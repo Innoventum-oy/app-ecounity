@@ -1,0 +1,216 @@
+{
+  "@@locale": "de",
+  "about": "Über",
+  "account": "Konto",
+  "age": "Alter",
+  "achievements": "Erfolge",
+  "application_name": "Ecounity",
+  "attention": "Achtung",
+  "authenticating": "Authentifizierung...",
+  "badge": "Abzeichen",
+  "badge_awarded": "Neues Abzeichen verliehen",
+  "@badge_awarded_congratulations": {
+    "description": "Badge awarded congratulation message",
+    "placeholders": {
+      "badge": {
+        "type": "String"
+      }
+    }
+  },
+  "badge_awarded_congratulations": "Herzlichen Glückwunsch! Sie haben das Abzeichen {badge} erhalten!",
+  "@badge_completion_status": {
+    "description": "Badge completion status",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
+  "badge_description": "Dieses Abzeichen wird für den Abschluss aller Lektionen und Herausforderungen im {pathway} Lernpfad verliehen.",
+  "button_accept": "Akzeptieren",
+  "button_approve": "Genehmigen",
+  "button_back": "Zurück",
+  "button_cancel": "Abbrechen",
+  "button_close": "Schließen",
+  "button_confirm": "Bestätigen",
+  "button_continue": "Fortfahren",
+  "button_continue_as_guest": "Als Gast fortfahren",
+  "button_create": "Erstellen",
+  "button_create_account": "Konto erstellen",
+  "button_delete": "Löschen",
+  "button_edit": "Bearbeiten",
+  "button_finish": "Fertigstellen",
+  "button_forgot_password": "Passwort vergessen?",
+  "button_login": "Anmelden",
+  "button_logout": "Abmelden",
+  "button_next": "Weiter",
+  "button_ok": "OK",
+  "button_previous": "Zurück",
+  "button_register": "Registrieren",
+  "button_reject": "Ablehnen",
+  "button_save": "Speichern",
+  "button_send": "Senden",
+  "button_submit": "Einreichen",
+  "cancel": "Abbrechen",
+  "choose_language": "Sprache wählen",
+  "collected_badges": "Gesammelte Abzeichen",
+  "completed": "Abgeschlossen",
+  "confirm_deleting_account": "Sind Sie sicher, dass Sie Ihr Konto löschen möchten?",
+  "contact": "Kontakt",
+  "delete_account": "Konto löschen",
+  "email": "E-Mail",
+  "email_not_valid": "Die angegebene E-Mail-Adresse ist ungültig",
+  "email_or_phone_number": "E-Mail oder Telefonnummer",
+  "@error": {
+    "defaultValue": "Anfrage konnte nicht abgeschlossen werden",
+    "description": "Fehlermeldung",
+    "placeholders": {
+      "error": {
+        "example": "404 Nicht gefunden",
+        "type": "String"
+      }
+    }
+  },
+  "error": "Fehler: {error}",
+  "error_default": "Anfrage konnte nicht abgeschlossen werden",
+  "error_occurred": "Ein Fehler ist aufgetreten",
+  "@errorViewNotFound": {
+    "description": "Fehlermeldung",
+    "placeholders": {
+      "view": {
+        "example": "Startseite",
+        "type": "String"
+      }
+    }
+  },
+  "errorViewNotFound": "Ansicht {view} nicht gefunden",
+  "@field_required": {
+    "description": "Pflichtfeld",
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "field_required": "Das Feld {field} ist erforderlich",
+  "firstName": "Vorname",
+  "funding_disclaimer": "Finanziert von der Europäischen Union. Die geäußerten Ansichten und Meinungen sind jedoch ausschließlich die der Autor(en) und spiegeln nicht unbedingt die der Europäischen Union oder der Europäischen Exekutivagentur für Bildung und Kultur (EACEA) wider. Weder die Europäische Union noch die EACEA können dafür verantwortlich gemacht werden.",
+  "home": "Startseite",
+  "language": "Sprache",
+  "lastName": "Nachname",
+  "loading": "Laden...",
+  "login": "Anmelden",
+  "login_failed": "Anmeldung fehlgeschlagen",
+  "logout": "Abmelden",
+  "logout_confirmation": "Sind Sie sicher, dass Sie sich abmelden möchten?",
+  "locale": "{language,select, fi{Finnisch} en{Englisch} pl{Polnisch} de{Deutsch} uk{Ukrainisch} ro{Rumänisch} es{Spanisch} other{Sprache:{language}}}",
+  "@locale": {
+    "description": "Locale",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "markAsCompleted": "Als abgeschlossen markieren",
+  "@navigation_item": {
+    "description": "Menü-Navigationspunkte",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "navigation_item": "{item, select, home{Startseite} pathways{Lernpfade} challenges{Herausforderungen} videolist{Videos} selfReflectionHub{Selbstreflexionszentrum} lessons{Unterrichtseinheiten} other{Menü:{item}}}",
+  "noBadgesFound": "Keine Abzeichen gefunden",
+  "noChallengesFound": "Keine Herausforderungen gefunden",
+  "noContentFound": "Kein Inhalt gefunden",
+  "noTranscriptAvailable": "Kein Transkript verfügbar",
+  "noVideosFound": "Keine Videos gefunden",
+  "noLessons": "Keine Unterrichtseinheiten gefunden",
+  "page_content": "Seiteninhalt",
+  "password": "Passwort",
+  "phone": "Telefon",
+  "phone_or_email": "Telefonnummer oder E-Mail-Adresse",
+  "please_enter_password": "Bitte geben Sie ein Passwort ein",
+  "please_enter_phone_or_email": "Bitte geben Sie eine Telefonnummer oder E-Mail-Adresse ein",
+  "please_provide_valid_phone_or_email": "Bitte geben Sie eine gültige Telefonnummer oder E-Mail-Adresse an",
+  "privacy": "Datenschutz",
+  "privacy_policy": "Datenschutzrichtlinie",
+  "profile": "Profil",
+  "quiz_not_passed": "Quiz nicht bestanden",
+  "register": "Registrieren",
+  "registration_failed": "Registrierung fehlgeschlagen",
+  "registration_successful": "Registrierung erfolgreich",
+  "@registration_successful_message": {
+    "description": "Registrierung erfolgreich Nachricht",
+    "placeholders": {
+      "firstName": {
+        "type": "String"
+      }
+    }
+  },
+  "registration_successful_message": "Willkommen bei Ecounity {firstName}!",
+  "screenTitle_challenges": "Herausforderungen",
+  "screenTitle_home": "Startseite",
+  "screenTitle_pathways": "Lernpfade",
+  "screenTitle_selfReflectionHub": "Selbstreflexionszentrum",
+  "screenTitle_videos": "Videos",
+  "screenTitle_lessons": "Unterricht",
+  "select": "Auswählen",
+  "selected": "Ausgewählt",
+  "sendAnswer": "Antwort senden",
+  "server": "Server",
+  "settings": "Einstellungen",
+  "stage": "Stufe",
+  "@stageValue": {
+    "description": "Stufenwert",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "stageValue": "{item,select, before{Bevor} during{Während} after{Nach} other{Stufe:{item}}}",
+  "terms": "Bedingungen",
+  "unnamed": "Unbenannt",
+  "you_have_this_badge": "Sie haben dieses Abzeichen",
+  "your_password": "Ihr Passwort",
+  "view_introduction": "Einführung",
+  "view_brochure": "Broschüre anzeigen",
+  "srh_description": "Nutzen Sie diese Fragen als Denkanstoß.",
+  "srh_what_was_most_impactful_for_me": "Was war für mich am wirkungsvollsten?",
+  "srh_what_will_i_put_into_practice": "Was werde ich in die Praxis umsetzen?",
+  "srh_what_are_my_hopes_and_fears_for_the_future": "Was sind meine Hoffnungen und Ängste für die Zukunft?",
+  "refresh": "Aktualisieren",
+  "cache_cleared": "Cache geleert. Bitte laden Sie die Seite neu.",
+  "@modules_completion_summary": {
+    "description": "Current module completion progress summary",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "modules_completion_summary": "{completed} of {total} modules completed",
+  "@learning_contents_completion_summary": {
+    "description": "Current learning content completion progress summary",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "learning_contents_completion_summary": "{completed} of {total} learning contents completed",
+  "current_progress": "Current progress",
+  "next_suggestion": "Next suggestion"
+}

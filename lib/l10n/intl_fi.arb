@@ -1,0 +1,261 @@
+{
+  "@@locale": "fi",
+  "badge": "Ansiomerkki",
+  "badge_awarded": "Uusi ansiomerkki ansaittu",
+  "@badge_awarded_congratulations": {
+    "description": "Ansiomerkki myönnetty -onnitteluviesti",
+    "placeholders": {
+      "badge": {
+        "type": "String"
+      }
+    }
+  },
+  "badge_awarded_congratulations": "Onneksi olkoon, olet ansainnut {badge} -ansiomerkin!",
+  "@badge_completion_status": {
+    "description": "Badge completion status",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
+  "badge_completion_status": "Olet suorittanut {completed} tähän ansiomerkkiin vaadittavista {required} oppimissisällöstä.",
+  "badge_description": "Tämä ansiomerkki myönnetään, kun olet suorittanut kaikki oppitunnit ja haasteet {pathway} polulla.",
+  "confirm_deleting_account": "Oletko varma, että haluat poistaa tilisi?",
+  "delete_account": "Poista tili",
+  "errorViewNotFound": "Näkymää {view} ei löytynyt",
+  "select_language": "Valitse kieli",
+  "loading" : "Ladataan...",
+  "logout" : "Kirjaudu ulos",
+  "noChallengesFound": "Haasteita ei löytynyt",
+  "noContentFound": "Sisältöä ei löytynyt",
+  "noPathwaysFound": "Oppimissisältöjä ei löytynyt",
+  "noTranscriptAvailable": "Transkriptiä ei ole saatavilla",
+  "noVideosFound" : "Videoita ei löytynyt",
+  "noLessonsFound" : "Oppitunteja ei löytynyt",
+  "pathway" : "Oppimissisältö",
+  "pathway_already_completed": "Oppimissisältö on jo suoritettu",
+  "pathway_completed" : "Oppimissisältö suoritettu",
+  "sendAnswer" : "Lähetä vastaus",
+  "stage" : "Vaihe",
+  "@stageValue": {
+    "description": "Polun tilavaihtoehdot",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "stageValue": "{item,select, before{Ennen} during{Aikana} after{Jälkeen} other{Vaihe:{item}}}",
+  "about": "Tietoja",
+  "account": "Tili",
+  "achievements": "Saavutukset",
+  "age": "Ikä",
+  "answer_saved": "Vastaus tallennettu",
+  "application_name": "Ecounity",
+  "attention": "Huomio",
+  "authenticating": "Autentikointi...",
+  "button_accept": "Hyväksy",
+  "button_approve": "Hyväksy",
+  "button_back": "Takaisin",
+  "button_cancel": "Peruuta",
+  "button_close": "Sulje",
+  "button_confirm": "Vahvista",
+  "button_continue": "Jatka",
+  "button_continue_as_guest": "Jatka vieraana",
+  "button_create": "Luo",
+  "button_create_account": "Luo tili",
+  "button_delete": "Poista",
+  "button_edit": "Muokkaa",
+  "button_finish": "Valmis",
+  "button_forgot_password": "Unohditko salasanasi?",
+  "button_login": "Kirjaudu sisään",
+  "button_logout": "Kirjaudu ulos",
+  "button_next": "Seuraava",
+  "button_ok": "OK",
+  "button_previous": "Edellinen",
+  "button_register": "Rekisteröidy",
+  "button_reject": "Hylkää",
+  "button_save": "Tallenna",
+  "button_send": "Lähetä",
+  "button_submit": "Lähetä",
+  "cancel": "Peruuta",
+  "choose_language": "Valitse kieli",
+  "collected_badges": "Kerätyt merkit",
+  "completed": "Suoritettu",
+  "contact": "Ota yhteyttä",
+  "email": "Sähköposti",
+  "email_not_valid": "Annettu sähköpostiosoite ei ole kelvollinen",
+  "email_or_phone_number": "Sähköposti tai puhelinnumero",
+  "@error": {
+    "defaultValue": "Pyyntöä ei voitu suorittaa",
+    "description": "Virheilmoitus",
+    "placeholders": {
+      "error": {
+        "example": "404 Not Found",
+        "type": "String"
+      }
+    }
+  },
+  "error": "Virhe: {error}",
+  "errors_in_form": "Täytä kaikki pakolliset kentät",
+  "error_default": "Pyyntöä ei voitu suorittaa",
+  "error_occurred": "Tapahtui virhe",
+  "@field_required": {
+    "description": "Pakollinen kenttä",
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "field_required": "Kenttä {field} on pakollinen",
+  "firstName": "Etunimi",
+  "funding_disclaimer": "Rahoitettu Euroopan unionin toimesta. Kirjoittajien esittämät näkemykset ja mielipiteet ovat kuitenkin vain heidän omiaan eivätkä välttämättä heijasta Euroopan unionin tai Euroopan koulutus- ja kulttuuriviraston (EACEA) näkemyksiä. Euroopan unioni tai EACEA eivät ole vastuussa niistä.",
+  "great": "Hienoa",
+  "home": "Koti",
+  "introduction": "Johdanto",
+  "language": "Kieli",
+  "lastName": "Sukunimi",
+  "locale": "{language,select, fi{Suomi} en{Englanti} pl{Puola} de{Saksa} uk{Ukraina} ro{Romania} es{Espanja} other{Kieli:{language}}}",
+  "@locale": {
+    "description": "Locale",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "login": "Kirjaudu sisään",
+  "login_failed": "Kirjautuminen epäonnistui",
+  "logout_confirmation": "Oletko varma, että haluat kirjautua ulos?",
+  "markAsCompleted": "Merkitse suoritetuksi",
+  "@navigation_item": {
+    "description": "Valikon navigointikohteet",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "navigation_item": "{item, select, home{Koti} pathways{Polut} challenges{Haasteet} videolist{Videot} selfReflectionHub{Itsearviointikeskus} lessons{Oppitunnit} modules{Moduulit} resources{Resurssit} other{Valikko:{item}}}",
+  "@navitem": {
+    "description": "Navigaatio",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "navitem": "{item, select, dashboard{Etusivu} videolist{Videot} challenges{Haasteet} selfReflectionHub{Oma kehitys} profile{Profiili} settings{Asetukset} about{Tietoja} privacy{Tietosuoja} terms{Käyttöehdot} contact{Ota yhteyttä} logout{Kirjaudu ulos} other{{item}}}",
+  "next": "Seuraava",
+  "noBadgesFound": "Ansiomerkkejä ei löytynyt",
+  "page_content": "Sivun sisältö",
+  "password": "Salasana",
+  "phone": "Puhelin",
+  "phone_or_email": "Puhelinnumero tai sähköpostiosoite",
+  "please_complete_form_properly": "Täytä lomake oikein",
+  "please_enter_password": "Anna salasana",
+  "please_enter_phone_or_email": "Anna puhelinnumero tai sähköpostiosoite",
+  "please_provide_valid_phone_or_email": "Anna kelvollinen puhelinnumero tai sähköpostiosoite",
+  "previous": "Edellinen",
+  "privacy": "Tietosuoja",
+  "privacy_policy": "Tietosuojakäytäntö",
+  "profile": "Profiili",
+  "quiz_not_passed": "Et läpäissyt testiä",
+  "register": "Rekisteröidy",
+  "registration_failed": "Rekisteröinti epäonnistui",
+  "registration_successful": "Rekisteröinti onnistui",
+  "@registration_successful_message": {
+    "description": "Rekisteröinti onnistui -viesti",
+    "placeholders": {
+      "firstName": {
+        "type": "String"
+      }
+    }
+  },
+  "registration_successful_message": "Tervetuloa Ecounityiin {firstName}!",
+  "saving_data_failed": "Tietojen tallennus epäonnistui",
+  "screenTitle_challenges": "Haasteet",
+  "screenTitle_home": "Koti",
+  "screenTitle_pathways": "Polut",
+  "screenTitle_selfReflectionHub": "Itsearviointikeskus",
+  "screenTitle_videos": "Videot",
+  "screenTitle_lessons": "Oppitunnit",
+  "screenTitle_modules": "Moduulit",
+  "screenTitle_resources": "Resurssit",
+  "server": "Palvelin",
+  "select": "Valitse",
+  "selected": "Valittu",
+  "settings": "Asetukset",
+  "terms": "Käyttöehdot",
+  "unnamed": "Nimetön",
+  "you_have_this_badge": "Sinulla on tämä merkki",
+  "your_password": "Salasanasi",
+  "view_introduction": "Johdanto",
+  "view_brochure": "Katso esite",
+  "welcome_title": "Tervetuloa Ecounity-sovellukseen - porttiisi digitaaliseen oppimiseen, inspiraatioon ja yrittäjähenkiseen kasvuun.",
+  "login_introduction_text": "Tutustu käänteisen luokkahuoneen mikro-oppimisresursseihin, videoihin ja menestystarinoihin käytännöllisillä työkaluilla, jotka täydentävät Ecounity-opetussuunnitelmaa ja vahvistavat sosiaalisen yrittäjyyden taitoja.",
+  "srh_title": "Itsearviointikeskus",
+  "srh_description": "Käytä näitä kysymyksiä pohdinnan aiheena.",
+  "srh_what_was_most_impactful_for_me": "Mikä oli minulle vaikuttavinta?",
+  "srh_what_will_i_put_into_practice": "Mitä aion laittaa käytäntöön?",
+  "srh_what_are_my_hopes_and_fears_for_the_future": "Mitkä ovat toiveeni ja pelkoni tulevaisuutta ajatellen?",
+  "no_video_found": "Videota ei löytynyt.",
+  "no_modules_found": "Moduuleja ei löytynyt.",
+  "no_contents_found": "Sisältöjä ei löytynyt.",
+  "no_resources_found": "Resursseja ei löytynyt.",
+    "no_images_found": "Kuvia ei löytynyt.",
+    "links": "Linkit",
+    "refresh": "Päivitä",
+    "cache_cleared": "Välimuisti tyhjennetty. Ole hyvä ja lataa sivu uudelleen.",
+    "module_completed": "Moduuli suoritettu",
+    "mark_as_completed": "Merkitse suoritetuksi",
+      "mark_as_not_completed": "Merkitse suorittamattomaksi",
+  "no_image_available": "Kuvaa ei ole saatavilla",
+  "no_title": "Ei otsikkoa",
+  "items_matched": "Kohteita yhdistetty",
+  "all_items_matched": "Kaikki kohteet yhdistetty!",
+  "play_again": "Pelaa uudelleen",
+  "not_enough_images_to_match": "Ei tarpeeksi yhdistettäviä kuvia",
+  "unknown": "Ei tietoa",
+  "error_loading_button": "Virhe painikkeen lataamisessa",
+  "seek": "Etsi",
+  "ok": "OK",
+  "notification": "Huomio",
+  "@modules_completion_summary": {
+    "description": "Moduulien etenemisen yhteenveto",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "modules_completion_summary": "{completed} / {total} moduulia suoritettu",
+  "@learning_contents_completion_summary": {
+    "description": "Oppimissisältöjen etenemisen yhteenveto",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "learning_contents_completion_summary": "{completed} / {total} oppimissisältöä suoritettu",
+  "current_progress": "Nykyinen eteneminen",
+  "next_suggestion": "Seuraava suositus",
+  "next_up": "Seuraavaksi:",
+  "congratulations": "Onnittelut!",
+  "you_have_completed_all_learning_contents": "Olet suorittanut kaikki oppimissisällöt.",
+  "writeAnswerHere": "Kirjoita vastauksesi tähän.",
+  "fieldCannotBeEmpty": "Tätä kenttää ei voi jättää tyhjäksi.",
+    "clear_answers": "Tyhjennä vastaukset"
+}

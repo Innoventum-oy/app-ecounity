@@ -1,0 +1,31 @@
+{
+"@@locale": "uk",
+"locale": "{language,select, uk{Українська} en{Англійська} fi{Фінська} de{Німецька} pl{Польська} ro{Румунська} es{Іспанська} other{Мова:{language}}}",
+"language": "Мова",
+"@modules_completion_summary": {
+  "description": "Current module completion progress summary",
+  "placeholders": {
+    "completed": {
+      "type": "int"
+    },
+    "total": {
+      "type": "int"
+    }
+  }
+},
+"modules_completion_summary": "{completed} of {total} modules completed",
+"@learning_contents_completion_summary": {
+  "description": "Current learning content completion progress summary",
+  "placeholders": {
+    "completed": {
+      "type": "int"
+    },
+    "total": {
+      "type": "int"
+    }
+  }
+},
+"learning_contents_completion_summary": "{completed} of {total} learning contents completed",
+"current_progress": "Current progress",
+"next_suggestion": "Next suggestion"
+}

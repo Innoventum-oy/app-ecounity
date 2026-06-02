@@ -1,0 +1,13 @@
+---
+appName: Ecounity
+servers:
+  primary: ecounityproject.app
+  development: dev.ecounityproject.app
+endpoints:
+  login: /api/login
+  logout: /api/logout
+  registration: /api/register
+  forgotPassword: /api/forgot-password
+  requestValidationToken: /api/dispatcher/registration
+  checkValidationToken: /api/dispatcher/registration
+  getContactMethods: /api/dispatcher/registration
