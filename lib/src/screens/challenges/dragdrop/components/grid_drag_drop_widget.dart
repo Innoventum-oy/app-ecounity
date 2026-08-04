@@ -1,23 +1,35 @@
 import 'dart:developer';
-
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-
-import 'package:ecounity/src/objects/drag_drop_item.dart';
 import 'dart:math' as math;
 
+import 'package:ecounity/src/objects/drag_drop_item.dart';
+import 'package:flutter/material.dart';
+
 typedef DragDropAction = void Function(DragDropItem item);
+typedef DragDropOrderChanged = void Function(List<DragDropItem> items);
+
+enum _GridDragKind { match, reorder }
+
+class _GridDragPayload {
+  const _GridDragPayload({required this.item, required this.kind});
+
+  final DragDropItem item;
+  final _GridDragKind kind;
+}
 
 class GridDragDropWidget extends StatefulWidget {
   final List<DragDropItem> items;
   final DragDropAction onMatched;
   final DragDropAction onMisMatched;
+  final DragDropOrderChanged? onOrderChanged;
+  final double aspectRatio;
 
   const GridDragDropWidget({
     super.key,
     required this.items,
+    this.aspectRatio = 1.0,
     required this.onMatched,
     required this.onMisMatched,
+    this.onOrderChanged,
   });
 
   @override
@@ -27,11 +39,192 @@ class GridDragDropWidget extends StatefulWidget {
 class GridDragDropWidgetState extends State<GridDragDropWidget> {
   late List<DragDropItem> combinedItems;
 
+  String _normalizeMatchId(String rawId) {
+    if (rawId.startsWith('image-')) {
+      return rawId.substring(6);
+    }
+    if (rawId.startsWith('text-')) {
+      return rawId.substring(5);
+    }
+    return rawId;
+  }
+
+  bool _isSameItem(DragDropItem first, DragDropItem second) {
+    if (identical(first, second)) {
+      return true;
+    }
+    if (first.isDraggable && second.isDraggable) {
+      return first.value == second.value;
+    }
+    if (!first.isDraggable && !second.isDraggable) {
+      return first.key == second.key;
+    }
+    return false;
+  }
+
   @override
   void initState() {
     super.initState();
     combinedItems = List.from(widget.items);
-    combinedItems.shuffle();
+  }
+
+  @override
+  void didUpdateWidget(covariant GridDragDropWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    combinedItems = List.from(widget.items);
+  }
+
+  Widget _buildTileContent(DragDropItem item) {
+    return Container(
+      alignment: Alignment.center,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (item.dropChild != null) item.dropChild!,
+          if (item.draggedItem != null) item.draggedItem!,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReorderPlaceholder() {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: 0.25),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.45)),
+      ),
+    );
+  }
+
+  Widget _withReorderTarget({
+    required DragDropItem item,
+    required Widget child,
+  }) {
+    return DragTarget<_GridDragPayload>(
+      onWillAcceptWithDetails: (receivedItem) =>
+          receivedItem.data.kind == _GridDragKind.reorder &&
+          !_isSameItem(receivedItem.data.item, item),
+      onAcceptWithDetails: (receivedItem) {
+        _swapItems(receivedItem.data.item, item);
+      },
+      builder: (context, acceptedItems, rejectedItems) {
+        final bool isReorderHover = acceptedItems
+            .whereType<_GridDragPayload>()
+            .any((payload) => payload.kind == _GridDragKind.reorder);
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: isReorderHover
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: child,
+        );
+      },
+    );
+  }
+
+  Widget _buildReorderableTarget(DragDropItem item) {
+    final Widget tileContent = _buildTileContent(item);
+    return DragTarget<_GridDragPayload>(
+      key: ValueKey(item.key),
+      onAcceptWithDetails: (receivedItem) {
+        if (receivedItem.data.kind == _GridDragKind.reorder) {
+          _swapItems(receivedItem.data.item, item);
+          return;
+        }
+        _handleMatchDrop(item, receivedItem.data.item);
+      },
+      onLeave: (receivedItem) {
+        log('onLeave called');
+        item.willAccept = false;
+      },
+      onWillAcceptWithDetails: (receivedItem) {
+        if (receivedItem.data.kind == _GridDragKind.reorder) {
+          return !_isSameItem(receivedItem.data.item, item);
+        }
+        final bool willAccept = !item.isAccepted;
+        item.willAccept = willAccept;
+        return willAccept;
+      },
+      builder: (context, acceptedItems, rejectedItem) {
+        final bool isMatchHover = acceptedItems
+            .whereType<_GridDragPayload>()
+            .any((payload) => payload.kind == _GridDragKind.match);
+        final bool isReorderHover = acceptedItems
+            .whereType<_GridDragPayload>()
+            .any((payload) => payload.kind == _GridDragKind.reorder);
+        return MeasuredDraggable<_GridDragPayload>(
+          data: _GridDragPayload(item: item, kind: _GridDragKind.reorder),
+          childWhenDragging: _buildReorderPlaceholder(),
+          feedback: Material(color: Colors.transparent, child: tileContent),
+          dragChild: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: isMatchHover || isReorderHover
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.transparent,
+                width: 2,
+              ),
+            ),
+            child: tileContent,
+          ),
+          useLongPress: true,
+        );
+      },
+    );
+  }
+
+  void _swapItems(DragDropItem draggedItem, DragDropItem targetItem) {
+    final int draggedIndex = combinedItems.indexWhere(
+      (item) => _isSameItem(item, draggedItem),
+    );
+    final int targetIndex = combinedItems.indexWhere(
+      (item) => _isSameItem(item, targetItem),
+    );
+    if (draggedIndex == -1 ||
+        targetIndex == -1 ||
+        draggedIndex == targetIndex) {
+      return;
+    }
+
+    setState(() {
+      final DragDropItem movedItem = combinedItems[draggedIndex];
+      combinedItems[draggedIndex] = combinedItems[targetIndex];
+      combinedItems[targetIndex] = movedItem;
+    });
+    widget.onOrderChanged?.call(List<DragDropItem>.from(combinedItems));
+  }
+
+  void _handleMatchDrop(DragDropItem targetItem, DragDropItem receivedItem) {
+    targetItem.draggedItem = receivedItem.dragChild ?? receivedItem.dropChild;
+    targetItem.acceptedFromValue = receivedItem.value;
+    log('onAcceptWithDetails: ${receivedItem.value} ${targetItem.key}');
+    receivedItem.isAccepted = true;
+    targetItem.isAccepted = true;
+    final bool isCorrect =
+        _normalizeMatchId(receivedItem.value) ==
+        _normalizeMatchId(targetItem.key);
+    if (isCorrect) {
+      log('Matched: ${receivedItem.value} ${targetItem.key}');
+      targetItem.isCorrect = true;
+      widget.onMatched(receivedItem);
+    } else {
+      log('MisMatched: ${receivedItem.value} ${targetItem.key}');
+      targetItem.isCorrect = false;
+      widget.onMisMatched(receivedItem);
+    }
+    setState(() {
+      combinedItems.removeWhere(
+        (candidate) =>
+            identical(candidate, receivedItem) ||
+            (candidate.isDraggable && candidate.value == receivedItem.value),
+      );
+    });
   }
 
   @override
@@ -42,87 +235,35 @@ class GridDragDropWidgetState extends State<GridDragDropWidget> {
       crossAxisCount = math.min(crossAxisCount, 2);
     }
     return GridView.builder(
-      shrinkWrap: true, // Ensures the GridView does not expand infinitely
-   //   physics: const NeverScrollableScrollPhysics(), // Prevents GridView from handling its own scrolling
+      padding: const EdgeInsets.only(bottom: 12),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        childAspectRatio: 1,
+        childAspectRatio: widget.aspectRatio,
       ),
       itemCount: combinedItems.length,
       itemBuilder: (context, index) {
         final item = combinedItems[index];
 
-        return SizedBox(
-          width: 100, // Set explicit width
-          height: 100, // Set explicit height
-          child: item.isDraggable
-              ? (item.isAccepted ? Container() : MeasuredDraggable<DragDropItem>(
-            data: item,
-            childWhenDragging: Container(),//item.childWhenDragging,
-            feedback: item.feedbackItem!,
-            dragChild: item.dragChild!,
-           // child: item.isAccepted ? item.dragChild! : item.dragChild!,
-          )
-          )  :  item.draggedItem!=null ? Container(
-            decoration: BoxDecoration(
-              /*border: Border.all(
-                color: item.isCorrect ? Colors.green : Colors.red,
-                width: 2.0,
-              ),*/
-            ),
-            child: Stack(
-              children: [
-                if(item.dropChild!=null) item.dropChild!,
-                if(item.draggedItem!=null) item.draggedItem!,
-              ],
-            ),
-          ) : DragTarget<DragDropItem>( key: ValueKey(item.key), // Assign unique key
-            onAcceptWithDetails: (receivedItem) {
-              if(kDebugMode){
-                item.draggedItem = receivedItem.data.dropChild;
-                log('onAcceptWithDetails: ${receivedItem.data.value} ${item.key}');
-              }
-              receivedItem.data.isAccepted = true;
-              item.isAccepted = true;
-              if (receivedItem.data.value == item.key) {
-                if(kDebugMode){
-                  log('Matched: ${receivedItem.data.value} ${item.key}');
-                }
-                item.isCorrect = true;
-                widget.onMatched(receivedItem.data);
-              }
-              else {
-                if(kDebugMode){
-                  log('MisMatched: ${receivedItem.data.value} ${item.key}');
-                }
-                item.isCorrect = false;
-                widget.onMisMatched(receivedItem.data);
-              }
-              setState(() {
-                combinedItems.remove(receivedItem.data);
-              });
-            },
-            onLeave: (receivedItem) {
-              if(kDebugMode){
-                log('onLeave called');
-              }
-              item.willAccept = false;
+        if (item.isDraggable) {
+          if (item.isAccepted) {
+            return const SizedBox.shrink();
+          }
 
-            },
-            onWillAcceptWithDetails: (receivedItem) {
-
-              bool willAccept = receivedItem.data.value == item.key && !item.isAccepted;
-              item.willAccept = willAccept;
-              return true;// willAccept;
-            },
-            builder: (context, acceptedItems, rejectedItem) => Container(
-              alignment: Alignment.center,
-              // margin: const EdgeInsets.all(8.0),
-                //  color: item.isCorrect ? Colors.green : (item.isAccepted ? Colors.red : Colors.transparent),
-              child:  item.dropChild!,
+          return _withReorderTarget(
+            item: item,
+            child: MeasuredDraggable<_GridDragPayload>(
+              data: _GridDragPayload(item: item, kind: _GridDragKind.match),
+              childWhenDragging:
+                  item.childWhenDragging ??
+                  item.dragChild ??
+                  const SizedBox.shrink(),
+              feedback: item.feedbackItem!,
+              dragChild: item.dragChild!,
             ),
-          ),
-        );
+          );
+        }
+
+        return _buildReorderableTarget(item);
       },
     );
   }
@@ -133,6 +274,7 @@ class MeasuredDraggable<T extends Object> extends StatefulWidget {
   final Widget dragChild;
   final Widget childWhenDragging;
   final Widget? feedback;
+  final bool useLongPress;
 
   const MeasuredDraggable({
     super.key,
@@ -140,13 +282,15 @@ class MeasuredDraggable<T extends Object> extends StatefulWidget {
     required this.dragChild,
     required this.childWhenDragging,
     this.feedback,
+    this.useLongPress = false,
   });
 
   @override
   MeasuredDraggableState<T> createState() => MeasuredDraggableState<T>();
 }
 
-class MeasuredDraggableState<T extends Object> extends State<MeasuredDraggable<T>> {
+class MeasuredDraggableState<T extends Object>
+    extends State<MeasuredDraggable<T>> {
   final GlobalKey _dragChildKey = GlobalKey();
   Size? _dragChildSize;
 
@@ -154,13 +298,20 @@ class MeasuredDraggableState<T extends Object> extends State<MeasuredDraggable<T
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
       _measureDragChild();
     });
   }
 
   void _measureDragChild() {
-    final renderBox = _dragChildKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox != null) {
+    if (!mounted) {
+      return;
+    }
+    final renderBox =
+        _dragChildKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null && renderBox.size != _dragChildSize) {
       setState(() {
         _dragChildSize = renderBox.size;
       });
@@ -169,20 +320,29 @@ class MeasuredDraggableState<T extends Object> extends State<MeasuredDraggable<T
 
   @override
   Widget build(BuildContext context) {
+    final Widget feedback = _dragChildSize != null
+        ? SizedBox(
+            width: _dragChildSize!.width,
+            height: _dragChildSize!.height,
+            child: widget.feedback ?? widget.dragChild,
+          )
+        : widget.feedback ?? widget.dragChild;
+    final Widget child = Container(key: _dragChildKey, child: widget.dragChild);
+
+    if (widget.useLongPress) {
+      return LongPressDraggable<T>(
+        data: widget.data,
+        childWhenDragging: widget.childWhenDragging,
+        feedback: feedback,
+        child: child,
+      );
+    }
+
     return Draggable<T>(
       data: widget.data,
       childWhenDragging: widget.childWhenDragging,
-      feedback: _dragChildSize != null
-          ? SizedBox(
-        width: _dragChildSize!.width,
-        height: _dragChildSize!.height,
-        child: widget.feedback ?? widget.dragChild,
-      )
-          : widget.feedback ?? widget.dragChild,
-      child: Container(
-        key: _dragChildKey,
-        child: widget.dragChild,
-      ),
+      feedback: feedback,
+      child: child,
     );
   }
 }

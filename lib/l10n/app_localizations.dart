@@ -9,7 +9,9 @@ import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
 import 'app_localizations_es.dart';
 import 'app_localizations_fi.dart';
+import 'app_localizations_it.dart';
 import 'app_localizations_pl.dart';
+import 'app_localizations_pt.dart';
 import 'app_localizations_ro.dart';
 import 'app_localizations_uk.dart';
 
@@ -103,7 +105,9 @@ abstract class AppLocalizations {
     Locale('en'),
     Locale('es'),
     Locale('fi'),
+    Locale('it'),
     Locale('pl'),
+    Locale('pt'),
     Locale('ro'),
     Locale('uk'),
   ];
@@ -471,7 +475,7 @@ abstract class AppLocalizations {
   /// Locale
   ///
   /// In en, this message translates to:
-  /// **'{language,select, en{English} fi{Finnish} pl{Polish} de{German} uk{Ukrainian} ro{Romanian} es{Spanish} other{Language:{language}}}'**
+  /// **'{language,select, en{English} fi{Finnish} it{Italian} pt{Portuguese} pl{Polish} de{German} uk{Ukrainian} ro{Romanian} es{Spanish} other{Language:{language}}}'**
   String locale(String language);
 
   /// No description provided for @lastName.
@@ -684,6 +688,12 @@ abstract class AppLocalizations {
   /// **'Welcome to Ecounity {firstName}!'**
   String registration_successful_message(String firstName);
 
+  /// No description provided for @references.
+  ///
+  /// In en, this message translates to:
+  /// **'References'**
+  String get references;
+
   /// No description provided for @saving_data_failed.
   ///
   /// In en, this message translates to:
@@ -759,7 +769,7 @@ abstract class AppLocalizations {
   /// No description provided for @sendAnswer.
   ///
   /// In en, this message translates to:
-  /// **'Send answer'**
+  /// **'Save answer'**
   String get sendAnswer;
 
   /// No description provided for @server.
@@ -785,6 +795,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{item,select, before{Before} during{During} after{After} other{{item}}}'**
   String stageValue(String item);
+
+  /// No description provided for @start.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get start;
 
   /// No description provided for @terms.
   ///
@@ -1066,7 +1082,9 @@ class _AppLocalizationsDelegate
     'en',
     'es',
     'fi',
+    'it',
     'pl',
+    'pt',
     'ro',
     'uk',
   ].contains(locale.languageCode);
@@ -1086,8 +1104,12 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsEs();
     case 'fi':
       return AppLocalizationsFi();
+    case 'it':
+      return AppLocalizationsIt();
     case 'pl':
       return AppLocalizationsPl();
+    case 'pt':
+      return AppLocalizationsPt();
     case 'ro':
       return AppLocalizationsRo();
     case 'uk':

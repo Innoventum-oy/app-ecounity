@@ -13,6 +13,30 @@
 migrate_working_dir/
 /assets/config/keys.yaml
 
+# Local Ruby / Bundler state
+.bundle/
+vendor/bundle/
+
+# Fastlane credentials and generated store assets
+**/fastlane/.env
+**/fastlane/.env.*
+!**/fastlane/.env.example
+**/fastlane/README.md
+**/fastlane/Preview.html
+**/fastlane/report.xml
+android/key.properties
+android/app/upload-keystore.jks
+android/fastlane/*.json
+ios/fastlane/*.json
+ios/fastlane/*.p8
+ios/signing/
+ios/fastlane/signing/
+build/fastlane/
+ios/fastlane/screenshots/
+android/fastlane/metadata/android/*/images/phoneScreenshots/
+android/fastlane/metadata/android/*/images/sevenInchScreenshots/
+android/fastlane/metadata/android/*/images/tenInchScreenshots/
+
 # IntelliJ related
 *.iml
 *.ipr
@@ -33,6 +57,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+/android/build/
 
 # Symbolication related
 app.*.symbols

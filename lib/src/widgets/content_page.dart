@@ -5,10 +5,8 @@ import 'package:ecounity/l10n/app_localizations_extension.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:core/core.dart';
 
-
 /// View for displaying selected webpage text contents from iCMS. Fetches the page contents from server based on commonname + language parameters.
 /// Expects to receive array of text editor blocks to display
-
 
 class ContentPage extends StatefulWidget {
   final String commonname;
@@ -18,8 +16,14 @@ class ContentPage extends StatefulWidget {
   final String? route;
   final Widget? bottomNavigationBar;
 
-  ContentPage(this.commonname,
-      {super.key, this.language='en',this.providedPage, this.route, this.bottomNavigationBar});
+  ContentPage(
+    this.commonname, {
+    super.key,
+    this.language = 'en',
+    this.providedPage,
+    this.route,
+    this.bottomNavigationBar,
+  });
   @override
   ContentPageState createState() => ContentPageState();
 }
@@ -28,21 +32,16 @@ class ContentPageState extends State<ContentPage> {
   String? errorMessage;
   WebPage page = WebPage();
 
-
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-
-
       if (widget.providedPage != null) {
-        page =widget.providedPage!;
-
+        page = widget.providedPage!;
       } else {
         final Map<String, String> params = {
           'language': Localizations.localeOf(context).toString(),
           'commonname': widget.commonname,
           'fields': 'id,commonname,pagetitle,textcontents,thumbnailid',
-
         };
         widget.pageProvider.loadItem(params);
       }
@@ -54,17 +53,13 @@ class ContentPageState extends State<ContentPage> {
   Widget build(BuildContext context) {
     page = Provider.of<WebPageProvider>(context).page ?? WebPage();
 
-    String pageTitle = page.pagetitle ?? context.l10n.page_content;
+    String pageTitle = page.title;
     return Scaffold(
-        appBar: AppBar(
-          title: Text(pageTitle),
-          elevation: 0.1,
-        ),
-        body: _pageContentSection(page),
-        bottomNavigationBar: widget.bottomNavigationBar);
+      appBar: AppBar(title: Text(pageTitle), elevation: 0.1),
+      body: _pageContentSection(page),
+      bottomNavigationBar: widget.bottomNavigationBar,
+    );
   }
-
-
 
   Widget _pageContentSection(WebPage page) {
     List<Widget> textContents = [];
@@ -76,22 +71,28 @@ class ContentPageState extends State<ContentPage> {
       }
     }
     if (widget.route == null) {
-      textContents.add(Align(
-        alignment: Alignment.center,
-        child: ElevatedButton(
+      textContents.add(
+        Align(
+          alignment: Alignment.center,
+          child: ElevatedButton(
             onPressed: () {
               if (widget.route != null) {
-                if(kDebugMode){
+                if (kDebugMode) {
                   print('pushing route${widget.route!}');
                 }
                 Navigator.pushNamedAndRemoveUntil(
-                    context, widget.route!, (Route<dynamic> route) => false);
+                  context,
+                  widget.route!,
+                  (Route<dynamic> route) => false,
+                );
               } else {
                 Navigator.pop(context);
               }
             },
-            child: Text(context.l10n.button_back)),
-      ));
+            child: Text(context.l10n.button_back),
+          ),
+        ),
+      );
     }
     return Column(children: textContents);
   }

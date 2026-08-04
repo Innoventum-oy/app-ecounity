@@ -107,7 +107,7 @@ flutter gen-l10n
 Hive adapters are generated with build runner:
 
 ```sh
-dart run build_runner build --delete-conflicting-outputs
+flutter pub run build_runner build
 ```
 
 The helper script runs both localization and adapter generation:

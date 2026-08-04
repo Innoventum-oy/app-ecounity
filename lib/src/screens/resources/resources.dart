@@ -255,13 +255,19 @@ class ResourcesViewState extends State<ResourcesView>
         );
 
         return ScreenScaffold(
+          key: const ValueKey('screenshot-resources-list-screen'),
           onRefresh: _refresh,
           title: screenTitle,
           navigationIndex: widget.navIndex,
           child: Column(
             children: [
               tabBar,
-              Expanded(child: tabBarView),
+              Expanded(
+                child: KeyedSubtree(
+                  key: const ValueKey('screenshot-resources-list'),
+                  child: tabBarView,
+                ),
+              ),
             ],
           ),
         );

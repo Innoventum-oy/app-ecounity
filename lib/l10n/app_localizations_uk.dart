@@ -9,198 +9,198 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
-  String get about => 'About';
+  String get about => 'Про';
 
   @override
-  String get age => 'Age';
+  String get age => 'Вік';
 
   @override
-  String get account => 'Account';
+  String get account => 'Акаунт';
 
   @override
-  String get achievements => 'Achievements';
+  String get achievements => 'Досягнення';
 
   @override
-  String get answer_saved => 'Answer saved';
+  String get answer_saved => 'Відповідь збережено';
 
   @override
   String get application_name => 'Ecounity';
 
   @override
-  String get attention => 'Attention';
+  String get attention => 'Увага';
 
   @override
-  String get authenticating => 'Authenticating...';
+  String get authenticating => 'Авторизація...';
 
   @override
-  String get badge => 'Badge';
+  String get badge => 'Відзнака';
 
   @override
   String badge_completion_status(int completed, int required) {
-    return 'You have completed $completed out of $required learning contents required to earn this badge.';
+    return 'Ви завершили $completed з $required навчальних матеріалів, необхідних для отримання цієї відзнаки.';
   }
 
   @override
   String badge_description(Object pathway) {
-    return 'This badge is awarded for completing all the lessons and challenges in the $pathway pathway.';
+    return 'Цю відзнаку надають за проходження всіх уроків і викликів у програмі $pathway.';
   }
 
   @override
-  String get button_accept => 'Accept';
+  String get button_accept => 'Прийняти';
 
   @override
-  String get button_approve => 'Approve';
+  String get button_approve => 'Схвалити';
 
   @override
-  String get badge_awarded => 'New badge awarded';
+  String get badge_awarded => 'Нараховано нову відзнаку';
 
   @override
   String badge_awarded_congratulations(String badge) {
-    return 'Congratulations! You have been awarded the $badge badge.';
+    return 'Вітаємо! Вам надано відзнаку $badge.';
   }
 
   @override
-  String get button_back => 'Back';
+  String get button_back => 'Назад';
 
   @override
-  String get button_cancel => 'Cancel';
+  String get button_cancel => 'Скасувати';
 
   @override
-  String get button_close => 'Close';
+  String get button_close => 'Закрити';
 
   @override
-  String get button_confirm => 'Confirm';
+  String get button_confirm => 'Підтвердити';
 
   @override
-  String get button_continue => 'Continue';
+  String get button_continue => 'Продовжити';
 
   @override
-  String get button_continue_as_guest => 'Continue as guest';
+  String get button_continue_as_guest => 'Продовжити як гість';
 
   @override
-  String get button_create => 'Create';
+  String get button_create => 'Створити';
 
   @override
-  String get button_create_account => 'Create account';
+  String get button_create_account => 'Створити обліковий запис';
 
   @override
-  String get button_delete => 'Delete';
+  String get button_delete => 'Видалити';
 
   @override
-  String get button_edit => 'Edit';
+  String get button_edit => 'Редагувати';
 
   @override
-  String get button_finish => 'Finish';
+  String get button_finish => 'Завершити';
 
   @override
-  String get button_forgot_password => 'Forgot password?';
+  String get button_forgot_password => 'Забули пароль?';
 
   @override
-  String get button_login => 'Login';
+  String get button_login => 'Увійти';
 
   @override
-  String get button_logout => 'Logout';
+  String get button_logout => 'Вийти';
 
   @override
-  String get button_next => 'Next';
+  String get button_next => 'Далі';
 
   @override
   String get button_ok => 'OK';
 
   @override
-  String get button_previous => 'Previous';
+  String get button_previous => 'Попередній';
 
   @override
-  String get button_register => 'Register';
+  String get button_register => 'Зареєструватися';
 
   @override
-  String get button_reject => 'Reject';
+  String get button_reject => 'Відхилити';
 
   @override
-  String get button_save => 'Save';
+  String get button_save => 'Зберегти';
 
   @override
-  String get button_send => 'Send';
+  String get button_send => 'Надіслати';
 
   @override
-  String get button_submit => 'Submit';
+  String get button_submit => 'Надіслати';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Скасувати';
 
   @override
-  String get choose_language => 'Choose language';
+  String get choose_language => 'Вибрати мову';
 
   @override
-  String get collected_badges => 'Collected badges';
+  String get collected_badges => 'Зібрані відзнаки';
 
   @override
-  String get completed => 'Completed';
+  String get completed => 'Завершено';
 
   @override
   String get confirm_deleting_account =>
-      'Are you sure you want to delete your account?';
+      'Ви впевнені, що хочете видалити свій обліковий запис?';
 
   @override
-  String get contact => 'Contact';
+  String get contact => 'Контакт';
 
   @override
-  String get delete_account => 'Delete account';
+  String get delete_account => 'Видалити обліковий запис';
 
   @override
-  String get email => 'Email';
+  String get email => 'Електронна пошта';
 
   @override
-  String get email_not_valid => 'The given email address is not valid';
+  String get email_not_valid => 'Надана адреса email недійсна';
 
   @override
-  String get email_or_phone_number => 'Email or phone number';
+  String get email_or_phone_number => 'Email або номер телефону';
 
   @override
   String error(String error) {
-    return 'Error: $error';
+    return 'Помилка: $error';
   }
 
   @override
-  String get error_default => 'Unable to complete the request';
+  String get error_default => 'Не вдалося виконати запит';
 
   @override
-  String get error_occurred => 'An error occurred';
+  String get error_occurred => 'Сталася помилка';
 
   @override
   String errorViewNotFound(String view) {
-    return 'View $view not found';
+    return 'Сторінку $view не знайдено';
   }
 
   @override
-  String get errors_in_form => 'Errors in form';
+  String get errors_in_form => 'Помилки у формі';
 
   @override
   String field_required(String field) {
-    return 'The field $field is required';
+    return 'Поле $field є обов\'язковим';
   }
 
   @override
-  String get firstName => 'First name';
+  String get firstName => 'Ім\'я';
 
   @override
   String get funding_disclaimer =>
-      'Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Education and Culture Executive Agency (EACEA). Neither the European Union nor EACEA can be held responsible for them.';
+      'Фінансується Європейським Союзом. Погляди та думки, що тут висловлені, належать лише автору(ам) і не обов\'язково відображають позицію Європейського Союзу або Європейського виконавчого агентства з освіти й культури (EACEA). Ані Європейський Союз, ані EACEA не несуть відповідальності.';
 
   @override
-  String get great => 'Great';
+  String get great => 'Чудово';
 
   @override
-  String get home => 'Home';
+  String get home => 'Головна';
 
   @override
-  String get introduction => 'Introduction';
+  String get introduction => 'Вступ';
 
   @override
   String get language => 'Мова';
 
   @override
-  String get select_language => 'Select language';
+  String get select_language => 'Оберіть мову';
 
   @override
   String locale(String language) {
@@ -208,336 +208,345 @@ class AppLocalizationsUk extends AppLocalizations {
       'uk': 'Українська',
       'en': 'Англійська',
       'fi': 'Фінська',
+      'it': 'Італійська',
       'de': 'Німецька',
       'pl': 'Польська',
-      'ro': 'Румунська',
-      'es': 'Іспанська',
+      'pt': 'Португальська',
+      'ro': 'Romanian',
+      'es': 'Spanish',
       'other': 'Мова:$language',
     });
     return '$_temp0';
   }
 
   @override
-  String get lastName => 'Last name';
+  String get lastName => 'Прізвище';
 
   @override
-  String get loading => 'Loading...';
+  String get loading => 'Завантаження...';
 
   @override
-  String get login => 'Login';
+  String get login => 'Увійти';
 
   @override
-  String get login_failed => 'Login failed';
+  String get login_failed => 'Не вдалося увійти';
 
   @override
-  String get logout => 'Logout';
+  String get logout => 'Вийти';
 
   @override
-  String get logout_confirmation => 'Are you sure you want to logout?';
+  String get logout_confirmation => 'Ви впевнені, що хочете вийти?';
 
   @override
-  String get markAsCompleted => 'Mark as completed';
+  String get markAsCompleted => 'Позначити як завершене';
 
   @override
   String navigation_item(String item) {
     String _temp0 = intl.Intl.selectLogic(item, {
-      'home': 'Home',
-      'pathways': 'Pathways',
-      'challenges': 'Challenges',
-      'videolist': 'Videos',
-      'selfReflectionHub': 'Self-reflection Hub',
-      'lessons': 'Lessons',
-      'modules': 'Modules',
-      'resources': 'Resources',
-      'other': 'Menu:$item',
+      'home': 'Головна',
+      'pathways': 'Шляхи',
+      'challenges': 'Виклики',
+      'videolist': 'Відео',
+      'selfReflectionHub': 'Центр саморефлексії',
+      'lessons': 'Уроки',
+      'modules': 'Модулі',
+      'resources': 'Ресурси',
+      'other': 'Меню:$item',
     });
     return '$_temp0';
   }
 
   @override
-  String get next => 'Next';
+  String get next => 'Далі';
 
   @override
-  String get noBadgesFound => 'No badges found';
+  String get noBadgesFound => 'Відзнак не знайдено';
 
   @override
-  String get noChallengesFound => 'No challenges were found';
+  String get noChallengesFound => 'Викликів не знайдено';
 
   @override
-  String get noContentFound => 'No content found';
+  String get noContentFound => 'Контент не знайдено';
 
   @override
-  String get noPathwaysFound => 'No learning contents were found';
+  String get noPathwaysFound => 'Не знайдено навчальних матеріалів';
 
   @override
-  String get noTranscriptAvailable => 'No transcript available';
+  String get noTranscriptAvailable => 'Транскрипт недоступний';
 
   @override
-  String get noVideosFound => 'No videos were found';
+  String get noVideosFound => 'Відео не знайдено';
 
   @override
-  String get noLessonsFound => 'No lessons were found';
+  String get noLessonsFound => 'Уроків не знайдено';
 
   @override
-  String get page_content => 'Page content';
+  String get page_content => 'Вміст сторінки';
 
   @override
-  String get password => 'Password';
+  String get password => 'Пароль';
 
   @override
-  String get pathway => 'Learning content';
+  String get pathway => 'Навчальний матеріал';
 
   @override
-  String get pathway_already_completed => 'Learning content is completed';
+  String get pathway_already_completed => 'Навчальний матеріал завершено';
 
   @override
-  String get pathway_completed => 'Learning content completed';
+  String get pathway_completed => 'Навчальний матеріал завершено';
 
   @override
-  String get phone => 'Phone';
+  String get phone => 'Телефон';
 
   @override
-  String get phone_or_email => 'Phone number or email address';
+  String get phone_or_email => 'Номер телефону або email';
 
   @override
   String get please_complete_form_properly =>
-      'Please complete the form properly';
+      'Будь ласка, заповніть форму правильно';
 
   @override
-  String get please_enter_password => 'Please enter a password';
+  String get please_enter_password => 'Введіть пароль';
 
   @override
-  String get please_enter_phone_or_email =>
-      'Please enter a phone number or email address';
+  String get please_enter_phone_or_email => 'Введіть номер телефону або email';
 
   @override
   String get please_provide_valid_phone_or_email =>
-      'Please provide a valid phone number or email address';
+      'Введіть дійсний номер телефону або email';
 
   @override
-  String get previous => 'Previous';
+  String get previous => 'Назад';
 
   @override
-  String get privacy => 'Privacy';
+  String get privacy => 'Конфіденційність';
 
   @override
-  String get privacy_policy => 'Privacy Policy';
+  String get privacy_policy => 'Політика конфіденційності';
 
   @override
-  String get profile => 'Profile';
+  String get profile => 'Профіль';
 
   @override
-  String get register => 'Register';
+  String get register => 'Зареєструватися';
 
   @override
-  String get registration_failed => 'Registration failed';
+  String get registration_failed => 'Реєстрація не вдалася';
 
   @override
-  String get registration_successful => 'Registration successful';
+  String get registration_successful => 'Реєстрація успішна';
 
   @override
   String registration_successful_message(String firstName) {
-    return 'Welcome to Ecounity $firstName!';
+    return 'Ласкаво просимо до Ecounity $firstName!';
   }
 
   @override
-  String get saving_data_failed => 'Saving data failed';
+  String get references => 'Джерела';
 
   @override
-  String get quiz_not_passed => 'Quiz not passed';
+  String get saving_data_failed => 'Не вдалося зберегти дані';
 
   @override
-  String get screenTitle_challenges => 'Challenges';
+  String get quiz_not_passed => 'Тест не пройдено';
 
   @override
-  String get screenTitle_home => 'Home';
+  String get screenTitle_challenges => 'Виклики';
 
   @override
-  String get screenTitle_pathways => 'Pathways';
+  String get screenTitle_home => 'Головна';
 
   @override
-  String get screenTitle_selfReflectionHub => 'Self-reflection Hub';
+  String get screenTitle_pathways => 'Шляхи';
 
   @override
-  String get screenTitle_videos => 'Videos';
+  String get screenTitle_selfReflectionHub => 'Центр саморефлексії';
 
   @override
-  String get screenTitle_lessons => 'Lessons';
+  String get screenTitle_videos => 'Відео';
 
   @override
-  String get screenTitle_modules => 'Modules';
+  String get screenTitle_lessons => 'Уроки';
 
   @override
-  String get screenTitle_resources => 'Resources';
+  String get screenTitle_modules => 'Модулі';
 
   @override
-  String get select => 'Select';
+  String get screenTitle_resources => 'Ресурси';
 
   @override
-  String get selected => 'Selected';
+  String get select => 'Вибрати';
 
   @override
-  String get sendAnswer => 'Send answer';
+  String get selected => 'Обрано';
 
   @override
-  String get server => 'Server';
+  String get sendAnswer => 'Зберегти відповідь';
 
   @override
-  String get settings => 'Settings';
+  String get server => 'Сервер';
 
   @override
-  String get stage => 'Stage';
+  String get settings => 'Налаштування';
+
+  @override
+  String get stage => 'Етап';
 
   @override
   String stageValue(String item) {
     String _temp0 = intl.Intl.selectLogic(item, {
-      'before': 'Before',
-      'during': 'During',
-      'after': 'After',
+      'before': 'Перед',
+      'during': 'Під час',
+      'after': 'Після',
       'other': '$item',
     });
     return '$_temp0';
   }
 
   @override
-  String get terms => 'Terms';
+  String get start => 'Почати';
 
   @override
-  String get unnamed => 'Unnamed';
+  String get terms => 'Умови';
 
   @override
-  String get view_introduction => 'Introduction';
+  String get unnamed => 'Без назви';
 
   @override
-  String get you_have_this_badge => 'You have this badge';
+  String get view_introduction => 'Вступ';
 
   @override
-  String get your_password => 'Your password';
+  String get you_have_this_badge => 'У вас є ця відзнака';
 
   @override
-  String get view_brochure => 'View brochure';
+  String get your_password => 'Ваш пароль';
+
+  @override
+  String get view_brochure => 'Переглянути брошуру';
 
   @override
   String get welcome_title =>
-      'Welcome to the Ecounity App - your gateway to digital learning, inspiration, and entrepreneurial growth.';
+      'Ласкаво просимо до додатка Ecounity — вашого доступу до цифрового навчання, натхнення та підприємницького зростання.';
 
   @override
   String get login_introduction_text =>
-      'Explore Flipped Classroom micro-learning resources, videos, and success stories with practical tools that complement the Ecounity Curriculum and strengthen social entrepreneurship skills.';
+      'Вивчайте ресурси мікронавчання, відео та історії успіху у форматі Flipped Classroom з практичними інструментами, що доповнюють навчальну програму Ecounity та зміцнюють навички соціального підприємництва.';
 
   @override
-  String get srh_description => 'Use these questions as a food for thought.';
+  String get srh_description =>
+      'Використовуйте ці запитання як привід для роздумів.';
 
   @override
   String get srh_what_was_most_impactful_for_me =>
-      'What was most impactful for me?';
+      'Що було для мене найбільш вражаючим?';
 
   @override
-  String get srh_what_will_i_put_into_practice =>
-      'What will I put into practice?';
+  String get srh_what_will_i_put_into_practice => 'Що я застосую на практиці?';
 
   @override
   String get srh_what_are_my_hopes_and_fears_for_the_future =>
-      'What are my hopes and fears for the future?';
+      'Які мої надії та страхи на майбутнє?';
 
   @override
-  String get no_video_found => 'The video was not found.';
+  String get no_video_found => 'Відео не знайдено.';
 
   @override
-  String get no_modules_found => 'No modules were found.';
+  String get no_modules_found => 'Модулів не знайдено.';
 
   @override
-  String get no_contents_found => 'Contents were not found.';
+  String get no_contents_found => 'Матеріали не знайдені.';
 
   @override
-  String get no_resources_found => 'Resources were not found.';
+  String get no_resources_found => 'Ресурси не знайдені.';
 
   @override
-  String get no_images_found => 'Images were not found.';
+  String get no_images_found => 'Зображення не знайдені.';
 
   @override
-  String get links => 'Links';
+  String get links => 'Посилання';
 
   @override
-  String get refresh => 'Refresh';
+  String get refresh => 'Оновити';
 
   @override
-  String get cache_cleared => 'Cache cleared. Please reload the page.';
+  String get cache_cleared =>
+      'Кеш очищено. Будь ласка, перезавантажте сторінку.';
 
   @override
-  String get module_completed => 'Module completed';
+  String get module_completed => 'Модуль завершено';
 
   @override
-  String get mark_as_completed => 'Mark as completed';
+  String get mark_as_completed => 'Позначити як завершене';
 
   @override
-  String get mark_as_not_completed => 'Mark as not completed';
+  String get mark_as_not_completed => 'Позначити як незавершене';
 
   @override
-  String get no_image_available => 'No image available';
+  String get no_image_available => 'Зображення недоступне';
 
   @override
-  String get no_title => 'No title';
+  String get no_title => 'Без назви';
 
   @override
-  String get items_matched => 'Items matched';
+  String get items_matched => 'Елементи зіставлено';
 
   @override
-  String get all_items_matched => 'All items matched!';
+  String get all_items_matched => 'Усі елементи зіставлені!';
 
   @override
-  String get play_again => 'Play again';
+  String get play_again => 'Спробувати знову';
 
   @override
-  String get not_enough_images_to_match => 'Not enough images to match';
+  String get not_enough_images_to_match =>
+      'Недостатньо зображень для зіставлення';
 
   @override
-  String get unknown => 'Unknown';
+  String get unknown => 'Невідомо';
 
   @override
-  String get error_loading_button => 'Error loading button';
+  String get error_loading_button => 'Помилка завантаження кнопки';
 
   @override
-  String get seek => 'Seek';
+  String get seek => 'Шукати';
 
   @override
   String get ok => 'OK';
 
   @override
-  String get notification => 'Notification';
+  String get notification => 'Сповіщення';
 
   @override
   String modules_completion_summary(int completed, int total) {
-    return '$completed of $total modules completed';
+    return '$completed з $total модулів завершено';
   }
 
   @override
   String learning_contents_completion_summary(int completed, int total) {
-    return '$completed of $total learning contents completed';
+    return '$completed з $total навчальних матеріалів завершено';
   }
 
   @override
-  String get current_progress => 'Current progress';
+  String get current_progress => 'Поточний прогрес';
 
   @override
-  String get next_suggestion => 'Next suggestion';
+  String get next_suggestion => 'Наступна порада';
 
   @override
-  String get next_up => 'Next up:';
+  String get next_up => 'Далі:';
 
   @override
-  String get congratulations => 'Congratulations!';
+  String get congratulations => 'Вітаємо!';
 
   @override
   String get you_have_completed_all_learning_contents =>
-      'You have completed all learning contents.';
+      'Ви завершили всі навчальні матеріали.';
 
   @override
-  String get writeAnswerHere => 'Type your answer here.';
+  String get writeAnswerHere => 'Введіть відповідь тут.';
 
   @override
-  String get fieldCannotBeEmpty => 'This field cannot be empty.';
+  String get fieldCannotBeEmpty => 'Це поле не може бути порожнім.';
 
   @override
-  String get clear_answers => 'Clear answers';
+  String get clear_answers => 'Очистити відповіді';
 }

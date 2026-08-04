@@ -3,7 +3,7 @@ import 'package:ecounity/src/objects/pathway_status.dart';
 
 part 'pathway_status_item.g.dart';
 
-@HiveType(typeId: 202)
+@HiveType(typeId: 1202)
 class PathwayStatusItem {
   @HiveField(0)
   int id;

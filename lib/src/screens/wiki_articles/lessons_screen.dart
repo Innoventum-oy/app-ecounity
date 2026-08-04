@@ -58,8 +58,10 @@ class WikiArticlesScreenState extends State<WikiArticlesScreen> {
   List<WebPage> pathways = [];
   void load() async {
     // Get all web pages that have a pagecategory set
-    WebPageProvider webPageProvider =
-        Provider.of<WebPageProvider>(context, listen: false);
+    WebPageProvider webPageProvider = Provider.of<WebPageProvider>(
+      context,
+      listen: false,
+    );
     webPageProvider.getItems(pathwayLoadParameters).then((value) {
       webPageProvider.loadingStatus = DataLoadingStatus.loaded;
     });
@@ -74,15 +76,17 @@ class WikiArticlesScreenState extends State<WikiArticlesScreen> {
   Widget build(BuildContext context) {
     String screenTitle = context.l10n.screenTitle_lessons;
 
-    DataLoadingStatus loadingStatus =
-        Provider.of<WebPageProvider>(context).loadingStatus;
+    DataLoadingStatus loadingStatus = Provider.of<WebPageProvider>(
+      context,
+    ).loadingStatus;
     String? error;
     // if data is loaded, display the pathways
     if (loadingStatus == DataLoadingStatus.loaded) {
       List<WebPage>? pathways = Provider.of<WebPageProvider>(context).list;
       if (pathways != null) {
-        List<WebPage> mainPathways =
-            pathways.where((element) => element.isMainPathway).toList();
+        List<WebPage> mainPathways = pathways
+            .where((element) => element.isMainPathway)
+            .toList();
         if (mainPathways.isNotEmpty) {
           // sort the main pathways by name
           mainPathways.sort((a, b) => a.pathwayName!.compareTo(b.pathwayName!));
@@ -92,14 +96,17 @@ class WikiArticlesScreenState extends State<WikiArticlesScreen> {
           TabBarView tabBarView = TabBarView(
             children: mainPathways.map((e) {
               List<WebPage> subPathways = pathways
-                  .where((element) =>
-                      element.parent == e.id &&
-                      element.type == PathwayType.wiki)
+                  .where(
+                    (element) =>
+                        element.parent == e.id &&
+                        element.type == PathwayType.wiki,
+                  )
                   .toList();
               // sort the subPathways by sortOrder
               subPathways.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-              core.WebPageList pageList =
-                  core.WebPageList(webPages: subPathways);
+              core.WebPageList pageList = core.WebPageList(
+                webPages: subPathways,
+              );
               return SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
@@ -111,12 +118,15 @@ class WikiArticlesScreenState extends State<WikiArticlesScreen> {
                         itemCount: subPathways.length,
                         itemBuilder: (context, index) {
                           return pathwayCard(
-                              context,
+                            context,
+                            subPathways[index],
+                            isPathwayCompleted(
                               subPathways[index],
-                              isPathwayCompleted(
-                                  subPathways[index], completedPathways),
-                              widget.navIndex,
-                              pathways: pageList);
+                              completedPathways,
+                            ),
+                            widget.navIndex,
+                            pathways: pageList,
+                          );
                         },
                       ),
                       if (subPathways.isEmpty)
@@ -155,8 +165,8 @@ class WikiArticlesScreenState extends State<WikiArticlesScreen> {
       title: screenTitle,
       navigationIndex: widget.navIndex,
       child: Center(
-          child:
-              error != null ? Text(error) : const CircularProgressIndicator()),
+        child: error != null ? Text(error) : const CircularProgressIndicator(),
+      ),
     );
   }
 }

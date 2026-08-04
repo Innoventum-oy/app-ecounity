@@ -106,7 +106,7 @@
   "introduction": "Introduction",
   "language": "Language",
   "select_language": "Select language",
-  "locale": "{language,select, en{English} fi{Finnish} pl{Polish} de{German} uk{Ukrainian} ro{Romanian} es{Spanish} other{Language:{language}}}",
+  "locale": "{language,select, en{English} fi{Finnish} it{Italian} pt{Portuguese} pl{Polish} de{German} uk{Ukrainian} ro{Romanian} es{Spanish} other{Language:{language}}}",
   "@locale": {
     "description": "Locale",
     "placeholders": {
@@ -166,6 +166,7 @@
     }
   },
   "registration_successful_message": "Welcome to Ecounity {firstName}!",
+  "references": "References",
   "saving_data_failed": "Saving data failed",
   "quiz_not_passed": "Quiz not passed",
   "screenTitle_challenges": "Challenges",
@@ -178,7 +179,7 @@
   "screenTitle_resources": "Resources",
   "select": "Select",
   "selected": "Selected",
-  "sendAnswer": "Send answer",
+  "sendAnswer": "Save answer",
   "server": "Server",
   "settings": "Settings",
   "stage": "Stage",
@@ -191,6 +192,7 @@
     }
   },
   "stageValue": "{item,select, before{Before} during{During} after{After} other{{item}}}",
+  "start": "Start",
   "terms": "Terms",
   "unnamed": "Unnamed",
   "view_introduction": "Introduction",

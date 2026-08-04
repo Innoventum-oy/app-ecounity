@@ -9,16 +9,16 @@ import 'package:ecounity/src/widgets/screenscaffold.dart';
 class SelfReflectionHubScreen extends StatefulWidget {
   final int navIndex;
 
- const SelfReflectionHubScreen({super.key, required this.navIndex});
+  const SelfReflectionHubScreen({super.key, required this.navIndex});
 
   @override
- SelfReflectionHubScreenState createState() => SelfReflectionHubScreenState();
-
+  SelfReflectionHubScreenState createState() => SelfReflectionHubScreenState();
 }
+
 /// Creates a view with a list of self reflection questions and text fields for answers.
 /// The answers are saved to application memory with dates and times.
 class SelfReflectionHubScreenState extends State<SelfReflectionHubScreen> {
-  Map<int,String> answers = {}; // Map of question index to answer
+  Map<int, String> answers = {}; // Map of question index to answer
   core.FileStorage fileStorage = core.FileStorage();
   // initstate - load responses from storage
   @override
@@ -26,12 +26,16 @@ class SelfReflectionHubScreenState extends State<SelfReflectionHubScreen> {
     super.initState();
     loadAnswers();
   }
-  void loadAnswers() async{
-    dynamic storedData = await fileStorage.getObject('selfReflectionAnswers', boxName: 'userData');
-    if(storedData != null){
+
+  void loadAnswers() async {
+    dynamic storedData = await fileStorage.getObject(
+      'selfReflectionAnswers',
+      boxName: 'userData',
+    );
+    if (storedData != null) {
       // Check if the stored data is a Map
       if (storedData is Map) {
-        if(kDebugMode){
+        if (kDebugMode) {
           log('loaded answers: $storedData');
         }
         // Parse the data to Map <int,String>
@@ -44,19 +48,22 @@ class SelfReflectionHubScreenState extends State<SelfReflectionHubScreen> {
 
         // update state
         setState(() {
-         answers = parsedData;
+          answers = parsedData;
         });
       }
     }
-
-
   }
+
   // Save answers to storage
   void saveAnswers() {
-    if(kDebugMode){
+    if (kDebugMode) {
       log('saving answers: $answers');
     }
-    fileStorage.setObject('selfReflectionAnswers', answers, boxName: 'userData');
+    fileStorage.setObject(
+      'selfReflectionAnswers',
+      answers,
+      boxName: 'userData',
+    );
   }
 
   @override
@@ -64,27 +71,31 @@ class SelfReflectionHubScreenState extends State<SelfReflectionHubScreen> {
     final List<Map<String, dynamic>> selfReflectionQuestions = [
       {
         'question': context.l10n.srh_what_was_most_impactful_for_me,
-        'icon': Icons.lightbulb
+        'icon': Icons.lightbulb,
       },
       {
         'question': context.l10n.srh_what_will_i_put_into_practice,
-        'icon': Icons.note_alt_outlined
+        'icon': Icons.note_alt_outlined,
       },
       {
         'question': context.l10n.srh_what_are_my_hopes_and_fears_for_the_future,
-        'icon': Icons.sentiment_satisfied_alt
-      }
+        'icon': Icons.sentiment_satisfied_alt,
+      },
     ];
     var child = Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
           // Title
-          Text(context.l10n.screenTitle_selfReflectionHub,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(
+            context.l10n.screenTitle_selfReflectionHub,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
           // Description
-          Text(context.l10n.srh_description,
-              style: const TextStyle(fontSize: 16)),
+          Text(
+            context.l10n.srh_description,
+            style: const TextStyle(fontSize: 16),
+          ),
           const SizedBox(height: 20),
           // Questions
           buildQuestions(selfReflectionQuestions),
@@ -94,9 +105,10 @@ class SelfReflectionHubScreenState extends State<SelfReflectionHubScreen> {
     );
 
     return ScreenScaffold(
-        title: context.l10n.screenTitle_selfReflectionHub,
-        navigationIndex: widget.navIndex,
-        child: child);
+      title: context.l10n.screenTitle_selfReflectionHub,
+      navigationIndex: widget.navIndex,
+      child: child,
+    );
   }
 
   Widget buildQuestions(List<Map<String, dynamic>> questions) {
@@ -111,7 +123,9 @@ class SelfReflectionHubScreenState extends State<SelfReflectionHubScreen> {
   }
 
   Widget buildQuestion(Map<String, dynamic> question, int index) {
-    TextEditingController controller = TextEditingController(text: answers[index]);
+    TextEditingController controller = TextEditingController(
+      text: answers[index],
+    );
     controller.addListener(() {
       answers[index] = controller.text;
       saveAnswers();
@@ -137,9 +151,8 @@ class SelfReflectionHubScreenState extends State<SelfReflectionHubScreen> {
           ),
         ),
         // Add some spacing between questions
-        const SizedBox(height: 20)
+        const SizedBox(height: 20),
       ],
     );
   }
-
 }

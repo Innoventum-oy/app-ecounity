@@ -212,6 +212,8 @@ class AppLocalizationsRo extends AppLocalizations {
       'pl': 'Poloneză',
       'de': 'Germană',
       'uk': 'Ucraineană',
+      'it': 'Italian',
+      'pt': 'Portuguese',
       'other': 'Limbă:$language',
     });
     return '$_temp0';
@@ -341,6 +343,9 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
+  String get references => 'References';
+
+  @override
   String get saving_data_failed => 'Saving data failed';
 
   @override
@@ -377,7 +382,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get selected => 'Selected';
 
   @override
-  String get sendAnswer => 'Send answer';
+  String get sendAnswer => 'Save answer';
 
   @override
   String get server => 'Server';
@@ -398,6 +403,9 @@ class AppLocalizationsRo extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get start => 'Start';
 
   @override
   String get terms => 'Terms';

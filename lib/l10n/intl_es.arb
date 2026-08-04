@@ -1,31 +1,262 @@
 {
-"@@locale": "es",
-"locale": "{language,select, es{Español} ro{Rumano} en{Inglés} fi{Finés} pl{Polaco} de{Alemán} uk{Ucraniano} other{Idioma:{language}}}",
-"language": "Idioma",
-"@modules_completion_summary": {
-  "description": "Current module completion progress summary",
-  "placeholders": {
-    "completed": {
-      "type": "int"
-    },
-    "total": {
-      "type": "int"
+  "@@locale": "es",
+  "about": "About",
+  "age": "Age",
+  "account": "Account",
+  "achievements": "Achievements",
+  "answer_saved": "Answer saved",
+  "application_name": "Ecounity",
+  "attention": "Attention",
+  "authenticating": "Authenticating...",
+  "badge": "Badge",
+  "@badge_completion_status": {
+    "description": "Badge completion status",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
     }
-  }
-},
-"modules_completion_summary": "{completed} of {total} modules completed",
-"@learning_contents_completion_summary": {
-  "description": "Current learning content completion progress summary",
-  "placeholders": {
-    "completed": {
-      "type": "int"
-    },
-    "total": {
-      "type": "int"
+  },
+  "badge_completion_status": "You have completed {completed} out of {required} learning contents required to earn this badge.",
+  "badge_description": "This badge is awarded for completing all the lessons and challenges in the {pathway} pathway.",
+  "button_accept": "Accept",
+  "button_approve": "Approve",
+  "badge_awarded": "New badge awarded",
+  "@badge_awarded_congratulations": {
+    "description": "Badge awarded congratulation message",
+    "placeholders": {
+      "badge": {
+        "type": "String"
+      }
     }
-  }
-},
-"learning_contents_completion_summary": "{completed} of {total} learning contents completed",
-"current_progress": "Current progress",
-"next_suggestion": "Next suggestion"
+  },
+  "badge_awarded_congratulations": "Congratulations! You have been awarded the {badge} badge.",
+  "button_back": "Back",
+  "button_cancel": "Cancel",
+  "button_close": "Close",
+  "button_confirm": "Confirm",
+  "button_continue": "Continue",
+  "button_continue_as_guest": "Continue as guest",
+  "button_create": "Create",
+  "button_create_account": "Create account",
+  "button_delete": "Delete",
+  "button_edit": "Edit",
+  "button_finish": "Finish",
+  "button_forgot_password": "Forgot password?",
+  "button_login": "Login",
+  "button_logout": "Logout",
+  "button_next": "Next",
+  "button_ok": "OK",
+  "button_previous": "Previous",
+  "button_register": "Register",
+  "button_reject": "Reject",
+  "button_save": "Save",
+  "button_send": "Send",
+  "button_submit": "Submit",
+  "cancel": "Cancel",
+  "choose_language": "Choose language",
+  "collected_badges": "Collected badges",
+  "completed": "Completed",
+  "confirm_deleting_account": "Are you sure you want to delete your account?",
+  "contact": "Contact",
+  "delete_account": "Delete account",
+  "email": "Email",
+  "email_not_valid": "The given email address is not valid",
+  "email_or_phone_number": "Email or phone number",
+  "@error": {
+    "defaultValue": "Could not complete the request",
+    "description": "Error message",
+    "placeholders": {
+      "error": {
+        "example": "404 Not Found",
+        "type": "String"
+      }
+    }
+  },
+  "error": "Error: {error}",
+  "error_default": "Unable to complete the request",
+  "error_occurred": "An error occurred",
+  "@errorViewNotFound": {
+    "description": "Error message",
+    "placeholders": {
+      "view": {
+        "example": "Home",
+        "type": "String"
+      }
+    }
+  },
+  "errorViewNotFound": "View {view} not found",
+  "@field_required": {
+    "description": "Field required",
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "errors_in_form": "Errors in form",
+  "field_required": "The field {field} is required",
+  "firstName": "First name",
+  "funding_disclaimer": "Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Education and Culture Executive Agency (EACEA). Neither the European Union nor EACEA can be held responsible for them.",
+  "great": "Great",
+  "home": "Home",
+  "introduction": "Introduction",
+  "language": "Idioma",
+  "select_language": "Select language",
+  "locale": "{language,select, es{Español} ro{Rumano} en{Inglés} fi{Finés} pl{Polaco} de{Alemán} uk{Ucraniano} it{Italian} pt{Portuguese} other{Idioma:{language}}}",
+  "@locale": {
+    "description": "Locale",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "lastName": "Last name",
+  "loading": "Loading...",
+  "login": "Login",
+  "login_failed": "Login failed",
+  "logout": "Logout",
+  "logout_confirmation": "Are you sure you want to logout?",
+  "markAsCompleted": "Mark as completed",
+  "@navigation_item": {
+    "description": "Menu navigation items map",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "navigation_item": "{item, select, home{Home} pathways{Pathways} challenges{Challenges} videolist{Videos} selfReflectionHub{Self-reflection Hub} lessons{Lessons} modules{Modules} resources{Resources} other{Menu:{item}}}",
+  "next": "Next",
+  "noBadgesFound": "No badges found",
+  "noChallengesFound": "No challenges were found",
+  "noContentFound": "No content found",
+  "noPathwaysFound": "No learning contents were found",
+  "noTranscriptAvailable": "No transcript available",
+  "noVideosFound": "No videos were found",
+  "noLessonsFound": "No lessons were found",
+  "page_content": "Page content",
+  "password": "Password",
+  "pathway": "Learning content",
+  "pathway_already_completed": "Learning content is completed",
+  "pathway_completed": "Learning content completed",
+  "phone": "Phone",
+  "phone_or_email": "Phone number or email address",
+  "please_complete_form_properly": "Please complete the form properly",
+  "please_enter_password": "Please enter a password",
+  "please_enter_phone_or_email": "Please enter a phone number or email address",
+  "please_provide_valid_phone_or_email": "Please provide a valid phone number or email address",
+  "previous": "Previous",
+  "privacy": "Privacy",
+  "privacy_policy": "Privacy Policy",
+  "profile": "Profile",
+  "register": "Register",
+  "registration_failed": "Registration failed",
+  "registration_successful": "Registration successful",
+  "@registration_successful_message": {
+    "description": "Registration successful message",
+    "placeholders": {
+      "firstName": {
+        "type": "String"
+      }
+    }
+  },
+  "registration_successful_message": "Welcome to Ecounity {firstName}!",
+  "references": "References",
+  "saving_data_failed": "Saving data failed",
+  "quiz_not_passed": "Quiz not passed",
+  "screenTitle_challenges": "Challenges",
+  "screenTitle_home": "Home",
+  "screenTitle_pathways": "Pathways",
+  "screenTitle_selfReflectionHub": "Self-reflection Hub",
+  "screenTitle_videos": "Videos",
+  "screenTitle_lessons": "Lessons",
+  "screenTitle_modules": "Modules",
+  "screenTitle_resources": "Resources",
+  "select": "Select",
+  "selected": "Selected",
+  "sendAnswer": "Save answer",
+  "server": "Server",
+  "settings": "Settings",
+  "stage": "Stage",
+  "@stageValue": {
+    "description": "Pathway stage options",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "stageValue": "{item,select, before{Before} during{During} after{After} other{{item}}}",
+  "start": "Start",
+  "terms": "Terms",
+  "unnamed": "Unnamed",
+  "view_introduction": "Introduction",
+  "you_have_this_badge": "You have this badge",
+  "your_password": "Your password",
+  "view_brochure": "View brochure",
+  "welcome_title": "Welcome to the Ecounity App - your gateway to digital learning, inspiration, and entrepreneurial growth.",
+  "login_introduction_text": "Explore Flipped Classroom micro-learning resources, videos, and success stories with practical tools that complement the Ecounity Curriculum and strengthen social entrepreneurship skills.",
+  "srh_description": "Use these questions as a food for thought.",
+  "srh_what_was_most_impactful_for_me": "What was most impactful for me?",
+  "srh_what_will_i_put_into_practice": "What will I put into practice?",
+  "srh_what_are_my_hopes_and_fears_for_the_future": "What are my hopes and fears for the future?",
+  "no_video_found": "The video was not found.",
+  "no_modules_found": "No modules were found.",
+  "no_contents_found": "Contents were not found.",
+  "no_resources_found": "Resources were not found.",
+  "no_images_found": "Images were not found.",
+  "links": "Links",
+  "refresh": "Refresh",
+  "cache_cleared": "Cache cleared. Please reload the page.",
+  "module_completed": "Module completed",
+  "mark_as_completed": "Mark as completed",
+  "mark_as_not_completed": "Mark as not completed",
+  "no_image_available": "No image available",
+  "no_title": "No title",
+  "items_matched": "Items matched",
+  "all_items_matched": "All items matched!",
+  "play_again": "Play again",
+  "not_enough_images_to_match": "Not enough images to match",
+  "unknown": "Unknown",
+  "error_loading_button": "Error loading button",
+  "seek": "Seek",
+  "ok": "OK",
+  "notification": "Notification",
+  "@modules_completion_summary": {
+    "description": "Current module completion progress summary",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "modules_completion_summary": "{completed} of {total} modules completed",
+  "@learning_contents_completion_summary": {
+    "description": "Current learning content completion progress summary",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "learning_contents_completion_summary": "{completed} of {total} learning contents completed",
+  "current_progress": "Current progress",
+  "next_suggestion": "Next suggestion",
+  "next_up": "Next up:",
+  "congratulations": "Congratulations!",
+  "you_have_completed_all_learning_contents": "You have completed all learning contents.",
+  "writeAnswerHere": "Type your answer here.",
+  "fieldCannotBeEmpty": "This field cannot be empty.",
+  "clear_answers": "Clear answers"
 }

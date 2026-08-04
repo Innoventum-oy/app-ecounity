@@ -1,31 +1,262 @@
 {
-"@@locale": "uk",
-"locale": "{language,select, uk{Українська} en{Англійська} fi{Фінська} de{Німецька} pl{Польська} ro{Румунська} es{Іспанська} other{Мова:{language}}}",
-"language": "Мова",
-"@modules_completion_summary": {
-  "description": "Current module completion progress summary",
-  "placeholders": {
-    "completed": {
-      "type": "int"
-    },
-    "total": {
-      "type": "int"
+  "@@locale": "uk",
+  "about": "Про",
+  "age": "Вік",
+  "account": "Акаунт",
+  "achievements": "Досягнення",
+  "answer_saved": "Відповідь збережено",
+  "application_name": "Ecounity",
+  "attention": "Увага",
+  "authenticating": "Авторизація...",
+  "badge": "Відзнака",
+  "@badge_completion_status": {
+    "description": "Badge completion status",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
     }
-  }
-},
-"modules_completion_summary": "{completed} of {total} modules completed",
-"@learning_contents_completion_summary": {
-  "description": "Current learning content completion progress summary",
-  "placeholders": {
-    "completed": {
-      "type": "int"
-    },
-    "total": {
-      "type": "int"
+  },
+  "badge_completion_status": "Ви завершили {completed} з {required} навчальних матеріалів, необхідних для отримання цієї відзнаки.",
+  "badge_description": "Цю відзнаку надають за проходження всіх уроків і викликів у програмі {pathway}.",
+  "button_accept": "Прийняти",
+  "button_approve": "Схвалити",
+  "badge_awarded": "Нараховано нову відзнаку",
+  "@badge_awarded_congratulations": {
+    "description": "Badge awarded congratulation message",
+    "placeholders": {
+      "badge": {
+        "type": "String"
+      }
     }
-  }
-},
-"learning_contents_completion_summary": "{completed} of {total} learning contents completed",
-"current_progress": "Current progress",
-"next_suggestion": "Next suggestion"
+  },
+  "badge_awarded_congratulations": "Вітаємо! Вам надано відзнаку {badge}.",
+  "button_back": "Назад",
+  "button_cancel": "Скасувати",
+  "button_close": "Закрити",
+  "button_confirm": "Підтвердити",
+  "button_continue": "Продовжити",
+  "button_continue_as_guest": "Продовжити як гість",
+  "button_create": "Створити",
+  "button_create_account": "Створити обліковий запис",
+  "button_delete": "Видалити",
+  "button_edit": "Редагувати",
+  "button_finish": "Завершити",
+  "button_forgot_password": "Забули пароль?",
+  "button_login": "Увійти",
+  "button_logout": "Вийти",
+  "button_next": "Далі",
+  "button_ok": "OK",
+  "button_previous": "Попередній",
+  "button_register": "Зареєструватися",
+  "button_reject": "Відхилити",
+  "button_save": "Зберегти",
+  "button_send": "Надіслати",
+  "button_submit": "Надіслати",
+  "cancel": "Скасувати",
+  "choose_language": "Вибрати мову",
+  "collected_badges": "Зібрані відзнаки",
+  "completed": "Завершено",
+  "confirm_deleting_account": "Ви впевнені, що хочете видалити свій обліковий запис?",
+  "contact": "Контакт",
+  "delete_account": "Видалити обліковий запис",
+  "email": "Електронна пошта",
+  "email_not_valid": "Надана адреса email недійсна",
+  "email_or_phone_number": "Email або номер телефону",
+  "@error": {
+    "defaultValue": "Could not complete the request",
+    "description": "Error message",
+    "placeholders": {
+      "error": {
+        "example": "404 Not Found",
+        "type": "String"
+      }
+    }
+  },
+  "error": "Помилка: {error}",
+  "error_default": "Не вдалося виконати запит",
+  "error_occurred": "Сталася помилка",
+  "@errorViewNotFound": {
+    "description": "Error message",
+    "placeholders": {
+      "view": {
+        "example": "Home",
+        "type": "String"
+      }
+    }
+  },
+  "errorViewNotFound": "Сторінку {view} не знайдено",
+  "@field_required": {
+    "description": "Field required",
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "errors_in_form": "Помилки у формі",
+  "field_required": "Поле {field} є обов'язковим",
+  "firstName": "Ім'я",
+  "funding_disclaimer": "Фінансується Європейським Союзом. Погляди та думки, що тут висловлені, належать лише автору(ам) і не обов'язково відображають позицію Європейського Союзу або Європейського виконавчого агентства з освіти й культури (EACEA). Ані Європейський Союз, ані EACEA не несуть відповідальності.",
+  "great": "Чудово",
+  "home": "Головна",
+  "introduction": "Вступ",
+  "language": "Мова",
+  "select_language": "Оберіть мову",
+  "locale": "{language,select, uk{Українська} en{Англійська} fi{Фінська} it{Італійська} de{Німецька} pl{Польська} pt{Португальська} ro{Romanian} es{Spanish} other{Мова:{language}}}",
+  "@locale": {
+    "description": "Locale",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "lastName": "Прізвище",
+  "loading": "Завантаження...",
+  "login": "Увійти",
+  "login_failed": "Не вдалося увійти",
+  "logout": "Вийти",
+  "logout_confirmation": "Ви впевнені, що хочете вийти?",
+  "markAsCompleted": "Позначити як завершене",
+  "@navigation_item": {
+    "description": "Menu navigation items map",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "navigation_item": "{item, select, home{Головна} pathways{Шляхи} challenges{Виклики} videolist{Відео} selfReflectionHub{Центр саморефлексії} lessons{Уроки} modules{Модулі} resources{Ресурси} other{Меню:{item}}}",
+  "next": "Далі",
+  "noBadgesFound": "Відзнак не знайдено",
+  "noChallengesFound": "Викликів не знайдено",
+  "noContentFound": "Контент не знайдено",
+  "noPathwaysFound": "Не знайдено навчальних матеріалів",
+  "noTranscriptAvailable": "Транскрипт недоступний",
+  "noVideosFound": "Відео не знайдено",
+  "noLessonsFound": "Уроків не знайдено",
+  "page_content": "Вміст сторінки",
+  "password": "Пароль",
+  "pathway": "Навчальний матеріал",
+  "pathway_already_completed": "Навчальний матеріал завершено",
+  "pathway_completed": "Навчальний матеріал завершено",
+  "phone": "Телефон",
+  "phone_or_email": "Номер телефону або email",
+  "please_complete_form_properly": "Будь ласка, заповніть форму правильно",
+  "please_enter_password": "Введіть пароль",
+  "please_enter_phone_or_email": "Введіть номер телефону або email",
+  "please_provide_valid_phone_or_email": "Введіть дійсний номер телефону або email",
+  "previous": "Назад",
+  "privacy": "Конфіденційність",
+  "privacy_policy": "Політика конфіденційності",
+  "profile": "Профіль",
+  "register": "Зареєструватися",
+  "registration_failed": "Реєстрація не вдалася",
+  "registration_successful": "Реєстрація успішна",
+  "@registration_successful_message": {
+    "description": "Registration successful message",
+    "placeholders": {
+      "firstName": {
+        "type": "String"
+      }
+    }
+  },
+  "registration_successful_message": "Ласкаво просимо до Ecounity {firstName}!",
+  "references": "Джерела",
+  "saving_data_failed": "Не вдалося зберегти дані",
+  "quiz_not_passed": "Тест не пройдено",
+  "screenTitle_challenges": "Виклики",
+  "screenTitle_home": "Головна",
+  "screenTitle_pathways": "Шляхи",
+  "screenTitle_selfReflectionHub": "Центр саморефлексії",
+  "screenTitle_videos": "Відео",
+  "screenTitle_lessons": "Уроки",
+  "screenTitle_modules": "Модулі",
+  "screenTitle_resources": "Ресурси",
+  "select": "Вибрати",
+  "selected": "Обрано",
+  "sendAnswer": "Зберегти відповідь",
+  "server": "Сервер",
+  "settings": "Налаштування",
+  "stage": "Етап",
+  "@stageValue": {
+    "description": "Pathway stage options",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "stageValue": "{item,select, before{Перед} during{Під час} after{Після} other{{item}}}",
+  "start": "Почати",
+  "terms": "Умови",
+  "unnamed": "Без назви",
+  "view_introduction": "Вступ",
+  "you_have_this_badge": "У вас є ця відзнака",
+  "your_password": "Ваш пароль",
+  "view_brochure": "Переглянути брошуру",
+  "welcome_title": "Ласкаво просимо до додатка Ecounity — вашого доступу до цифрового навчання, натхнення та підприємницького зростання.",
+  "login_introduction_text": "Вивчайте ресурси мікронавчання, відео та історії успіху у форматі Flipped Classroom з практичними інструментами, що доповнюють навчальну програму Ecounity та зміцнюють навички соціального підприємництва.",
+  "srh_description": "Використовуйте ці запитання як привід для роздумів.",
+  "srh_what_was_most_impactful_for_me": "Що було для мене найбільш вражаючим?",
+  "srh_what_will_i_put_into_practice": "Що я застосую на практиці?",
+  "srh_what_are_my_hopes_and_fears_for_the_future": "Які мої надії та страхи на майбутнє?",
+  "no_video_found": "Відео не знайдено.",
+  "no_modules_found": "Модулів не знайдено.",
+  "no_contents_found": "Матеріали не знайдені.",
+  "no_resources_found": "Ресурси не знайдені.",
+  "no_images_found": "Зображення не знайдені.",
+  "links": "Посилання",
+  "refresh": "Оновити",
+  "cache_cleared": "Кеш очищено. Будь ласка, перезавантажте сторінку.",
+  "module_completed": "Модуль завершено",
+  "mark_as_completed": "Позначити як завершене",
+  "mark_as_not_completed": "Позначити як незавершене",
+  "no_image_available": "Зображення недоступне",
+  "no_title": "Без назви",
+  "items_matched": "Елементи зіставлено",
+  "all_items_matched": "Усі елементи зіставлені!",
+  "play_again": "Спробувати знову",
+  "not_enough_images_to_match": "Недостатньо зображень для зіставлення",
+  "unknown": "Невідомо",
+  "error_loading_button": "Помилка завантаження кнопки",
+  "seek": "Шукати",
+  "ok": "OK",
+  "notification": "Сповіщення",
+  "@modules_completion_summary": {
+    "description": "Current module completion progress summary",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "modules_completion_summary": "{completed} з {total} модулів завершено",
+  "@learning_contents_completion_summary": {
+    "description": "Current learning content completion progress summary",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "learning_contents_completion_summary": "{completed} з {total} навчальних матеріалів завершено",
+  "current_progress": "Поточний прогрес",
+  "next_suggestion": "Наступна порада",
+  "next_up": "Далі:",
+  "congratulations": "Вітаємо!",
+  "you_have_completed_all_learning_contents": "Ви завершили всі навчальні матеріали.",
+  "writeAnswerHere": "Введіть відповідь тут.",
+  "fieldCannotBeEmpty": "Це поле не може бути порожнім.",
+  "clear_answers": "Очистити відповіді"
 }

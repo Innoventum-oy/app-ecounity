@@ -2,17 +2,17 @@ import 'dart:developer';
 
 import 'package:collection/collection.dart';
 import 'package:core/core.dart' as core;
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:ecounity/l10n/app_localizations_extension.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
-import 'package:provider/provider.dart';
+import 'package:ecounity/src/objects/ecounity_badge.dart';
 import 'package:ecounity/src/objects/pathway_stage.dart';
 import 'package:ecounity/src/objects/pathway_status.dart';
 import 'package:ecounity/src/objects/pathway_status_item.dart';
 import 'package:ecounity/src/objects/pathway_type.dart';
-import 'package:ecounity/src/objects/ecounity_badge.dart';
 import 'package:ecounity/src/util/image_from_url.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:provider/provider.dart';
 
 import '../providers/ecounity_badge_provider.dart';
 import '../util/core_compat.dart';
@@ -21,10 +21,62 @@ import '../util/settings.dart';
 import '../widgets/badge_completion_page.dart';
 import '../widgets/popupdialog.dart';
 import 'badge_status_item.dart';
+
 export 'pathway_status.dart';
 export 'pathway_type.dart';
 
 final Map<int, Future<core.ImageObject?>> _coreImageFutureCache = {};
+final Map<String, Future<List<core.ImageObject>>> _imageObjectsCache = {};
+final Map<String, Future<Widget?>> _contentsCache = {};
+Future<void> _pathwayStatusMutationQueue = Future.value();
+
+Future<T> _runWithPathwayStatusQueue<T>(Future<T> Function() task) {
+  final Future<T> queued = _pathwayStatusMutationQueue.then((_) => task());
+  _pathwayStatusMutationQueue = queued.then((_) {}, onError: (_) {});
+  return queued;
+}
+
+int? _coerceInt(dynamic value) {
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  return int.tryParse(value?.toString() ?? '');
+}
+
+@visibleForTesting
+String replaceImageTokens(String content, List<core.ImageObject> images) {
+  String contentWithImages = content;
+
+  for (int i = 0; i < images.length; i++) {
+    final String token = '%image.${i + 1}%';
+    final String? imageUrl = images[i].imageUrl;
+    if (imageUrl == null) {
+      contentWithImages = contentWithImages.replaceAll(token, '');
+      continue;
+    }
+
+    contentWithImages = contentWithImages.replaceAll(
+      token,
+      '<img src="$imageUrl" style="max-width: 100%; height: auto; width: auto;" />',
+    );
+  }
+
+  // Remove any remaining placeholders to keep HTML clean.
+  contentWithImages = contentWithImages.replaceAll(RegExp(r'%image\.\d+%'), '');
+
+  return contentWithImages;
+}
+
+String _contentsCacheKey(core.WebPage page) {
+  return "${page.getValue('id')}|${const DeepCollectionEquality().hash(page.getValue('images'))}|${const DeepCollectionEquality().hash(page.getValue('textcontents'))}";
+}
+
+String _imageObjectsCacheKey(core.WebPage page) {
+  return "${page.getValue('id')}|${const DeepCollectionEquality().hash(page.getValue('images'))}";
+}
 
 extension Pathway on core.WebPage {
   int get id =>
@@ -36,6 +88,7 @@ extension Pathway on core.WebPage {
 
   String? get description => getValue('description');
   String? get introductionTextString => getValue('introductiontext');
+  String? get references => getValue('references');
 
   Future<core.ImageObject?> get thumbnailImage async {
     if (thumbnail == null) {
@@ -78,6 +131,48 @@ extension Pathway on core.WebPage {
       imageId,
       () => loadCoreImage(imageId),
     );
+  }
+
+  Future<List<core.ImageObject>> get imageObjects async {
+    final cacheKey = _imageObjectsCacheKey(this);
+    if (_imageObjectsCache.containsKey(cacheKey)) {
+      return _imageObjectsCache[cacheKey]!;
+    }
+
+    final dynamic images = getValue('images');
+    final future = () async {
+      if (images == null || images is! List<dynamic>) {
+        return <core.ImageObject>[];
+      }
+
+      final List<Future<core.ImageObject?>> imageFutures = [];
+      for (final imageData in images) {
+        if (imageData is! Map) {
+          continue;
+        }
+
+        final String? objectType = imageData['objecttype']?.toString();
+        if (objectType != null && objectType != 'image') {
+          continue;
+        }
+
+        final dynamic objectId = imageData['objectid'];
+        final int? id = int.tryParse(objectId.toString());
+        if (id == null) {
+          continue;
+        }
+
+        imageFutures.add(loadCoreImage(id));
+      }
+
+      final List<core.ImageObject?> imagesLoaded = await Future.wait(
+        imageFutures,
+      );
+      return imagesLoaded.whereType<core.ImageObject>().toList();
+    }();
+
+    _imageObjectsCache[cacheKey] = future;
+    return future;
   }
 
   Future<core.Form?> get form async {
@@ -146,25 +241,37 @@ extension Pathway on core.WebPage {
     return Column(children: widgets);
   }
 
-  Widget? get contents {
-    if (textcontents == null) {
-      return null;
+  Future<Widget?> get contents async {
+    final String cacheKey = _contentsCacheKey(this);
+    if (_contentsCache.containsKey(cacheKey)) {
+      return _contentsCache[cacheKey]!;
     }
-    // Iterate through the text contents and return a widget. The text contents are in HTML format. The widget should contain a list of Card widget, each containing the HTML content.
-    List<Widget> widgets = [];
-    for (String content in textcontents!) {
-      if(kDebugMode ) print(content);
 
-      widgets.add(
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: HtmlWidget(content),
+    final future = () async {
+      if (textcontents == null) {
+        return null;
+      }
+
+      final List<core.ImageObject> images = await imageObjects;
+
+      final List<Widget> widgets = [];
+      for (String content in textcontents!) {
+        final String contentWithImages = replaceImageTokens(content, images);
+        widgets.add(
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: HtmlWidget(contentWithImages),
+            ),
           ),
-        ),
-      );
-    }
-    return Column(children: widgets);
+        );
+      }
+
+      return Column(children: widgets);
+    }();
+
+    _contentsCache[cacheKey] = future;
+    return future;
   }
 
   Widget? getIntroductionTextReplaced(List<String> keys, List<String> values) {
@@ -291,107 +398,163 @@ extension Pathway on core.WebPage {
 
   Future<void> toggleCompleted(BuildContext context) async {
     if (await isCompleted() && context.mounted) {
-      setStatus(PathwayStatus.opened, context);
+      await setStatus(PathwayStatus.opened, context);
     } else {
-      setStatus(PathwayStatus.completed, context);
+      await setStatus(PathwayStatus.completed, context);
     }
   }
 
   Future<void> setStatus(PathwayStatus status, BuildContext context) async {
     if (kDebugMode) {
-      log('Setting pathway status for $title ($id) to $status');
+      log('Setting pathway status for $title (${id.toString()}) to $status');
     }
+
+    final int? pathwayId = _coerceInt(id);
+    if (pathwayId == null) {
+      if (kDebugMode) {
+        log('Skipping pathway status update because id could not be resolved');
+      }
+      return;
+    }
+
+    final bool shouldAwardBadges = status == PathwayStatus.completed;
+    final List<int> completedPathwayIds = List<int>.empty(growable: true);
 
     core.FileStorage fileStorage = Provider.of<core.FileStorage>(
       context,
       listen: false,
     );
+    core.WebPageProvider webPageProvider = Provider.of<core.WebPageProvider>(
+      context,
+      listen: false,
+    );
     await EcoUnityStorage(fileStorage).registerAdapters();
 
-    List<PathwayStatusItem>? statusItems = await EcoUnityStorage(
-      fileStorage,
-    ).getCompletedPathways();
-    // If the pathway is already in the list, update the status
-    if (statusItems != null) {
-      PathwayStatusItem? item = statusItems.firstWhereOrNull(
-        (element) => element.id == id,
-      );
-      if (item != null) {
-        item.status = status;
-      } else {
-        statusItems.add(PathwayStatusItem(id: id, status: status));
-      }
-    } else {
-      statusItems = [PathwayStatusItem(id: id, status: status)];
-    }
+    await _runWithPathwayStatusQueue(() async {
+      List<PathwayStatusItem> statusItems =
+          (await EcoUnityStorage(
+            fileStorage,
+          ).getCompletedPathways())?.toList() ??
+          [];
 
-    // Update the status of the parent page
-    if (parent != null && context.mounted) {
-      core.WebPageProvider webPageProvider = Provider.of<core.WebPageProvider>(
-        context,
-        listen: false,
-      );
-      List<core.WebPage> pages = await webPageProvider.getItems(
+      final Map<int, PathwayStatusItem> statusById = {
+        for (final PathwayStatusItem item in statusItems) item.id: item,
+      };
+
+      final List<core.WebPage> pages = await webPageProvider.getItems(
         pathwayLoadParameters,
       );
-
-      if (pages.isNotEmpty) {
-        core.WebPage? parentpage = pages.firstWhere(
-          (val) => val.id == parent,
-          orElse: () => core.WebPage(),
-        );
-
-        if (parentpage.id != null) {
-          if (status == PathwayStatus.completed) {
-            // Check if the parent page should be marked as completed
-
-            List<core.WebPage> siblingpages = pages
-                .where((val) => val.parent == parent)
-                .toList();
-
-            if (siblingpages.isNotEmpty) {
-              bool incomplete = false;
-              for (int i = 0; i < siblingpages.length; i++) {
-                if (siblingpages[i].id == id) {
-                  // Ignore current page
-                  continue;
-                }
-                if (await siblingpages[i].status != PathwayStatus.completed) {
-                  incomplete = true;
-                  break;
-                }
-              }
-
-              if (!incomplete &&
-                  await parentpage.status != PathwayStatus.completed &&
-                  context.mounted) {
-                // Mark parent page as completed
-                parentpage.setStatus(PathwayStatus.completed, context);
-              }
-            }
-          } else if (await parentpage.status == PathwayStatus.completed &&
-              context.mounted) {
-            // Mark parent page as incomplete
-            parentpage.setStatus(PathwayStatus.opened, context);
-          }
+      final Map<int, core.WebPage> pagesById = {};
+      for (final core.WebPage page in pages) {
+        final int? pageId = page.id;
+        if (pageId != null) {
+          pagesById[pageId] = page;
         }
       }
-    }
 
-    // Put the bunny back in the box
-    await fileStorage.setObject(
-      'completedPathways',
-      statusItems,
-      boxName: 'userData',
-    );
-    // Check if the change caused a badge to be completed
-    if (status == PathwayStatus.completed) {
-      if (context.mounted) {
-        awardBadges(context);
+      if (!pagesById.containsKey(pathwayId)) {
+        pagesById[pathwayId] = this;
       }
 
-      // Increase the counter for the times when the page has been completed
-      await core.ApiClient().addCompletion(id);
+      final Set<int> pendingStatuses = <int>{pathwayId};
+      final Set<int> processed = <int>{};
+      final Map<int, PathwayStatus> plannedStatuses = {pathwayId: status};
+      final List<int> newlyCompletedIds = [];
+
+      while (pendingStatuses.isNotEmpty) {
+        final int currentId = pendingStatuses.first;
+        pendingStatuses.remove(currentId);
+        if (processed.contains(currentId)) {
+          continue;
+        }
+        processed.add(currentId);
+
+        final PathwayStatus? targetStatus = plannedStatuses[currentId];
+        if (targetStatus == null) {
+          continue;
+        }
+
+        final PathwayStatus? currentStatus = statusById[currentId]?.status;
+        final bool wasCompleted = currentStatus == PathwayStatus.completed;
+        if (currentStatus != targetStatus) {
+          statusById[currentId] = PathwayStatusItem(
+            id: currentId,
+            status: targetStatus,
+          );
+          if (!wasCompleted && targetStatus == PathwayStatus.completed) {
+            newlyCompletedIds.add(currentId);
+          }
+        }
+
+        final core.WebPage currentPage =
+            pagesById[currentId] ?? core.WebPage(id: currentId);
+        final int? parentId = _coerceInt(currentPage.getValue('pageid'));
+        if (parentId == null) {
+          continue;
+        }
+
+        final PathwayStatus? siblingStatusTarget =
+            targetStatus == PathwayStatus.completed
+            ? PathwayStatus.completed
+            : null;
+
+        if (siblingStatusTarget != null) {
+          bool siblingBlocked = false;
+          for (final core.WebPage sibling in pages) {
+            final int? siblingParent = _coerceInt(sibling.getValue('pageid'));
+            if (siblingParent != parentId) {
+              continue;
+            }
+
+            final int? siblingId = sibling.id;
+            if (siblingId == null || siblingId == currentId) {
+              continue;
+            }
+
+            if (statusById[siblingId]?.status != PathwayStatus.completed) {
+              siblingBlocked = true;
+              break;
+            }
+          }
+
+          if (!siblingBlocked &&
+              statusById[parentId]?.status != PathwayStatus.completed) {
+            plannedStatuses[parentId] = PathwayStatus.completed;
+            pendingStatuses.add(parentId);
+          }
+        } else if (statusById[parentId]?.status == PathwayStatus.completed) {
+          plannedStatuses[parentId] = PathwayStatus.opened;
+          pendingStatuses.add(parentId);
+        }
+      }
+
+      // Put the bunny back in the box.
+      await fileStorage.setObject(
+        'completedPathways',
+        statusById.values.toList(),
+        boxName: 'userData',
+      );
+
+      completedPathwayIds.addAll(newlyCompletedIds);
+    });
+
+    if (!context.mounted || completedPathwayIds.isEmpty) {
+      return;
+    }
+
+    if (shouldAwardBadges) {
+      awardBadges(context);
+    }
+
+    for (final int completedPageId in completedPathwayIds) {
+      try {
+        await core.ApiClient().addCompletion(completedPageId);
+      } catch (error) {
+        log('Failed to sync completion for page $completedPageId: $error');
+      }
+      if (kDebugMode) {
+        log('Completion sync completed for page $completedPageId');
+      }
     }
   }
 
@@ -439,16 +602,6 @@ extension Pathway on core.WebPage {
               context.l10n.module_completed,
               BadgeCompletionPage(badge: badge),
               context,
-              actions: [
-                ElevatedButton(
-                  child: Text(context.l10n.ok),
-                  onPressed: () {
-                    if (context.mounted) {
-                      Navigator.of(context, rootNavigator: true).pop();
-                    }
-                  },
-                ),
-              ],
             );
             badge.isNotified = true;
             // Save the badge as notified
@@ -483,10 +636,23 @@ extension Pathway on core.WebPage {
   // Get list of badge status items from local storage
   Future<List<BadgeStatusItem>?> getBadgeStatusItems() async {
     core.FileStorage fileStorage = core.FileStorage();
-    return (await fileStorage.getObject('badgeStatusItems', boxName: 'userData')
-            as List<dynamic>?)
-        ?.map((item) => item as BadgeStatusItem)
-        .toList();
+    try {
+      return (await fileStorage.getObject(
+                'badgeStatusItems',
+                boxName: 'userData',
+              )
+              as List<dynamic>?)
+          ?.map((item) => item as BadgeStatusItem)
+          .toList();
+    } catch (error) {
+      log('Resetting unreadable badgeStatusItems Hive entry: $error');
+      await fileStorage.setObject(
+        'badgeStatusItems',
+        <BadgeStatusItem>[],
+        boxName: 'userData',
+      );
+      return <BadgeStatusItem>[];
+    }
   }
 
   // Store list of badge status items to local storage
@@ -576,12 +742,17 @@ extension on core.ApiClient {
     Map<String, dynamic> params = {
       'objectid': pageId,
       'action': 'addcompletion',
-      'method': 'json'
+      'method': 'json',
     };
-    var url = Uri.https(await baseUrl, apiPath, params.map((key, value) => MapEntry(key, value.toString())));
+    var url = Uri.https(
+      await baseUrl,
+      apiPath,
+      params.map((key, value) => MapEntry(key, value.toString())),
+    );
 
     return getJson(url).then((core.ApiResponse response) {
-      Map<String, dynamic>? responseData = response.rawData as Map<String, dynamic>?;
+      Map<String, dynamic>? responseData =
+          response.rawData as Map<String, dynamic>?;
       return responseData?['status'] == 'success';
     });
   }

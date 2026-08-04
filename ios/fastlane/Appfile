@@ -1,0 +1,5 @@
+app_identifier("app.ecounity.ecounity")
+team_id("6GB259Z94P")
+
+apple_id(ENV["APP_STORE_CONNECT_USERNAME"]) if ENV["APP_STORE_CONNECT_USERNAME"]
+itc_team_id(ENV["APP_STORE_CONNECT_TEAM_ID"]) if ENV["APP_STORE_CONNECT_TEAM_ID"]

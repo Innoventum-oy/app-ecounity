@@ -6,20 +6,21 @@ void notifyDialog(String? titleText, Widget text, BuildContext context) {
   double screenHeight = MediaQuery.of(context).size.height;
 
   showDialog<String>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-            title: Text(titleText ?? context.l10n.attention),
-            content: ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: 0.8 * screenHeight),
-              child: SingleChildScrollView(child: text),
-            ),
-            actions: <Widget>[
-              ElevatedButton(
-                  child: Text(
-                      context.l10n.ok),
-                  onPressed: () {
-                    Navigator.of(context, rootNavigator: true).pop();
-                  })
-            ],
-          ));
+    context: context,
+    builder: (BuildContext context) => AlertDialog(
+      title: Text(titleText ?? context.l10n.attention),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: 0.8 * screenHeight),
+        child: SingleChildScrollView(child: text),
+      ),
+      actions: <Widget>[
+        ElevatedButton(
+          child: Text(context.l10n.ok),
+          onPressed: () {
+            Navigator.of(context, rootNavigator: true).pop();
+          },
+        ),
+      ],
+    ),
+  );
 }

@@ -12,7 +12,7 @@ import 'pathway_status.dart';
 
 part 'ecounity_badge.g.dart';
 
-@HiveType(typeId: 205)
+@HiveType(typeId: 1205)
 class EcoUnityBadge extends core.Badge {
   @HiveField(251)
   String? pathway;
@@ -50,7 +50,8 @@ class EcoUnityBadge extends core.Badge {
 
     if (kDebugMode) {
       final List<PathwayStatusItem> completedPathways =
-          await EcoUnityStorage(core.FileStorage()).getCompletedPathways() ?? [];
+          await EcoUnityStorage(core.FileStorage()).getCompletedPathways() ??
+          [];
       final Set<int> requiredIds = filteredPathways
           .map((pathway) => pathway.id)
           .whereType<int>()
@@ -95,7 +96,7 @@ class EcoUnityBadge extends core.Badge {
     }
     int completedPathwaysCount = 0;
 
-    filteredPathways.forEach((element) {
+    for (var element in filteredPathways) {
       // Count only pathways explicitly marked completed, not merely opened.
       if (completedPathways.any(
         (item) =>
@@ -103,7 +104,7 @@ class EcoUnityBadge extends core.Badge {
       )) {
         completedPathwaysCount++;
       }
-    });
+    }
 
     // Calculate the percentage
     return ((completedPathwaysCount / totalPathways) * 100).roundToDouble();
@@ -128,14 +129,14 @@ class EcoUnityBadge extends core.Badge {
     final List<WebPage> filteredPathways = _getFilteredPathways(lang);
 
     int completedPathwaysCount = 0;
-    filteredPathways.forEach((element) {
+    for (var element in filteredPathways) {
       if (completedPathways.any(
         (item) =>
             item.id == element.id && item.status == PathwayStatus.completed,
       )) {
         completedPathwaysCount++;
       }
-    });
+    }
     return completedPathwaysCount;
   }
 

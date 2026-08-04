@@ -2,7 +2,7 @@ import 'package:hive_ce/hive.dart';
 
 part 'pathway_stage.g.dart';
 
-@HiveType(typeId: 203)
+@HiveType(typeId: 1203)
 enum PathwayStage {
   @HiveField(0)
   any,
@@ -11,5 +11,5 @@ enum PathwayStage {
   @HiveField(2)
   during,
   @HiveField(3)
-  after
+  after,
 }

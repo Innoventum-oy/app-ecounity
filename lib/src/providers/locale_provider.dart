@@ -9,6 +9,7 @@ class LocaleProvider with ChangeNotifier {
     _locale = loc;
     notifyListeners();
   }
+
   void clearLocale() {
     _locale = null;
     notifyListeners();

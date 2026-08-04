@@ -2,7 +2,7 @@
 // Do not modify
 // Check in to version control
 
-import 'package:hive_ce/hive.dart';
+import 'package:hive_ce/hive_ce.dart';
 import 'package:ecounity/src/objects/badge_status_item.dart';
 import 'package:ecounity/src/objects/ecounity_badge.dart';
 import 'package:ecounity/src/objects/pathway_stage.dart';

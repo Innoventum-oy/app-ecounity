@@ -29,7 +29,6 @@ class Question extends StatefulWidget {
 class RadioGroupWidget extends State<Question> {
   // Default Radio Button Item
   int? selectedOptionValue;
-  List<dynamic>? options;
 
   @override
   void initState() {
@@ -46,14 +45,8 @@ class RadioGroupWidget extends State<Question> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    options = widget.element.elements;
-    log(
-      'Building Question ${widget.element.id} ${widget.element.title} with ${widget.element.elements?.length} options, selected: ${widget.selectedOption}',
-    );
-    //  print('building radio group; group value is '+this.selectedOptionValue.toString());
-    List<Widget> children = [];
+  List<Widget> _buildQuestionTypeContent(List<dynamic> options) {
+    final List<Widget> children = [];
     switch (widget.element.type) {
       case 'radio':
         children.add(
@@ -68,7 +61,7 @@ class RadioGroupWidget extends State<Question> {
               });
             },
             child: Column(
-              children: options!
+              children: options
                   .map(
                     (data) => Card(
                       child: RadioListTile<dynamic>(
@@ -88,47 +81,74 @@ class RadioGroupWidget extends State<Question> {
       default:
         break;
     }
-    return Column(
-      children: [
-        Text(
-          widget.element.title ?? '',
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 12),
-        if (widget.element.description != null)
-          Text(widget.element.description ?? ''),
-        if (widget.element.type == 'richtext' &&
-            widget.element.htmldescription != null)
-          Html(
-            data: widget.element.htmldescription,
-            style: {'ul': Style(padding: HtmlPaddings.only(left: 10))},
-          ),
-        ...children,
+    return children;
+  }
 
-        SizedBox(height: 12),
-        if (widget.buttons != null)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Expanded(
-                child: Wrap(
-                  alignment: WrapAlignment.spaceAround,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  runSpacing: 10,
-                  children: widget.buttons ?? [],
-                ),
-              ),
-            ],
-          ),
-        const SizedBox(height: 12),
-        Center(
-          child: Text(
-            "${widget.index} / ${widget.pageCount}",
-            style: const TextStyle(fontSize: 14),
-          ),
+  List<Widget> _buildQuestionContent(List<Widget> typeContent) {
+    return [
+      Text(
+        widget.element.title ?? '',
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: 12),
+      if (widget.element.description != null)
+        Text(widget.element.description ?? ''),
+      if (widget.element.type == 'richtext' &&
+          widget.element.htmldescription != null)
+        Html(
+          data: widget.element.htmldescription,
+          style: {'ul': Style(padding: HtmlPaddings.only(left: 10))},
         ),
-      ],
+      ...typeContent,
+    ];
+  }
+
+  List<Widget> _buildPageControls() {
+    return [
+      const SizedBox(height: 12),
+      if (widget.buttons != null)
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Expanded(
+              child: Wrap(
+                alignment: WrapAlignment.spaceAround,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                runSpacing: 10,
+                children: widget.buttons ?? [],
+              ),
+            ),
+          ],
+        ),
+      const SizedBox(height: 12),
+      Center(
+        child: Text(
+          "${widget.index} / ${widget.pageCount}",
+          style: const TextStyle(fontSize: 14),
+        ),
+      ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<dynamic> options = widget.element.elements ?? [];
+    log(
+      'Building Question ${widget.element.id} ${widget.element.title} with ${widget.element.elements?.length} options, selected: ${widget.selectedOption}',
+    );
+
+    final List<Widget> questionContent = _buildQuestionContent(
+      _buildQuestionTypeContent(options),
+    );
+    final List<Widget> pageControls = _buildPageControls();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [...questionContent, ...pageControls],
+      ),
     );
   }
 }

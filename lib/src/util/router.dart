@@ -16,6 +16,7 @@ import 'package:ecounity/src/screens/video_list/video_list_screen.dart';
 import '../objects/ecounity_badge.dart';
 import '../screens/badge_view/badge_view.dart';
 import '../screens/dashboard/components/settings_screen.dart';
+import '../screens/dashboard/components/settings/settings_content_screen.dart';
 import '../screens/dashboard/dashboard.dart';
 import '../screens/login/login_form.dart';
 import '../screens/modules/modules.dart';
@@ -46,6 +47,7 @@ class AppRouter {
     replaceRoute = true,
     dynamic data,
     openIntroduction = false,
+    skipAutoOpenIntroduction = false,
     WebPageList? pathways,
     callback,
   }) {
@@ -87,6 +89,7 @@ class AppRouter {
           navIndex: navIndex,
           webPage: data as WebPage,
           openIntroduction: openIntroduction,
+          skipAutoIntroduction: skipAutoOpenIntroduction,
           pathways: pathways,
         );
         routeFound = true;
@@ -101,6 +104,7 @@ class AppRouter {
           navIndex: navIndex,
           webPage: data as WebPage,
           openIntroduction: openIntroduction,
+          skipAutoIntroduction: skipAutoOpenIntroduction,
           pathways: pathways,
         );
         routeFound = true;
@@ -110,6 +114,7 @@ class AppRouter {
           navIndex: navIndex,
           webPage: data as WebPage,
           openIntroduction: openIntroduction,
+          skipAutoIntroduction: skipAutoOpenIntroduction,
           pathways: pathways,
         );
         routeFound = true;
@@ -120,6 +125,7 @@ class AppRouter {
           navIndex: navIndex,
           webPage: data as WebPage,
           openIntroduction: openIntroduction,
+          skipAutoIntroduction: skipAutoOpenIntroduction,
           pathways: pathways,
         );
         routeFound = true;
@@ -134,6 +140,7 @@ class AppRouter {
           navIndex: navIndex,
           webPage: data as WebPage,
           openIntroduction: openIntroduction,
+          skipAutoIntroduction: skipAutoOpenIntroduction,
           pathways: pathways,
         );
         routeFound = true;
@@ -150,6 +157,24 @@ class AppRouter {
 
       case 'settings':
         targetWidget = SettingsScreen(navigationIndex: navIndex);
+        routeFound = true;
+        break;
+
+      case 'settingsprivacy':
+        targetWidget = SettingsContentScreen(
+          navigationIndex: navIndex,
+          title: context.l10n.privacy_policy,
+          commonName: 'app-privacy-policy',
+        );
+        routeFound = true;
+        break;
+
+      case 'settingsabout':
+        targetWidget = SettingsContentScreen(
+          navigationIndex: navIndex,
+          title: context.l10n.about,
+          commonName: 'app-about',
+        );
         routeFound = true;
         break;
 

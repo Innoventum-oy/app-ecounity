@@ -8,7 +8,7 @@ part of 'pathway_status_item.dart';
 
 class PathwayStatusItemAdapter extends TypeAdapter<PathwayStatusItem> {
   @override
-  final typeId = 202;
+  final typeId = 1202;
 
   @override
   PathwayStatusItem read(BinaryReader reader) {

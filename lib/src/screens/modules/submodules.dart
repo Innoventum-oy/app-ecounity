@@ -32,9 +32,9 @@ class SubModulesViewState extends State<SubModulesView> {
 
   @override
   void initState() {
+    super.initState();
     // add listener to the file storage
     fileStorage.addListener(_fileStorageListener);
-    super.initState();
     loadModules();
   }
 
@@ -80,6 +80,7 @@ class SubModulesViewState extends State<SubModulesView> {
     completedPathways = await EcoUnityStorage(
       fileStorage,
     ).getCompletedPathways();
+    if (!mounted) return;
     setState(() {});
   }
 
@@ -130,6 +131,7 @@ class SubModulesViewState extends State<SubModulesView> {
           });
 
           return ScreenScaffold(
+            key: const ValueKey('screenshot-module-units-screen'),
             onRefresh: _refresh,
             title: screenTitle,
             navigationIndex: widget.navIndex,
@@ -137,12 +139,14 @@ class SubModulesViewState extends State<SubModulesView> {
               height: MediaQuery.sizeOf(context).height * 0.8,
               width: MediaQuery.sizeOf(context).width,
               child: ListView(
+                key: const ValueKey('screenshot-module-units-list'),
                 children: subModules.map((e) {
                   return subModuleCard(
                     context,
                     e,
                     isPathwayCompleted(e, completedPathways),
                     widget.navIndex,
+                    modules: WebPageList(webPages: modules),
                   );
                 }).toList(),
               ),

@@ -21,7 +21,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get achievements => 'Erfolge';
 
   @override
-  String get answer_saved => 'Answer saved';
+  String get answer_saved => 'Antwort gespeichert';
 
   @override
   String get application_name => 'Ecounity';
@@ -37,7 +37,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String badge_completion_status(int completed, int required) {
-    return 'You have completed $completed out of $required learning contents required to earn this badge.';
+    return 'Du hast $completed von $required Lerninhalten abgeschlossen, die erforderlich sind, um dieses Abzeichen zu erhalten.';
   }
 
   @override
@@ -173,7 +173,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get errors_in_form => 'Errors in form';
+  String get errors_in_form => 'Fehler im Formular';
 
   @override
   String field_required(String field) {
@@ -185,33 +185,35 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get funding_disclaimer =>
-      'Finanziert von der Europäischen Union. Die geäußerten Ansichten und Meinungen sind jedoch ausschließlich die der Autor(en) und spiegeln nicht unbedingt die der Europäischen Union oder der Europäischen Exekutivagentur für Bildung und Kultur (EACEA) wider. Weder die Europäische Union noch die EACEA können dafür verantwortlich gemacht werden.';
+      'Von der Europäischen Union finanziert. Die geäußerten Ansichten und Meinungen entsprechen jedoch ausschließlich denen des Autors bzw. der Autoren und spiegeln nicht zwingend die der Europäischen Union oder der Europäischen Exekutivagentur für Bildung und Kultur (EACEA) wider. Weder die Europäische Union noch die EACEA können dafür verantwortlich gemacht werden.';
 
   @override
-  String get great => 'Great';
+  String get great => 'Großartig';
 
   @override
   String get home => 'Startseite';
 
   @override
-  String get introduction => 'Introduction';
+  String get introduction => 'Einführung';
 
   @override
   String get language => 'Sprache';
 
   @override
-  String get select_language => 'Select language';
+  String get select_language => 'Sprache auswählen';
 
   @override
   String locale(String language) {
     String _temp0 = intl.Intl.selectLogic(language, {
       'fi': 'Finnisch',
       'en': 'Englisch',
+      'it': 'Italienisch',
+      'pt': 'Portugiesisch',
       'pl': 'Polnisch',
       'de': 'Deutsch',
       'uk': 'Ukrainisch',
-      'ro': 'Rumänisch',
-      'es': 'Spanisch',
+      'ro': 'Romanian',
+      'es': 'Spanish',
       'other': 'Sprache:$language',
     });
     return '$_temp0';
@@ -254,7 +256,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get next => 'Next';
+  String get next => 'Weiter';
 
   @override
   String get noBadgesFound => 'Keine Abzeichen gefunden';
@@ -266,7 +268,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noContentFound => 'Kein Inhalt gefunden';
 
   @override
-  String get noPathwaysFound => 'No learning contents were found';
+  String get noPathwaysFound => 'Keine Lerninhalte gefunden';
 
   @override
   String get noTranscriptAvailable => 'Kein Transkript verfügbar';
@@ -275,7 +277,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noVideosFound => 'Keine Videos gefunden';
 
   @override
-  String get noLessonsFound => 'No lessons were found';
+  String get noLessonsFound => 'Keine Lektionen gefunden';
 
   @override
   String get page_content => 'Seiteninhalt';
@@ -284,13 +286,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get password => 'Passwort';
 
   @override
-  String get pathway => 'Learning content';
+  String get pathway => 'Lerninhalt';
 
   @override
-  String get pathway_already_completed => 'Learning content is completed';
+  String get pathway_already_completed => 'Lerninhalt ist abgeschlossen';
 
   @override
-  String get pathway_completed => 'Learning content completed';
+  String get pathway_completed => 'Lerninhalt abgeschlossen';
 
   @override
   String get phone => 'Telefon';
@@ -300,7 +302,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get please_complete_form_properly =>
-      'Please complete the form properly';
+      'Bitte füllen Sie das Formular korrekt aus.';
 
   @override
   String get please_enter_password => 'Bitte geben Sie ein Passwort ein';
@@ -314,7 +316,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Bitte geben Sie eine gültige Telefonnummer oder E-Mail-Adresse an';
 
   @override
-  String get previous => 'Previous';
+  String get previous => 'Zurück';
 
   @override
   String get privacy => 'Datenschutz';
@@ -340,7 +342,10 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get saving_data_failed => 'Saving data failed';
+  String get references => 'Referenzen';
+
+  @override
+  String get saving_data_failed => 'Daten konnten nicht gespeichert werden';
 
   @override
   String get quiz_not_passed => 'Quiz nicht bestanden';
@@ -358,16 +363,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get screenTitle_selfReflectionHub => 'Selbstreflexionszentrum';
 
   @override
-  String get screenTitle_videos => 'Videos';
+  String get screenTitle_videos => 'Videoübersicht';
 
   @override
   String get screenTitle_lessons => 'Unterricht';
 
   @override
-  String get screenTitle_modules => 'Modules';
+  String get screenTitle_modules => 'Module';
 
   @override
-  String get screenTitle_resources => 'Resources';
+  String get screenTitle_resources => 'Ressourcen';
 
   @override
   String get select => 'Auswählen';
@@ -376,10 +381,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get selected => 'Ausgewählt';
 
   @override
-  String get sendAnswer => 'Antwort senden';
+  String get sendAnswer => 'Antwort speichern';
 
   @override
-  String get server => 'Server';
+  String get server => 'Systemserver';
 
   @override
   String get settings => 'Einstellungen';
@@ -397,6 +402,9 @@ class AppLocalizationsDe extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get start => 'Starten';
 
   @override
   String get terms => 'Bedingungen';
@@ -418,11 +426,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get welcome_title =>
-      'Welcome to the Ecounity App - your gateway to digital learning, inspiration, and entrepreneurial growth.';
+      'Willkommen bei der Ecounity-App - Ihrem Portal für digitales Lernen, Inspiration und unternehmerisches Wachstum.';
 
   @override
   String get login_introduction_text =>
-      'Explore Flipped Classroom micro-learning resources, videos, and success stories with practical tools that complement the Ecounity Curriculum and strengthen social entrepreneurship skills.';
+      'Entdecken Sie die Micro-Learning-Ressourcen des Flipped Classroom, Videos und Erfolgsgeschichten mit praktischen Werkzeugen, die den Ecounity-Lehrplan ergänzen und soziale Unternehmergeist-Fähigkeiten stärken.';
 
   @override
   String get srh_description => 'Nutzen Sie diese Fragen als Denkanstoß.';
@@ -440,22 +448,22 @@ class AppLocalizationsDe extends AppLocalizations {
       'Was sind meine Hoffnungen und Ängste für die Zukunft?';
 
   @override
-  String get no_video_found => 'The video was not found.';
+  String get no_video_found => 'Das Video wurde nicht gefunden.';
 
   @override
-  String get no_modules_found => 'No modules were found.';
+  String get no_modules_found => 'Keine Module gefunden.';
 
   @override
-  String get no_contents_found => 'Contents were not found.';
+  String get no_contents_found => 'Inhalte wurden nicht gefunden.';
 
   @override
-  String get no_resources_found => 'Resources were not found.';
+  String get no_resources_found => 'Ressourcen wurden nicht gefunden.';
 
   @override
-  String get no_images_found => 'Images were not found.';
+  String get no_images_found => 'Bilder wurden nicht gefunden.';
 
   @override
-  String get links => 'Links';
+  String get links => 'Verweise';
 
   @override
   String get refresh => 'Aktualisieren';
@@ -464,79 +472,79 @@ class AppLocalizationsDe extends AppLocalizations {
   String get cache_cleared => 'Cache geleert. Bitte laden Sie die Seite neu.';
 
   @override
-  String get module_completed => 'Module completed';
+  String get module_completed => 'Modul abgeschlossen';
 
   @override
-  String get mark_as_completed => 'Mark as completed';
+  String get mark_as_completed => 'Als abgeschlossen markieren';
 
   @override
-  String get mark_as_not_completed => 'Mark as not completed';
+  String get mark_as_not_completed => 'Als nicht abgeschlossen markieren';
 
   @override
-  String get no_image_available => 'No image available';
+  String get no_image_available => 'Kein Bild verfügbar';
 
   @override
-  String get no_title => 'No title';
+  String get no_title => 'Kein Titel';
 
   @override
-  String get items_matched => 'Items matched';
+  String get items_matched => 'Elemente zugeordnet';
 
   @override
-  String get all_items_matched => 'All items matched!';
+  String get all_items_matched => 'Alle Elemente wurden zugeordnet!';
 
   @override
-  String get play_again => 'Play again';
+  String get play_again => 'Nochmal spielen';
 
   @override
-  String get not_enough_images_to_match => 'Not enough images to match';
+  String get not_enough_images_to_match => 'Nicht genug Bilder zum Zuordnen';
 
   @override
-  String get unknown => 'Unknown';
+  String get unknown => 'Unbekannt';
 
   @override
-  String get error_loading_button => 'Error loading button';
+  String get error_loading_button => 'Fehler beim Laden der Schaltfläche';
 
   @override
-  String get seek => 'Seek';
+  String get seek => 'Suchen';
 
   @override
   String get ok => 'OK';
 
   @override
-  String get notification => 'Notification';
+  String get notification => 'Benachrichtigung';
 
   @override
   String modules_completion_summary(int completed, int total) {
-    return '$completed of $total modules completed';
+    return '$completed von $total Modulen abgeschlossen';
   }
 
   @override
   String learning_contents_completion_summary(int completed, int total) {
-    return '$completed of $total learning contents completed';
+    return '$completed von $total Lerninhalten abgeschlossen';
   }
 
   @override
-  String get current_progress => 'Current progress';
+  String get current_progress => 'Aktueller Fortschritt';
 
   @override
-  String get next_suggestion => 'Next suggestion';
+  String get next_suggestion => 'Nächster Vorschlag';
 
   @override
-  String get next_up => 'Next up:';
+  String get next_up => 'Nächste Schritte:';
 
   @override
-  String get congratulations => 'Congratulations!';
+  String get congratulations => 'Glückwunsch!';
 
   @override
   String get you_have_completed_all_learning_contents =>
-      'You have completed all learning contents.';
+      'Du hast alle Lerninhalte abgeschlossen.';
 
   @override
-  String get writeAnswerHere => 'Type your answer here.';
+  String get writeAnswerHere => 'Geben Sie hier Ihre Antwort ein.';
 
   @override
-  String get fieldCannotBeEmpty => 'This field cannot be empty.';
+  String get fieldCannotBeEmpty => 'Dieses Feld darf nicht leer sein.';
 
   @override
-  String get clear_answers => 'Clear answers';
+  String get clear_answers => 'Antworten löschen';
 }

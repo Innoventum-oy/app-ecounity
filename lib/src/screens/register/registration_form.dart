@@ -53,20 +53,14 @@ class RegistrationFormState extends State<RegistrationForm> {
       case 'fi':
         initialCountry = 'FI';
         break;
-      case 'es':
-        initialCountry = 'ES';
-        break;
-      case 'ro':
-        initialCountry = 'RO';
+      case 'sl':
+        initialCountry = 'SI';
         break;
       case 'de':
         initialCountry = 'DE';
         break;
-      case 'pl':
-        initialCountry = 'PL';
-        break;
-      case 'uk':
-        initialCountry = 'UA';
+      case 'pt':
+        initialCountry = 'PT';
         break;
       default:
         initialCountry =

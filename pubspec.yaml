@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.6+13
+version: 1.0.8+17
 
 environment:
   sdk: '>=3.9.0 <4.0.0'
@@ -33,6 +33,7 @@ dependencies:
     git:
       url: git@github.com:Innoventum-oy/core.git
       path: core/
+      ref: dynamic-objectmodel
   dio: ^5.9.2 # for making http requests
   flutter:
     sdk: flutter
@@ -48,7 +49,7 @@ dependencies:
   provider: ^6.0.0  # for state management
   shared_preferences: ^2.5.5  # for storing data locally
   url_launcher: ^6.3.1  # for launching urls
-  another_flushbar: ^1.10.17 # for showing flushbars
+  another_flushbar: ^2.2.4 # for showing flushbars
   carousel_slider: ^5.0.0  # for image carousel with flexible aspect ratios
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -58,7 +59,8 @@ dependencies:
   font_awesome_flutter: ^11.0.0
   email_validator: ^3.0.0
   intl_phone_number_input: ^0.7.4
-  youtube_player_iframe: ^5.2.0
+  youtube_player_iframe: 6.0.2
+  youtube_player_flutter: 10.0.1
   flutter_widget_from_html: ^0.17.2
   webview_flutter: ^4.8.0
   webview_flutter_android: ^4.10.15
@@ -68,14 +70,19 @@ dependencies:
   http: ^1.3.0
   crypto: any
 dev_dependencies:
+  archive: ^4.0.9
   build_runner: ^2.13.1
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
   flutter_native_splash: ^2.1.6
   flutter_launcher_icons: ^0.14.1
   flutter_lints: ^6.0.0
   hive_ce_generator: ^1.10.0
+  image: ^4.8.0
   test: ^1.25.2
+  xml: ^6.6.1
 
 dependency_overrides:
 
@@ -128,15 +135,21 @@ flutter:
 
 #if you make changes, regenerate with flutter pub run flutter_native_splash:create
 flutter_native_splash:
-  color: E7FFDE
-  image: assets/images/ecounity-logo.png
-
-#if you make changes, regenerate with flutter pub run flutter_launcher_icons:main
-flutter_icons:
   android: true
   ios: true
-  image_path: "assets/images/icon.png"
-  remove_alpha_ios: true
+  web: true
+  color: "#E7FFDE"
+  image: assets/images/ecounity-logo.png
+  android_12:
+    color: "#E7FFDE"
+    image: assets/images/ecounity-logo.png
+
+#if you make Android icon changes, regenerate with flutter pub run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/ecounity-logo.png"
   adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/images/ecounity-logo.png"
 scripts:
   gen_l10n: ./generate.sh

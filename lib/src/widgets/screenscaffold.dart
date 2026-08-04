@@ -1,8 +1,10 @@
 import 'dart:developer';
+
 import 'package:core/core.dart' as core;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../util/router.dart';
 import '../widgets/bottom_navigation.dart';
 
@@ -61,6 +63,7 @@ class _ScreenScaffoldState extends State<ScreenScaffold> {
     }
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         title: Text(core.unescapeHTML(widget.title)),
         elevation: 0.1,
         leading: (Navigator.canPop(context) && ModalRoute.of(context)!.canPop)

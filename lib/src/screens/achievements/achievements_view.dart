@@ -1,12 +1,12 @@
 import 'dart:developer';
 
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:ecounity/l10n/app_localizations_extension.dart';
-import 'package:provider/provider.dart';
 import 'package:ecounity/src/objects/ecounity_badge.dart';
 import 'package:ecounity/src/providers/ecounity_badge_provider.dart';
 import 'package:ecounity/src/util/settings.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../util/router.dart';
 import '../../widgets/screenscaffold.dart';
@@ -107,7 +107,9 @@ class AchievementsViewState extends State<AchievementsView> {
     }
 
     setState(() {
-      _badgeProgress = Map<int?, _BadgeProgressData>.fromEntries(progressEntries);
+      _badgeProgress = Map<int?, _BadgeProgressData>.fromEntries(
+        progressEntries,
+      );
       loadedLanguage = currentLanguage;
       isLoadingProgress = false;
     });
@@ -122,10 +124,7 @@ class AchievementsViewState extends State<AchievementsView> {
     return ScreenScaffold(
       title: context.l10n.achievements,
       navigationIndex: widget.navIndex,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: allBadges(),
-      ),
+      child: Padding(padding: const EdgeInsets.all(20.0), child: allBadges()),
     );
   }
 
@@ -133,9 +132,7 @@ class AchievementsViewState extends State<AchievementsView> {
   Widget allBadges() {
     if (badges.isEmpty) {
       String emptytext = context.l10n.noBadgesFound;
-      return Center(
-        child: Text(emptytext),
-      );
+      return Center(child: Text(emptytext));
     }
 
     double screenWidth = MediaQuery.of(context).size.width;
@@ -152,25 +149,31 @@ class AchievementsViewState extends State<AchievementsView> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return GridView.builder(
-      itemCount: badges.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns, // Adjust based on screen width if needed
-        crossAxisSpacing: 5,
-        mainAxisSpacing: 5,
-        childAspectRatio: 0.57,
-      ),
-      itemBuilder: (context, index) {
-        final badge = badges[index];
-        final progress =
-            _badgeProgress[badge.id] ?? const _BadgeProgressData.empty();
-        return _badgeIconDisplay(
-          badge,
-          context,
-          progress: progress,
-        );
-      },
-    );
+    return columns > 1
+        ? GridView.builder(
+            itemCount: badges.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns, // Adjust based on screen width if needed
+              crossAxisSpacing: 5,
+              mainAxisSpacing: 5,
+              childAspectRatio: 0.60,
+            ),
+            itemBuilder: (context, index) {
+              final badge = badges[index];
+              final progress =
+                  _badgeProgress[badge.id] ?? const _BadgeProgressData.empty();
+              return _badgeIconDisplay(badge, context, progress: progress);
+            },
+          )
+        : ListView.builder(
+            itemCount: badges.length,
+            itemBuilder: (context, index) {
+              final badge = badges[index];
+              final progress =
+                  _badgeProgress[badge.id] ?? const _BadgeProgressData.empty();
+              return _badgeIconDisplay(badge, context, progress: progress);
+            },
+          );
   }
 
   Widget _badgeIconDisplay(
@@ -186,17 +189,23 @@ class AchievementsViewState extends State<AchievementsView> {
         if (kDebugMode) {
           log('Opening badge ${badge.name}');
         }
-        AppRouter.navigate(context, '/badge', 0, replaceRoute: false, data: badge);
+        AppRouter.navigate(
+          context,
+          '/badge',
+          0,
+          replaceRoute: false,
+          data: badge,
+        );
       },
       child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(10),
             child: AspectRatio(
-              aspectRatio: 0.85,
+              aspectRatio: 1,
               child: badge.badgeimageurl != null
                   ? FadeInImage.assetNetwork(
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                       width: double.infinity,
                       placeholder: 'assets/images/ecounity-logo.png',
                       image: badge.badgeimageurl!,
@@ -247,8 +256,8 @@ class _BadgeProgressData {
   });
 
   const _BadgeProgressData.empty()
-      : completion = 0,
-        isCompleted = false,
-        completedCount = 0,
-        requiredCount = 0;
+    : completion = 0,
+      isCompleted = false,
+      completedCount = 0,
+      requiredCount = 0;
 }

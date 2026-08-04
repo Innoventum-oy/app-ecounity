@@ -1,23 +1,14 @@
 {
   "@@locale": "de",
   "about": "Über",
-  "account": "Konto",
   "age": "Alter",
+  "account": "Konto",
   "achievements": "Erfolge",
+  "answer_saved": "Antwort gespeichert",
   "application_name": "Ecounity",
   "attention": "Achtung",
   "authenticating": "Authentifizierung...",
   "badge": "Abzeichen",
-  "badge_awarded": "Neues Abzeichen verliehen",
-  "@badge_awarded_congratulations": {
-    "description": "Badge awarded congratulation message",
-    "placeholders": {
-      "badge": {
-        "type": "String"
-      }
-    }
-  },
-  "badge_awarded_congratulations": "Herzlichen Glückwunsch! Sie haben das Abzeichen {badge} erhalten!",
   "@badge_completion_status": {
     "description": "Badge completion status",
     "placeholders": {
@@ -29,9 +20,20 @@
       }
     }
   },
+  "badge_completion_status": "Du hast {completed} von {required} Lerninhalten abgeschlossen, die erforderlich sind, um dieses Abzeichen zu erhalten.",
   "badge_description": "Dieses Abzeichen wird für den Abschluss aller Lektionen und Herausforderungen im {pathway} Lernpfad verliehen.",
   "button_accept": "Akzeptieren",
   "button_approve": "Genehmigen",
+  "badge_awarded": "Neues Abzeichen verliehen",
+  "@badge_awarded_congratulations": {
+    "description": "Badge awarded congratulation message",
+    "placeholders": {
+      "badge": {
+        "type": "String"
+      }
+    }
+  },
+  "badge_awarded_congratulations": "Herzlichen Glückwunsch! Sie haben das Abzeichen {badge} erhalten!",
   "button_back": "Zurück",
   "button_cancel": "Abbrechen",
   "button_close": "Schließen",
@@ -95,18 +97,16 @@
       }
     }
   },
+  "errors_in_form": "Fehler im Formular",
   "field_required": "Das Feld {field} ist erforderlich",
   "firstName": "Vorname",
-  "funding_disclaimer": "Finanziert von der Europäischen Union. Die geäußerten Ansichten und Meinungen sind jedoch ausschließlich die der Autor(en) und spiegeln nicht unbedingt die der Europäischen Union oder der Europäischen Exekutivagentur für Bildung und Kultur (EACEA) wider. Weder die Europäische Union noch die EACEA können dafür verantwortlich gemacht werden.",
+  "funding_disclaimer": "Von der Europäischen Union finanziert. Die geäußerten Ansichten und Meinungen entsprechen jedoch ausschließlich denen des Autors bzw. der Autoren und spiegeln nicht zwingend die der Europäischen Union oder der Europäischen Exekutivagentur für Bildung und Kultur (EACEA) wider. Weder die Europäische Union noch die EACEA können dafür verantwortlich gemacht werden.",
+  "great": "Großartig",
   "home": "Startseite",
+  "introduction": "Einführung",
   "language": "Sprache",
-  "lastName": "Nachname",
-  "loading": "Laden...",
-  "login": "Anmelden",
-  "login_failed": "Anmeldung fehlgeschlagen",
-  "logout": "Abmelden",
-  "logout_confirmation": "Sind Sie sicher, dass Sie sich abmelden möchten?",
-  "locale": "{language,select, fi{Finnisch} en{Englisch} pl{Polnisch} de{Deutsch} uk{Ukrainisch} ro{Rumänisch} es{Spanisch} other{Sprache:{language}}}",
+  "select_language": "Sprache auswählen",
+  "locale": "{language,select, fi{Finnisch} en{Englisch} it{Italienisch} pt{Portugiesisch} pl{Polnisch} de{Deutsch} uk{Ukrainisch} ro{Romanian} es{Spanish} other{Sprache:{language}}}",
   "@locale": {
     "description": "Locale",
     "placeholders": {
@@ -115,6 +115,12 @@
       }
     }
   },
+  "lastName": "Nachname",
+  "loading": "Laden...",
+  "login": "Anmelden",
+  "login_failed": "Anmeldung fehlgeschlagen",
+  "logout": "Abmelden",
+  "logout_confirmation": "Sind Sie sicher, dass Sie sich abmelden möchten?",
   "markAsCompleted": "Als abgeschlossen markieren",
   "@navigation_item": {
     "description": "Menü-Navigationspunkte",
@@ -125,23 +131,29 @@
     }
   },
   "navigation_item": "{item, select, home{Startseite} pathways{Lernpfade} challenges{Herausforderungen} videolist{Videos} selfReflectionHub{Selbstreflexionszentrum} lessons{Unterrichtseinheiten} other{Menü:{item}}}",
+  "next": "Weiter",
   "noBadgesFound": "Keine Abzeichen gefunden",
   "noChallengesFound": "Keine Herausforderungen gefunden",
   "noContentFound": "Kein Inhalt gefunden",
+  "noPathwaysFound": "Keine Lerninhalte gefunden",
   "noTranscriptAvailable": "Kein Transkript verfügbar",
   "noVideosFound": "Keine Videos gefunden",
-  "noLessons": "Keine Unterrichtseinheiten gefunden",
+  "noLessonsFound": "Keine Lektionen gefunden",
   "page_content": "Seiteninhalt",
   "password": "Passwort",
+  "pathway": "Lerninhalt",
+  "pathway_already_completed": "Lerninhalt ist abgeschlossen",
+  "pathway_completed": "Lerninhalt abgeschlossen",
   "phone": "Telefon",
   "phone_or_email": "Telefonnummer oder E-Mail-Adresse",
+  "please_complete_form_properly": "Bitte füllen Sie das Formular korrekt aus.",
   "please_enter_password": "Bitte geben Sie ein Passwort ein",
   "please_enter_phone_or_email": "Bitte geben Sie eine Telefonnummer oder E-Mail-Adresse ein",
   "please_provide_valid_phone_or_email": "Bitte geben Sie eine gültige Telefonnummer oder E-Mail-Adresse an",
+  "previous": "Zurück",
   "privacy": "Datenschutz",
   "privacy_policy": "Datenschutzrichtlinie",
   "profile": "Profil",
-  "quiz_not_passed": "Quiz nicht bestanden",
   "register": "Registrieren",
   "registration_failed": "Registrierung fehlgeschlagen",
   "registration_successful": "Registrierung erfolgreich",
@@ -154,16 +166,21 @@
     }
   },
   "registration_successful_message": "Willkommen bei Ecounity {firstName}!",
+  "references": "Referenzen",
+  "saving_data_failed": "Daten konnten nicht gespeichert werden",
+  "quiz_not_passed": "Quiz nicht bestanden",
   "screenTitle_challenges": "Herausforderungen",
   "screenTitle_home": "Startseite",
   "screenTitle_pathways": "Lernpfade",
   "screenTitle_selfReflectionHub": "Selbstreflexionszentrum",
-  "screenTitle_videos": "Videos",
+  "screenTitle_videos": "Videoübersicht",
   "screenTitle_lessons": "Unterricht",
+  "screenTitle_modules": "Module",
+  "screenTitle_resources": "Ressourcen",
   "select": "Auswählen",
   "selected": "Ausgewählt",
-  "sendAnswer": "Antwort senden",
-  "server": "Server",
+  "sendAnswer": "Antwort speichern",
+  "server": "Systemserver",
   "settings": "Einstellungen",
   "stage": "Stufe",
   "@stageValue": {
@@ -175,18 +192,41 @@
     }
   },
   "stageValue": "{item,select, before{Bevor} during{Während} after{Nach} other{Stufe:{item}}}",
+  "start": "Starten",
   "terms": "Bedingungen",
   "unnamed": "Unbenannt",
+  "view_introduction": "Einführung",
   "you_have_this_badge": "Sie haben dieses Abzeichen",
   "your_password": "Ihr Passwort",
-  "view_introduction": "Einführung",
   "view_brochure": "Broschüre anzeigen",
+  "welcome_title": "Willkommen bei der Ecounity-App - Ihrem Portal für digitales Lernen, Inspiration und unternehmerisches Wachstum.",
+  "login_introduction_text": "Entdecken Sie die Micro-Learning-Ressourcen des Flipped Classroom, Videos und Erfolgsgeschichten mit praktischen Werkzeugen, die den Ecounity-Lehrplan ergänzen und soziale Unternehmergeist-Fähigkeiten stärken.",
   "srh_description": "Nutzen Sie diese Fragen als Denkanstoß.",
   "srh_what_was_most_impactful_for_me": "Was war für mich am wirkungsvollsten?",
   "srh_what_will_i_put_into_practice": "Was werde ich in die Praxis umsetzen?",
   "srh_what_are_my_hopes_and_fears_for_the_future": "Was sind meine Hoffnungen und Ängste für die Zukunft?",
+  "no_video_found": "Das Video wurde nicht gefunden.",
+  "no_modules_found": "Keine Module gefunden.",
+  "no_contents_found": "Inhalte wurden nicht gefunden.",
+  "no_resources_found": "Ressourcen wurden nicht gefunden.",
+  "no_images_found": "Bilder wurden nicht gefunden.",
+  "links": "Verweise",
   "refresh": "Aktualisieren",
   "cache_cleared": "Cache geleert. Bitte laden Sie die Seite neu.",
+  "module_completed": "Modul abgeschlossen",
+  "mark_as_completed": "Als abgeschlossen markieren",
+  "mark_as_not_completed": "Als nicht abgeschlossen markieren",
+  "no_image_available": "Kein Bild verfügbar",
+  "no_title": "Kein Titel",
+  "items_matched": "Elemente zugeordnet",
+  "all_items_matched": "Alle Elemente wurden zugeordnet!",
+  "play_again": "Nochmal spielen",
+  "not_enough_images_to_match": "Nicht genug Bilder zum Zuordnen",
+  "unknown": "Unbekannt",
+  "error_loading_button": "Fehler beim Laden der Schaltfläche",
+  "seek": "Suchen",
+  "ok": "OK",
+  "notification": "Benachrichtigung",
   "@modules_completion_summary": {
     "description": "Current module completion progress summary",
     "placeholders": {
@@ -198,7 +238,7 @@
       }
     }
   },
-  "modules_completion_summary": "{completed} of {total} modules completed",
+  "modules_completion_summary": "{completed} von {total} Modulen abgeschlossen",
   "@learning_contents_completion_summary": {
     "description": "Current learning content completion progress summary",
     "placeholders": {
@@ -210,7 +250,13 @@
       }
     }
   },
-  "learning_contents_completion_summary": "{completed} of {total} learning contents completed",
-  "current_progress": "Current progress",
-  "next_suggestion": "Next suggestion"
+  "learning_contents_completion_summary": "{completed} von {total} Lerninhalten abgeschlossen",
+  "current_progress": "Aktueller Fortschritt",
+  "next_suggestion": "Nächster Vorschlag",
+  "next_up": "Nächste Schritte:",
+  "congratulations": "Glückwunsch!",
+  "you_have_completed_all_learning_contents": "Du hast alle Lerninhalte abgeschlossen.",
+  "writeAnswerHere": "Geben Sie hier Ihre Antwort ein.",
+  "fieldCannotBeEmpty": "Dieses Feld darf nicht leer sein.",
+  "clear_answers": "Antworten löschen"
 }

@@ -1,8 +1,0 @@
-targets:
-  $default:
-    builders:
-      hive_ce_generator:hive_generator:
-        options:
-          # Add checks before registering adapters to prevent duplicates
-          add_adapter_checks: true
-

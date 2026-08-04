@@ -12,16 +12,15 @@ class BadgeView extends StatefulWidget {
   @override
   BadgeViewState createState() => BadgeViewState();
 }
-  class BadgeViewState extends State<BadgeView> {
+
+class BadgeViewState extends State<BadgeView> {
   bool isCompleted = false;
   int requiredPathways = 0;
   int completedPathways = 0;
 
-  void initBadge() async{
+  void initBadge() async {
     if (mounted) {
-      setState(() {
-
-      });
+      setState(() {});
     }
   }
 
@@ -29,13 +28,15 @@ class BadgeView extends StatefulWidget {
   void didChangeDependencies() async {
     super.didChangeDependencies();
     String currentLanguage = Localizations.localeOf(context).languageCode;
-    requiredPathways = await widget.badge.getRequiredPathwaysCount(currentLanguage);
-    completedPathways = await widget.badge.getCompletedPathwaysCount(currentLanguage);
+    requiredPathways = await widget.badge.getRequiredPathwaysCount(
+      currentLanguage,
+    );
+    completedPathways = await widget.badge.getCompletedPathwaysCount(
+      currentLanguage,
+    );
     isCompleted = requiredPathways > 0 && completedPathways >= requiredPathways;
     if (mounted) {
-      setState(() {
-
-      });
+      setState(() {});
     }
   }
 
@@ -43,17 +44,14 @@ class BadgeView extends StatefulWidget {
   void initState() {
     super.initState();
     initBadge();
-    }
-
+  }
 
   @override
   Widget build(BuildContext context) {
-
-
     return ScreenScaffold(
-        title: widget.badge.name ?? context.l10n.unnamed,
-        navigationIndex: widget.navIndex,
-        child: widgetContent(context)
+      title: widget.badge.name ?? context.l10n.unnamed,
+      navigationIndex: widget.navIndex,
+      child: widgetContent(context),
     );
   }
 
@@ -65,50 +63,45 @@ class BadgeView extends StatefulWidget {
         children: [
           widget.badge.badgeimageurl != null
               ? Image.network(
-            widget.badge.badgeimageurl!,
-            fit: BoxFit.contain,
-            height: 200,
-          )
+                  widget.badge.badgeimageurl!,
+                  fit: BoxFit.contain,
+                  height: 200,
+                )
               : const Icon(Icons.emoji_events, size: 100),
           const SizedBox(height: 16),
           Text(
             widget.badge.name ?? context.l10n.unnamed,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
 
-            const SizedBox(height: 8),
-          if(isCompleted)
+          const SizedBox(height: 8),
+          if (isCompleted)
             Text(
               context.l10n.you_have_this_badge,
-              style: const TextStyle(
-                fontSize: 20,
-                color: Colors.green,
-              ),
+              style: const TextStyle(fontSize: 20, color: Colors.green),
             ),
-          if(!isCompleted)
+          if (!isCompleted)
             Text(
               context.l10n.badge_completion_status(
-                 completedPathways,
-                 requiredPathways,
+                completedPathways,
+                requiredPathways,
               ),
-              style: const TextStyle(
-                fontSize: 20,
-                color: Colors.blue,
-              ),
+              style: const TextStyle(fontSize: 20, color: Colors.blue),
             ),
           const SizedBox(height: 8),
           Text(
-            widget.badge.description ?? ((widget.badge.pathway!=null || widget.badge.name !=null) ? context.l10n.badge_description(widget.badge.pathway ?? widget.badge.name!) : context.l10n.badge),
+            widget.badge.description ??
+                ((widget.badge.pathway != null || widget.badge.name != null)
+                    ? context.l10n.badge_description(
+                        widget.badge.pathway ?? widget.badge.name!,
+                      )
+                    : context.l10n.badge),
             style: const TextStyle(fontSize: 16),
             textAlign: TextAlign.center,
           ),
         ],
       ),
-
     );
   }
 }

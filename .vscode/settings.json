@@ -1,0 +1,8 @@
+{
+	"dart.autoImportCompletions": true,
+	"java.configuration.updateBuildConfiguration": "disabled",
+	"java.import.gradle.enabled": false,
+	"jdk.serverVmOptions": [
+		"-Dproject.limitScanRoot=/Users/jleinone/git/empowerherproject"
+	]
+}

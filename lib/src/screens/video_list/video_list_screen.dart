@@ -33,8 +33,9 @@ class VideoListScreenState extends State<VideoListScreen> {
       if (kDebugMode || kProfileMode) {
         debugPrint('Storage updated, refreshing pathwayscreen');
       }
-      completedPathways =
-          await EcoUnityStorage(fileStorage).getCompletedPathways();
+      completedPathways = await EcoUnityStorage(
+        fileStorage,
+      ).getCompletedPathways();
     });
     super.initState();
     load();
@@ -52,14 +53,17 @@ class VideoListScreenState extends State<VideoListScreen> {
   List<WebPage> pathways = [];
   void load() async {
     // Get all web pages that have a pagecategory set
-    WebPageProvider webPageProvider =
-        Provider.of<WebPageProvider>(context, listen: false);
+    WebPageProvider webPageProvider = Provider.of<WebPageProvider>(
+      context,
+      listen: false,
+    );
 
     webPageProvider.getItems(pathwayLoadParameters).then((value) {
       webPageProvider.loadingStatus = DataLoadingStatus.loaded;
     });
-    completedPathways =
-        await EcoUnityStorage(fileStorage).getCompletedPathways();
+    completedPathways = await EcoUnityStorage(
+      fileStorage,
+    ).getCompletedPathways();
   }
 
   void _refresh() {
@@ -71,8 +75,9 @@ class VideoListScreenState extends State<VideoListScreen> {
   @override
   Widget build(BuildContext context) {
     String screenTitle = context.l10n.screenTitle_videos;
-    DataLoadingStatus loadingStatus =
-        Provider.of<WebPageProvider>(context).loadingStatus;
+    DataLoadingStatus loadingStatus = Provider.of<WebPageProvider>(
+      context,
+    ).loadingStatus;
     String? error;
     // if data is loaded, display the pathways
     if (loadingStatus == DataLoadingStatus.loaded) {
@@ -95,12 +100,12 @@ class VideoListScreenState extends State<VideoListScreen> {
                   itemCount: subPathways.length,
                   itemBuilder: (context, index) {
                     return videoCard(
-                        context,
-                        subPathways[index],
-                        isPathwayCompleted(
-                            subPathways[index], completedPathways),
-                        widget.navIndex,
-                        pathways: pageList);
+                      context,
+                      subPathways[index],
+                      isPathwayCompleted(subPathways[index], completedPathways),
+                      widget.navIndex,
+                      pathways: pageList,
+                    );
                   },
                 ),
                 // if no subpathways, display a message
@@ -131,8 +136,8 @@ class VideoListScreenState extends State<VideoListScreen> {
       title: screenTitle,
       navigationIndex: widget.navIndex,
       child: Center(
-          child:
-              error != null ? Text(error) : const CircularProgressIndicator()),
+        child: error != null ? Text(error) : const CircularProgressIndicator(),
+      ),
     );
   }
 }

@@ -11,28 +11,63 @@ class LanguageSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  // Create dropdown and get the options from AppLocalizations.supportedLocales
-    return DropdownButton(
-      hint: Text(context.l10n.select_language),
-      onChanged: (Locale? locale) async {
-        // Set the locale
-         Provider.of<LocaleProvider>(context, listen: false).setLocale(locale!);
-         // Language needs to be also saved to settings since the API uses the language
-         await Settings().setLanguage(locale.languageCode);
-         // Update app contents
-        if(context.mounted) {
-          loadAppData(context);
-          // pop the dialog
-          Navigator.of(context).pop();
-        }
-      },
-      items: AppLocalizations.supportedLocales.map((Locale locale) {
-        return DropdownMenuItem(
-          value: locale,
-          child: Text(context.l10n.locale(locale.toString())),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: AppLocalizations.supportedLocales.map((Locale locale) {
+        final Locale currentLocale =
+            Provider.of<LocaleProvider>(context).locale ??
+            Localizations.localeOf(context);
+        final bool isCurrent =
+            currentLocale.languageCode == locale.languageCode;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                Provider.of<LocaleProvider>(
+                  context,
+                  listen: false,
+                ).setLocale(locale);
+                await Settings().setLanguage(locale.languageCode);
+                if (context.mounted) {
+                  loadAppData(context);
+                  Navigator.of(context).pop();
+                }
+              },
+              icon: Text(_localeFlag(locale.languageCode)),
+              label: Text(context.l10n.locale(locale.toString())),
+              style: OutlinedButton.styleFrom(
+                backgroundColor: isCurrent
+                    ? Colors.blue.withValues(alpha: 0.1)
+                    : null,
+              ),
+            ),
+          ),
         );
       }).toList(),
     );
+  }
 
+  String _localeFlag(String languageCode) {
+    switch (languageCode) {
+      case 'de':
+        return '🇦🇹';
+      case 'en':
+        return '🇬🇧';
+      case 'fi':
+        return '🇫🇮';
+      case 'it':
+        return '🇮🇹';
+      case 'pl':
+        return '🇵🇱';
+      case 'pt':
+        return '🇵🇹';
+      case 'uk':
+        return '🇺🇦';
+      default:
+        return '🌐';
+    }
   }
 }

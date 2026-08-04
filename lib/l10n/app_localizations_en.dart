@@ -207,6 +207,8 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.selectLogic(language, {
       'en': 'English',
       'fi': 'Finnish',
+      'it': 'Italian',
+      'pt': 'Portuguese',
       'pl': 'Polish',
       'de': 'German',
       'uk': 'Ukrainian',
@@ -341,6 +343,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get references => 'References';
+
+  @override
   String get saving_data_failed => 'Saving data failed';
 
   @override
@@ -377,7 +382,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selected => 'Selected';
 
   @override
-  String get sendAnswer => 'Send answer';
+  String get sendAnswer => 'Save answer';
 
   @override
   String get server => 'Server';
@@ -398,6 +403,9 @@ class AppLocalizationsEn extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get start => 'Start';
 
   @override
   String get terms => 'Terms';

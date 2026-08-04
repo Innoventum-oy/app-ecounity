@@ -1,16 +1,14 @@
 {
   "@@locale": "fi",
+  "about": "Tietoja",
+  "age": "Ikä",
+  "account": "Tili",
+  "achievements": "Saavutukset",
+  "answer_saved": "Vastaus tallennettu",
+  "application_name": "Ecounity",
+  "attention": "Huomio",
+  "authenticating": "Autentikointi...",
   "badge": "Ansiomerkki",
-  "badge_awarded": "Uusi ansiomerkki ansaittu",
-  "@badge_awarded_congratulations": {
-    "description": "Ansiomerkki myönnetty -onnitteluviesti",
-    "placeholders": {
-      "badge": {
-        "type": "String"
-      }
-    }
-  },
-  "badge_awarded_congratulations": "Onneksi olkoon, olet ansainnut {badge} -ansiomerkin!",
   "@badge_completion_status": {
     "description": "Badge completion status",
     "placeholders": {
@@ -24,42 +22,18 @@
   },
   "badge_completion_status": "Olet suorittanut {completed} tähän ansiomerkkiin vaadittavista {required} oppimissisällöstä.",
   "badge_description": "Tämä ansiomerkki myönnetään, kun olet suorittanut kaikki oppitunnit ja haasteet {pathway} polulla.",
-  "confirm_deleting_account": "Oletko varma, että haluat poistaa tilisi?",
-  "delete_account": "Poista tili",
-  "errorViewNotFound": "Näkymää {view} ei löytynyt",
-  "select_language": "Valitse kieli",
-  "loading" : "Ladataan...",
-  "logout" : "Kirjaudu ulos",
-  "noChallengesFound": "Haasteita ei löytynyt",
-  "noContentFound": "Sisältöä ei löytynyt",
-  "noPathwaysFound": "Oppimissisältöjä ei löytynyt",
-  "noTranscriptAvailable": "Transkriptiä ei ole saatavilla",
-  "noVideosFound" : "Videoita ei löytynyt",
-  "noLessonsFound" : "Oppitunteja ei löytynyt",
-  "pathway" : "Oppimissisältö",
-  "pathway_already_completed": "Oppimissisältö on jo suoritettu",
-  "pathway_completed" : "Oppimissisältö suoritettu",
-  "sendAnswer" : "Lähetä vastaus",
-  "stage" : "Vaihe",
-  "@stageValue": {
-    "description": "Polun tilavaihtoehdot",
+  "button_accept": "Hyväksy",
+  "button_approve": "Hyväksy",
+  "badge_awarded": "Uusi ansiomerkki ansaittu",
+  "@badge_awarded_congratulations": {
+    "description": "Ansiomerkki myönnetty -onnitteluviesti",
     "placeholders": {
-      "item": {
+      "badge": {
         "type": "String"
       }
     }
   },
-  "stageValue": "{item,select, before{Ennen} during{Aikana} after{Jälkeen} other{Vaihe:{item}}}",
-  "about": "Tietoja",
-  "account": "Tili",
-  "achievements": "Saavutukset",
-  "age": "Ikä",
-  "answer_saved": "Vastaus tallennettu",
-  "application_name": "Ecounity",
-  "attention": "Huomio",
-  "authenticating": "Autentikointi...",
-  "button_accept": "Hyväksy",
-  "button_approve": "Hyväksy",
+  "badge_awarded_congratulations": "Onneksi olkoon, olet ansainnut {badge} -ansiomerkin!",
   "button_back": "Takaisin",
   "button_cancel": "Peruuta",
   "button_close": "Sulje",
@@ -86,7 +60,9 @@
   "choose_language": "Valitse kieli",
   "collected_badges": "Kerätyt merkit",
   "completed": "Suoritettu",
+  "confirm_deleting_account": "Oletko varma, että haluat poistaa tilisi?",
   "contact": "Ota yhteyttä",
+  "delete_account": "Poista tili",
   "email": "Sähköposti",
   "email_not_valid": "Annettu sähköpostiosoite ei ole kelvollinen",
   "email_or_phone_number": "Sähköposti tai puhelinnumero",
@@ -101,9 +77,18 @@
     }
   },
   "error": "Virhe: {error}",
-  "errors_in_form": "Täytä kaikki pakolliset kentät",
   "error_default": "Pyyntöä ei voitu suorittaa",
   "error_occurred": "Tapahtui virhe",
+  "@errorViewNotFound": {
+    "description": "Error message",
+    "placeholders": {
+      "view": {
+        "example": "Home",
+        "type": "String"
+      }
+    }
+  },
+  "errorViewNotFound": "Näkymää {view} ei löytynyt",
   "@field_required": {
     "description": "Pakollinen kenttä",
     "placeholders": {
@@ -112,15 +97,16 @@
       }
     }
   },
+  "errors_in_form": "Täytä kaikki pakolliset kentät",
   "field_required": "Kenttä {field} on pakollinen",
   "firstName": "Etunimi",
-  "funding_disclaimer": "Rahoitettu Euroopan unionin toimesta. Kirjoittajien esittämät näkemykset ja mielipiteet ovat kuitenkin vain heidän omiaan eivätkä välttämättä heijasta Euroopan unionin tai Euroopan koulutus- ja kulttuuriviraston (EACEA) näkemyksiä. Euroopan unioni tai EACEA eivät ole vastuussa niistä.",
+  "funding_disclaimer": "Euroopan unionin rahoittama. Esitetyt näkemykset ja mielipiteet ovat ainoastaan tämän tekstin laatijoiden näkemyksiä eivätkä välttämättä vastaa Euroopan unionin tai Euroopan koulutuksen ja kulttuurin toimeenpanovirasto (EACEA) kantaa. Euroopan unioni ja EACEA eivät ole vastuussa niistä.",
   "great": "Hienoa",
   "home": "Koti",
   "introduction": "Johdanto",
   "language": "Kieli",
-  "lastName": "Sukunimi",
-  "locale": "{language,select, fi{Suomi} en{Englanti} pl{Puola} de{Saksa} uk{Ukraina} ro{Romania} es{Espanja} other{Kieli:{language}}}",
+  "select_language": "Valitse kieli",
+  "locale": "{language,select, fi{Suomi} en{Englanti} it{Italia} pt{Portugali} pl{Puola} de{Saksa} uk{Ukraina} ro{Romanian} es{Spanish} other{Kieli:{language}}}",
   "@locale": {
     "description": "Locale",
     "placeholders": {
@@ -129,8 +115,11 @@
       }
     }
   },
+  "lastName": "Sukunimi",
+  "loading": "Ladataan...",
   "login": "Kirjaudu sisään",
   "login_failed": "Kirjautuminen epäonnistui",
+  "logout": "Kirjaudu ulos",
   "logout_confirmation": "Oletko varma, että haluat kirjautua ulos?",
   "markAsCompleted": "Merkitse suoritetuksi",
   "@navigation_item": {
@@ -142,19 +131,19 @@
     }
   },
   "navigation_item": "{item, select, home{Koti} pathways{Polut} challenges{Haasteet} videolist{Videot} selfReflectionHub{Itsearviointikeskus} lessons{Oppitunnit} modules{Moduulit} resources{Resurssit} other{Valikko:{item}}}",
-  "@navitem": {
-    "description": "Navigaatio",
-    "placeholders": {
-      "item": {
-        "type": "String"
-      }
-    }
-  },
-  "navitem": "{item, select, dashboard{Etusivu} videolist{Videot} challenges{Haasteet} selfReflectionHub{Oma kehitys} profile{Profiili} settings{Asetukset} about{Tietoja} privacy{Tietosuoja} terms{Käyttöehdot} contact{Ota yhteyttä} logout{Kirjaudu ulos} other{{item}}}",
   "next": "Seuraava",
   "noBadgesFound": "Ansiomerkkejä ei löytynyt",
+  "noChallengesFound": "Haasteita ei löytynyt",
+  "noContentFound": "Sisältöä ei löytynyt",
+  "noPathwaysFound": "Oppimissisältöjä ei löytynyt",
+  "noTranscriptAvailable": "Transkriptiä ei ole saatavilla",
+  "noVideosFound": "Videoita ei löytynyt",
+  "noLessonsFound": "Oppitunteja ei löytynyt",
   "page_content": "Sivun sisältö",
   "password": "Salasana",
+  "pathway": "Oppimissisältö",
+  "pathway_already_completed": "Oppimissisältö on jo suoritettu",
+  "pathway_completed": "Oppimissisältö suoritettu",
   "phone": "Puhelin",
   "phone_or_email": "Puhelinnumero tai sähköpostiosoite",
   "please_complete_form_properly": "Täytä lomake oikein",
@@ -165,7 +154,6 @@
   "privacy": "Tietosuoja",
   "privacy_policy": "Tietosuojakäytäntö",
   "profile": "Profiili",
-  "quiz_not_passed": "Et läpäissyt testiä",
   "register": "Rekisteröidy",
   "registration_failed": "Rekisteröinti epäonnistui",
   "registration_successful": "Rekisteröinti onnistui",
@@ -178,7 +166,9 @@
     }
   },
   "registration_successful_message": "Tervetuloa Ecounityiin {firstName}!",
+  "references": "Viitteet",
   "saving_data_failed": "Tietojen tallennus epäonnistui",
+  "quiz_not_passed": "Et läpäissyt testiä",
   "screenTitle_challenges": "Haasteet",
   "screenTitle_home": "Koti",
   "screenTitle_pathways": "Polut",
@@ -187,19 +177,30 @@
   "screenTitle_lessons": "Oppitunnit",
   "screenTitle_modules": "Moduulit",
   "screenTitle_resources": "Resurssit",
-  "server": "Palvelin",
   "select": "Valitse",
   "selected": "Valittu",
+  "sendAnswer": "Tallenna vastaus",
+  "server": "Palvelin",
   "settings": "Asetukset",
+  "stage": "Vaihe",
+  "@stageValue": {
+    "description": "Polun tilavaihtoehdot",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "stageValue": "{item,select, before{Ennen} during{Aikana} after{Jälkeen} other{Vaihe:{item}}}",
+  "start": "Aloita",
   "terms": "Käyttöehdot",
   "unnamed": "Nimetön",
+  "view_introduction": "Johdanto",
   "you_have_this_badge": "Sinulla on tämä merkki",
   "your_password": "Salasanasi",
-  "view_introduction": "Johdanto",
   "view_brochure": "Katso esite",
   "welcome_title": "Tervetuloa Ecounity-sovellukseen - porttiisi digitaaliseen oppimiseen, inspiraatioon ja yrittäjähenkiseen kasvuun.",
   "login_introduction_text": "Tutustu käänteisen luokkahuoneen mikro-oppimisresursseihin, videoihin ja menestystarinoihin käytännöllisillä työkaluilla, jotka täydentävät Ecounity-opetussuunnitelmaa ja vahvistavat sosiaalisen yrittäjyyden taitoja.",
-  "srh_title": "Itsearviointikeskus",
   "srh_description": "Käytä näitä kysymyksiä pohdinnan aiheena.",
   "srh_what_was_most_impactful_for_me": "Mikä oli minulle vaikuttavinta?",
   "srh_what_will_i_put_into_practice": "Mitä aion laittaa käytäntöön?",
@@ -208,13 +209,13 @@
   "no_modules_found": "Moduuleja ei löytynyt.",
   "no_contents_found": "Sisältöjä ei löytynyt.",
   "no_resources_found": "Resursseja ei löytynyt.",
-    "no_images_found": "Kuvia ei löytynyt.",
-    "links": "Linkit",
-    "refresh": "Päivitä",
-    "cache_cleared": "Välimuisti tyhjennetty. Ole hyvä ja lataa sivu uudelleen.",
-    "module_completed": "Moduuli suoritettu",
-    "mark_as_completed": "Merkitse suoritetuksi",
-      "mark_as_not_completed": "Merkitse suorittamattomaksi",
+  "no_images_found": "Kuvia ei löytynyt.",
+  "links": "Linkit",
+  "refresh": "Päivitä",
+  "cache_cleared": "Välimuisti tyhjennetty. Ole hyvä ja lataa sivu uudelleen.",
+  "module_completed": "Moduuli suoritettu",
+  "mark_as_completed": "Merkitse suoritetuksi",
+  "mark_as_not_completed": "Merkitse suorittamattomaksi",
   "no_image_available": "Kuvaa ei ole saatavilla",
   "no_title": "Ei otsikkoa",
   "items_matched": "Kohteita yhdistetty",
@@ -257,5 +258,5 @@
   "you_have_completed_all_learning_contents": "Olet suorittanut kaikki oppimissisällöt.",
   "writeAnswerHere": "Kirjoita vastauksesi tähän.",
   "fieldCannotBeEmpty": "Tätä kenttää ei voi jättää tyhjäksi.",
-    "clear_answers": "Tyhjennä vastaukset"
+  "clear_answers": "Tyhjennä vastaukset"
 }

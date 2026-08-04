@@ -7,10 +7,12 @@ import '../../../../l10n/app_localizations_extension.dart';
 import '../../../objects/pathway.dart';
 import '../../../objects/pathway_status_item.dart';
 import '../../../providers/selected_pathway_notifier.dart';
+import '../../../util/ecounity_storage.dart';
 import '../../../util/image_from_url.dart';
 import '../../../util/navigation_item.dart';
 import '../../../util/router.dart';
 import '../../../util/settings.dart';
+import 'dashboard_loading_indicator.dart';
 
 class NextPathway extends StatefulWidget {
   const NextPathway({super.key});
@@ -32,6 +34,7 @@ class NextPathwayState extends State<NextPathway> {
   bool hasResolvedSelection = false;
   bool _isLoadingContent = false;
   bool _hasLoadedCandidates = false;
+  String _currentLocaleLanguage = '';
 
   @override
   void initState() {
@@ -41,6 +44,9 @@ class NextPathwayState extends State<NextPathway> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final String currentLocaleLanguage = Localizations.localeOf(
+      context,
+    ).languageCode;
     selectedPathwayNotifier = Provider.of<SelectedPathwayNotifier>(
       context,
       listen: false,
@@ -57,10 +63,21 @@ class NextPathwayState extends State<NextPathway> {
       fileStorage?.addListener(_handleStorageUpdated);
     }
 
+    final bool localeChanged =
+        currentLocaleLanguage.isNotEmpty &&
+        _currentLocaleLanguage != currentLocaleLanguage;
+
     if (!_isLoadingContent &&
-        !hasResolvedSelection &&
-        sortedPathwayOptions.isEmpty) {
+        (!_hasLoadedCandidates ||
+            localeChanged ||
+            sortedPathwayOptions.isEmpty)) {
+      _currentLocaleLanguage = currentLocaleLanguage;
       load();
+      return;
+    }
+
+    if (localeChanged) {
+      _currentLocaleLanguage = currentLocaleLanguage;
     }
   }
 
@@ -127,13 +144,11 @@ class NextPathwayState extends State<NextPathway> {
 
       if (currentLanguage != null) {
         for (WebPage page in allPages) {
-          // Exclude pages that are not available in the selected language
-          if (page.contentlanguages != null &&
-              page.contentlanguages!.isNotEmpty &&
-              !page.contentlanguages!.contains(currentLanguage)) {
+          if (!_isAvailableInLanguage(page, currentLanguage)) {
             continue;
           }
 
+          // Exclude pages that are not available in the selected language
           // Place pages in their respective categories
           if (page.isSubModule) {
             subModules.add(page);
@@ -179,6 +194,61 @@ class NextPathwayState extends State<NextPathway> {
     }
   }
 
+  bool _isAvailableInLanguage(WebPage page, String currentLanguage) {
+    final String normalizedLanguage = _normalizeLanguageCode(currentLanguage);
+    if (normalizedLanguage.isEmpty) {
+      return true;
+    }
+
+    final List<String> availableLanguages = _normalizeLanguageList(
+      page.getValue('contentlanguages'),
+    );
+    if (availableLanguages.isNotEmpty) {
+      return availableLanguages.contains(normalizedLanguage);
+    }
+
+    final String legacyLanguage = _extractLanguageCode(
+      page.getValue('language'),
+    );
+    if (legacyLanguage.isNotEmpty) {
+      return legacyLanguage == normalizedLanguage;
+    }
+
+    return true;
+  }
+
+  List<String> _normalizeLanguageList(dynamic raw) {
+    if (raw is String) {
+      return raw
+          .replaceAll(' ', '')
+          .split(',')
+          .map(_normalizeLanguageCode)
+          .where((lang) => lang.isNotEmpty)
+          .toList();
+    }
+    if (raw is List) {
+      return raw
+          .whereType<dynamic>()
+          .map((item) => '$item')
+          .map(_normalizeLanguageCode)
+          .where((lang) => lang.isNotEmpty)
+          .toList();
+    }
+    return [];
+  }
+
+  String _extractLanguageCode(dynamic value) {
+    if (value == null) {
+      return '';
+    }
+
+    return _normalizeLanguageCode(value.toString());
+  }
+
+  String _normalizeLanguageCode(String value) {
+    return value.split(RegExp(r'[_-]')).first.toLowerCase().trim();
+  }
+
   Future<void> refreshSelectedItem() async {
     if (fileStorage == null || !_hasLoadedCandidates) {
       return;
@@ -209,13 +279,7 @@ class NextPathwayState extends State<NextPathway> {
 
   Future<List<PathwayStatusItem>?> loadStatusItems() async {
     return fileStorage != null
-        ? (await fileStorage!.getObject(
-                    'completedPathways',
-                    boxName: 'userData',
-                  )
-                  as List<dynamic>?)
-              ?.map((item) => item as PathwayStatusItem)
-              .toList()
+        ? EcoUnityStorage(fileStorage!).getCompletedPathways()
         : null;
   }
 
@@ -239,6 +303,7 @@ class NextPathwayState extends State<NextPathway> {
                         );
 
                   return InkWell(
+                    key: const ValueKey('screenshot-next-suggestion-card'),
                     onTap: () {
                       AppRouter.navigate(
                         context,
@@ -265,6 +330,9 @@ class NextPathwayState extends State<NextPathway> {
                                   return ImageFromUrl.get(
                                     imageUrl,
                                     fillContainer: true,
+                                    loadedKey: const ValueKey(
+                                      'screenshot-next-suggestion-cover-loaded',
+                                    ),
                                   );
                                 }
 
@@ -349,22 +417,7 @@ class NextPathwayState extends State<NextPathway> {
                 );
               },
             )
-          : Column(
-              children: [
-                const SizedBox(height: 32),
-                const Center(
-                  child: SizedBox(
-                    width: 50,
-                    height: 50,
-                    child: CircularProgressIndicator(),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 10, bottom: 10),
-                  child: Text(context.l10n.loading),
-                ),
-              ],
-            ),
+          : const Center(child: DashboardLoadingIndicator()),
     );
   }
 }

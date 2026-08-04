@@ -49,33 +49,44 @@ class SlidesCarouselState extends State<SlidesCarousel> {
       var image = widget.images[i];
       List<String>? externalLinks =
           image.externalLinks is String && image.externalLinks!.isNotEmpty
-              ? image.externalLinks!.split(';')
-              : null;
+          ? image.externalLinks!.split(';')
+          : null;
 
       Widget imageWidget = Container(
-          width: double.infinity,
-          margin: const EdgeInsets.symmetric(horizontal: 5),
-          child: Card(
-              elevation: 4,
-              child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: ImageFromUrl.get(image.imageUrl!,
-                      fillContainer: false))));
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 5),
+        child: Card(
+          elevation: 4,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: ImageFromUrl.get(image.imageUrl!, fillContainer: false),
+          ),
+        ),
+      );
       imageWidgets.add(imageWidget);
 
       if (externalLinks != null && externalLinks.isNotEmpty) {
         linkWidgets.addAll(
-            List<Widget>.generate(externalLinks.length, (int linkIndex) {
-          return Padding(
-              padding:
-                  const EdgeInsets.only(left: 0, right: 0, top: 5, bottom: 5),
+          List<Widget>.generate(externalLinks.length, (int linkIndex) {
+            return Padding(
+              padding: const EdgeInsets.only(
+                left: 0,
+                right: 0,
+                top: 5,
+                bottom: 5,
+              ),
               child: ElevatedButton(
-                  onPressed: () {
-                    goToUrl(externalLinks[linkIndex]);
-                  },
-                  child: Text(externalLinks[linkIndex],
-                      style: const TextStyle(color: Colors.orange))));
-        }));
+                onPressed: () {
+                  goToUrl(externalLinks[linkIndex]);
+                },
+                child: Text(
+                  externalLinks[linkIndex],
+                  style: const TextStyle(color: Colors.orange),
+                ),
+              ),
+            );
+          }),
+        );
       }
     }
 
@@ -94,7 +105,7 @@ class SlidesCarouselState extends State<SlidesCarousel> {
   @override
   Widget build(BuildContext context) {
     if (widget.images.isEmpty) {
-      return Center(child: Text(AppLocalizations.of(context)!.no_images_found));
+      return Center(child: Text(AppLocalizations.of(context).no_images_found));
     }
 
     if (loaded) {
@@ -143,13 +154,21 @@ class SlidesCarouselState extends State<SlidesCarousel> {
       ];
 
       if (linkWidgets.isNotEmpty) {
-        columnContents.add(Padding(
-            padding:
-                const EdgeInsets.only(left: 0, right: 0, top: 10, bottom: 10),
-            child: Text(AppLocalizations.of(context)!.links,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.bold))));
+        columnContents.add(
+          Padding(
+            padding: const EdgeInsets.only(
+              left: 0,
+              right: 0,
+              top: 10,
+              bottom: 10,
+            ),
+            child: Text(
+              AppLocalizations.of(context).links,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+        );
 
         columnContents.addAll(linkWidgets);
       }

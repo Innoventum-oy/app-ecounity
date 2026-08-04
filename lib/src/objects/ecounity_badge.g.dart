@@ -8,7 +8,7 @@ part of 'ecounity_badge.dart';
 
 class EcoUnityBadgeAdapter extends TypeAdapter<EcoUnityBadge> {
   @override
-  final typeId = 205;
+  final typeId = 1205;
 
   @override
   EcoUnityBadge read(BinaryReader reader) {

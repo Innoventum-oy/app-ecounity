@@ -185,7 +185,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get funding_disclaimer =>
-      'Rahoitettu Euroopan unionin toimesta. Kirjoittajien esittämät näkemykset ja mielipiteet ovat kuitenkin vain heidän omiaan eivätkä välttämättä heijasta Euroopan unionin tai Euroopan koulutus- ja kulttuuriviraston (EACEA) näkemyksiä. Euroopan unioni tai EACEA eivät ole vastuussa niistä.';
+      'Euroopan unionin rahoittama. Esitetyt näkemykset ja mielipiteet ovat ainoastaan tämän tekstin laatijoiden näkemyksiä eivätkä välttämättä vastaa Euroopan unionin tai Euroopan koulutuksen ja kulttuurin toimeenpanovirasto (EACEA) kantaa. Euroopan unioni ja EACEA eivät ole vastuussa niistä.';
 
   @override
   String get great => 'Hienoa';
@@ -207,11 +207,13 @@ class AppLocalizationsFi extends AppLocalizations {
     String _temp0 = intl.Intl.selectLogic(language, {
       'fi': 'Suomi',
       'en': 'Englanti',
+      'it': 'Italia',
+      'pt': 'Portugali',
       'pl': 'Puola',
       'de': 'Saksa',
       'uk': 'Ukraina',
-      'ro': 'Romania',
-      'es': 'Espanja',
+      'ro': 'Romanian',
+      'es': 'Spanish',
       'other': 'Kieli:$language',
     });
     return '$_temp0';
@@ -340,6 +342,9 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
+  String get references => 'Viitteet';
+
+  @override
   String get saving_data_failed => 'Tietojen tallennus epäonnistui';
 
   @override
@@ -376,7 +381,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get selected => 'Valittu';
 
   @override
-  String get sendAnswer => 'Lähetä vastaus';
+  String get sendAnswer => 'Tallenna vastaus';
 
   @override
   String get server => 'Palvelin';
@@ -397,6 +402,9 @@ class AppLocalizationsFi extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get start => 'Aloita';
 
   @override
   String get terms => 'Käyttöehdot';

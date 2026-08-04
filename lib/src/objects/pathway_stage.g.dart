@@ -8,7 +8,7 @@ part of 'pathway_stage.dart';
 
 class PathwayStageAdapter extends TypeAdapter<PathwayStage> {
   @override
-  final typeId = 203;
+  final typeId = 1203;
 
   @override
   PathwayStage read(BinaryReader reader) {

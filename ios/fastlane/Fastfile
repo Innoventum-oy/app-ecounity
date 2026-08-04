@@ -1,0 +1,842 @@
+require "fileutils"
+require "json"
+require "plist"
+require "shellwords"
+require "spaceship"
+require "tmpdir"
+
+default_platform(:ios)
+
+ENV["FASTLANE_SKIP_UPDATE_CHECK"] = "1"
+ENV["FASTLANE_HIDE_CHANGELOG"] = "1"
+ENV["LC_ALL"] ||= "en_US.UTF-8"
+ENV["LANG"] ||= "en_US.UTF-8"
+ENV["DELIVER_NUMBER_OF_THREADS"] ||= "1"
+ENV["FL_NUMBER_OF_THREADS"] ||= "1"
+ENV["SPACESHIP_SCREENSHOT_UPLOAD_TIMEOUT"] ||= "3"
+
+opt_out_usage
+
+APP_STORE_LOCALES = {
+  "en" => "en-GB",
+  "en-GB" => "en-GB",
+  "en-UK" => "en-GB",
+  "de" => "de-DE",
+  "de-DE" => "de-DE",
+  "es" => "es-ES",
+  "es-ES" => "es-ES",
+  "fi" => "fi",
+  "fi-FI" => "fi",
+  "it" => "it",
+  "it-IT" => "it",
+  "pl" => "pl",
+  "pl-PL" => "pl",
+  "pt" => "pt-PT",
+  "pt-PT" => "pt-PT",
+  "ro" => "ro",
+  "ro-RO" => "ro",
+  "uk" => "uk",
+}.freeze
+
+APP_STORE_METADATA_LOCALES = APP_STORE_LOCALES.values.uniq.freeze
+
+APP_STORE_METADATA_LIMITS = {
+  "promotional_text.txt" => 170,
+  "keywords.txt" => 100,
+  "support_url.txt" => 500,
+  "description.txt" => 4_000,
+}.freeze
+
+APP_STORE_ROOT_METADATA_LIMITS = {
+  "copyright.txt" => 100,
+}.freeze
+
+IOS_SCREENSHOT_TARGET_NAMES = %w[iphone_65 ipad_13].freeze
+
+def project_root
+  File.expand_path("../..", __dir__)
+end
+
+def flutter_bin
+  ENV["FLUTTER_BIN"] || "flutter"
+end
+
+def shell_join(parts)
+  parts.compact.map(&:to_s).map(&:shellescape).join(" ")
+end
+
+def run_at_project_root(command)
+  sh("cd #{project_root.shellescape} && #{command}")
+end
+
+def truthy?(value)
+  %w[1 true yes y].include?(value.to_s.downcase)
+end
+
+def env_value(name)
+  value = ENV[name]
+  return nil if value.to_s.strip.empty?
+
+  value
+end
+
+def app_identifier
+  env_value("APP_IDENTIFIER") || "app.ecounity.ecounity"
+end
+
+def developer_team_id
+  env_value("DEVELOPMENT_TEAM_ID") || env_value("FASTLANE_TEAM_ID") || "6GB259Z94P"
+end
+
+def flutter_build_args(options)
+  args = []
+  args << "--build-name=#{options[:build_name]}" if options[:build_name]
+  args << "--build-number=#{options[:build_number]}" if options[:build_number]
+  args << "--dart-define-from-file=#{ENV["DART_DEFINE_FILE"]}" if ENV["DART_DEFINE_FILE"]
+  args
+end
+
+def screenshot_locales(options)
+  (options[:locales] || ENV["SCREENSHOT_LOCALES"] || "en,de,es,fi,it,pl,pt,ro,uk")
+    .split(",")
+    .map(&:strip)
+    .reject(&:empty?)
+end
+
+def screenshot_target_names(options)
+  (options[:targets] || ENV["SCREENSHOT_TARGETS"] || "iphone_65,ipad_13")
+    .split(",")
+    .map(&:strip)
+    .reject(&:empty?)
+end
+
+def screenshot_drive_retries(options)
+  (options[:drive_retries] || ENV["SCREENSHOT_DRIVE_RETRIES"] || "1").to_i
+end
+
+def screenshot_upload_retries(options)
+  (options[:upload_retries] || ENV["SCREENSHOT_UPLOAD_RETRIES"] || "2").to_i
+end
+
+def screenshot_upload_retry_delay(options)
+  (options[:upload_retry_delay] || ENV["SCREENSHOT_UPLOAD_RETRY_DELAY"] || "90").to_i
+end
+
+def app_store_locale(locale)
+  normalized = locale.to_s.strip.tr("_", "-")
+  APP_STORE_LOCALES.fetch(normalized, normalized)
+end
+
+def app_store_metadata_path
+  File.join("fastlane", "metadata", "ios")
+end
+
+def app_store_metadata_root
+  File.join(__dir__, "metadata", "ios")
+end
+
+def app_store_metadata_locales(options)
+  configured = options[:metadata_locales] || ENV["APP_STORE_METADATA_LOCALES"]
+  return APP_STORE_METADATA_LOCALES if configured.to_s.strip.empty?
+
+  configured
+    .split(",")
+    .map { |locale| app_store_locale(locale) }
+    .reject(&:empty?)
+end
+
+def app_store_metadata_file_path(locale, file_name)
+  File.join(app_store_metadata_root, locale, file_name)
+end
+
+def selected_app_store_metadata_path(options)
+  selected_locales = app_store_metadata_locales(options)
+  return app_store_metadata_path if selected_locales.sort == APP_STORE_METADATA_LOCALES.sort
+
+  temp_root = Dir.mktmpdir(["ecounity-ios-metadata-"])
+  temp_metadata_path = File.join(temp_root, "metadata")
+  FileUtils.mkdir_p(temp_metadata_path)
+  APP_STORE_ROOT_METADATA_LIMITS.each_key do |file_name|
+    FileUtils.cp(
+      File.join(app_store_metadata_root, file_name),
+      File.join(temp_metadata_path, file_name)
+    )
+  end
+
+  selected_locales.each do |locale|
+    destination = File.join(temp_metadata_path, locale)
+    FileUtils.mkdir_p(destination)
+    APP_STORE_METADATA_LIMITS.each_key do |file_name|
+      FileUtils.cp(
+        app_store_metadata_file_path(locale, file_name),
+        File.join(destination, file_name)
+      )
+    end
+  end
+  temp_metadata_path
+end
+
+def cleanup_selected_app_store_metadata_path(path)
+  return if path == app_store_metadata_path
+
+  FileUtils.rm_rf(File.dirname(path))
+end
+
+def app_store_metadata_size(value, file_name)
+  return value.bytesize if file_name == "keywords.txt"
+
+  value.length
+end
+
+def app_store_metadata_unit(file_name)
+  file_name == "keywords.txt" ? "bytes" : "characters"
+end
+
+def ensure_app_store_metadata_file!(path, file_name, limit)
+  UI.user_error!("Missing App Store metadata file: #{path}") unless File.exist?(path)
+
+  value = File.read(path, encoding: "UTF-8").strip
+  UI.user_error!("App Store metadata file is empty: #{path}") if value.empty?
+
+  size = app_store_metadata_size(value, file_name)
+  return unless size > limit
+
+  UI.user_error!(
+    "#{path} is #{size} #{app_store_metadata_unit(file_name)}, " \
+    "but App Store Connect allows at most #{limit}."
+  )
+end
+
+def ensure_app_store_metadata!(options)
+  APP_STORE_ROOT_METADATA_LIMITS.each do |file_name, limit|
+    ensure_app_store_metadata_file!(
+      File.join(app_store_metadata_root, file_name),
+      file_name,
+      limit
+    )
+  end
+
+  app_store_metadata_locales(options).each do |locale|
+    APP_STORE_METADATA_LIMITS.each do |file_name, limit|
+      ensure_app_store_metadata_file!(
+        app_store_metadata_file_path(locale, file_name),
+        file_name,
+        limit
+      )
+    end
+  end
+
+  UI.message("Validated App Store metadata for #{app_store_metadata_locales(options).join(', ')}.")
+end
+
+def upload_app_store_metadata!(options)
+  ensure_app_store_metadata!(options)
+  metadata_path = selected_app_store_metadata_path(options)
+
+  begin
+    upload_to_app_store(
+      {
+        app_identifier: app_identifier,
+        metadata_path: metadata_path,
+        skip_binary_upload: true,
+        skip_metadata: false,
+        skip_screenshots: true,
+        submit_for_review: false,
+        run_precheck_before_submit: false,
+        force: truthy?(options[:force]),
+      }.merge(app_store_credentials!)
+    )
+  ensure
+    cleanup_selected_app_store_metadata_path(metadata_path)
+  end
+end
+
+def screenshot_targets(options)
+  screenshot_target_names(options).map do |target|
+    case target
+    when "iphone", "iphone_65"
+      {
+        name: "iphone_65",
+        requested_device: options[:iphone_device] ||
+          options[:device] ||
+          ENV["SCREENSHOT_IPHONE_DEVICE"] ||
+          ENV["SCREENSHOT_DEVICE"],
+        simulator_name: "Ecounity iPhone 6.5",
+        device_type: "com.apple.CoreSimulator.SimDeviceType.iPhone-11-Pro-Max",
+      }
+    when "ipad", "ipad_13"
+      {
+        name: "ipad_13",
+        requested_device: options[:ipad_device] ||
+          ENV["SCREENSHOT_IPAD_DEVICE"],
+        simulator_name: "Ecounity iPad 13",
+        device_type: "com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M4-8GB",
+      }
+    else
+      UI.user_error!("Unknown screenshot target '#{target}'. Use iphone_65 and/or ipad_13.")
+    end
+  end
+end
+
+def latest_ios_runtime_for(device_type)
+  runtimes = JSON.parse(`xcrun simctl list runtimes --json`).fetch("runtimes")
+  candidates = runtimes.select do |runtime|
+    runtime["isAvailable"] &&
+      runtime["platform"] == "iOS" &&
+      runtime.fetch("supportedDeviceTypes", []).any? { |type| type["identifier"] == device_type }
+  end
+
+  UI.user_error!("No available iOS simulator runtime supports #{device_type}.") if candidates.empty?
+
+  candidates.max_by { |runtime| Gem::Version.new(runtime["version"]) }.fetch("identifier")
+end
+
+def simulator_udid_for(target)
+  name = target.fetch(:simulator_name)
+  device_type = target.fetch(:device_type)
+  devices_by_runtime = JSON.parse(`xcrun simctl list devices --json`).fetch("devices")
+  existing = devices_by_runtime.values.flatten.find do |device|
+    device["name"] == name &&
+      device["isAvailable"] != false &&
+      (!device.key?("deviceTypeIdentifier") || device["deviceTypeIdentifier"] == device_type)
+  end
+
+  return existing.fetch("udid") if existing
+
+  runtime = latest_ios_runtime_for(device_type)
+  UI.message("Creating #{name} simulator for #{target.fetch(:name)} screenshots")
+  sh("xcrun simctl create #{name.shellescape} #{device_type.shellescape} #{runtime.shellescape}").strip
+end
+
+def boot_simulator(device)
+  system("xcrun simctl boot #{device.shellescape} >/dev/null 2>&1")
+  sh("xcrun simctl bootstatus #{device.shellescape} -b")
+end
+
+def run_screenshot_drive(command, options)
+  attempts = screenshot_drive_retries(options) + 1
+  attempt = 1
+
+  begin
+    run_at_project_root(command)
+  rescue => error
+    raise error if attempt >= attempts
+
+    UI.important("Flutter screenshot drive failed on attempt #{attempt}/#{attempts}; retrying once.")
+    UI.verbose(error.message)
+    attempt += 1
+    retry
+  end
+end
+
+def capture_flutter_screenshots(options)
+  output_root = File.join(project_root, "build/fastlane/raw/ios")
+  FileUtils.rm_rf(output_root)
+
+  screenshot_targets(options).each do |target|
+    output_dir = File.join(output_root, target[:name])
+    device = target[:requested_device] || simulator_udid_for(target)
+    boot_simulator(device) if device
+
+    screenshot_locales(options).each do |locale|
+      args = [
+        flutter_bin,
+        "drive",
+        "--driver=test_driver/integration_test.dart",
+        "--target=integration_test/store_screenshots_test.dart",
+        "--dart-define=SCREENSHOT_MODE=true",
+        "--dart-define=SCREENSHOT_LOCALE=#{locale}",
+      ]
+      args += ["-d", device] if device
+
+      env = [
+        "SCREENSHOT_OUTPUT_DIR=#{output_dir.shellescape}",
+        "SCREENSHOT_LOCALE=#{locale.shellescape}",
+        "SCREENSHOT_PLATFORM=ios",
+        "SCREENSHOT_TARGET=#{target[:name].shellescape}",
+      ].join(" ")
+
+      run_screenshot_drive("#{env} #{shell_join(args)}", options)
+    end
+  end
+end
+
+def prepare_store_screenshots(options)
+  args = [
+    "dart",
+    "tool/prepare_store_screenshots.dart",
+    "--platform",
+    "ios",
+    "--raw-dir",
+    "build/fastlane/raw/ios",
+    "--ios-targets",
+    screenshot_targets(options).map { |target| target[:name] }.join(","),
+    "--locales",
+    screenshot_locales(options).join(","),
+    "--clean",
+  ]
+
+  run_at_project_root(shell_join(args))
+end
+
+def screenshots_root
+  File.join(__dir__, "screenshots")
+end
+
+def screenshot_pngs
+  Dir[File.join(screenshots_root, "*", "*.png")].sort
+end
+
+def png_chunk?(path, chunk_name)
+  File.open(path, "rb") do |file|
+    file.read(8)
+
+    loop do
+      length_bytes = file.read(4)
+      return false unless length_bytes && length_bytes.bytesize == 4
+
+      length = length_bytes.unpack1("N")
+      type = file.read(4)
+      return false unless type && type.bytesize == 4
+      return true if type == chunk_name
+
+      file.seek(length + 4, IO::SEEK_CUR)
+    end
+  end
+end
+
+def png_info(path)
+  header = File.binread(path, 26)
+  signature = "\x89PNG\r\n\x1A\n".b
+  UI.user_error!("#{path} is not a PNG screenshot.") unless header.start_with?(signature)
+
+  {
+    width: header.byteslice(16, 4).unpack1("N"),
+    height: header.byteslice(20, 4).unpack1("N"),
+    bit_depth: header.getbyte(24),
+    color_type: header.getbyte(25),
+  }
+end
+
+def validate_png_encoding!(files)
+  invalid = files.select do |path|
+    info = png_info(path)
+    has_alpha_channel = [4, 6].include?(info[:color_type])
+    has_transparency_chunk = png_chunk?(path, "tRNS")
+    info[:bit_depth] != 8 || info[:color_type] != 2 || has_alpha_channel || has_transparency_chunk
+  end
+
+  return if invalid.empty?
+
+  examples = invalid.first(8).map do |path|
+    info = png_info(path)
+    "#{path.sub("#{__dir__}/", "")}: bit_depth=#{info[:bit_depth]}, color_type=#{info[:color_type]}"
+  end
+  UI.user_error!(
+    "Found iOS screenshots that are not opaque 8-bit RGB PNGs. App Store Connect rejects alpha channels/transparency.\n" \
+    "Run `bundle exec fastlane screenshots` or `dart tool/prepare_store_screenshots.dart --platform ios --raw-dir build/fastlane/raw/ios --ios-targets iphone_65,ipad_13 --locales en,de,es,fi,it,pl,pt,ro,uk --clean`.\n" \
+    "#{examples.join("\n")}"
+  )
+end
+
+def validate_ios_store_screenshots!(targets)
+  files = screenshot_pngs
+  UI.user_error!("No iOS screenshots found in fastlane/screenshots. Run `bundle exec fastlane screenshots` first.") if files.empty?
+
+  prefixes = targets.map { |target| "#{target.fetch(:name)}_" }.uniq
+  known_prefixes = IOS_SCREENSHOT_TARGET_NAMES.map { |target| "#{target}_" }
+  stale_files = files.reject do |path|
+    known_prefixes.any? { |prefix| File.basename(path).start_with?(prefix) }
+  end
+
+  if stale_files.any?
+    examples = stale_files.first(8).map { |path| path.sub("#{__dir__}/", "") }
+    UI.user_error!(
+      "Found stale iOS screenshots without the current target prefix. Run `bundle exec fastlane screenshots` " \
+      "to regenerate a clean split-target screenshot set before uploading.\n" \
+      "#{examples.join("\n")}"
+    )
+  end
+
+  grouped = Hash.new(0)
+  files.each do |path|
+    locale = File.basename(File.dirname(path))
+    target = known_prefixes.find { |prefix| File.basename(path).start_with?(prefix) }&.delete_suffix("_")
+    grouped[[locale, target]] += 1 if target
+  end
+
+  expected_targets = targets.map { |target| target.fetch(:name) }.uniq
+  locales = files.map { |path| File.basename(File.dirname(path)) }.uniq
+  missing = locales.flat_map do |locale|
+    expected_targets.select { |target| grouped[[locale, target]].zero? }.map { |target| "#{locale}/#{target}" }
+  end
+  UI.user_error!("Missing screenshots for selected iOS targets: #{missing.join(', ')}.") unless missing.empty?
+
+  too_many = grouped.select { |_, count| count > 10 }
+  unless too_many.empty?
+    summary = too_many.map { |(locale, target), count| "#{locale}/#{target}: #{count}" }.join(", ")
+    UI.user_error!("Too many screenshots for App Store Connect display sets: #{summary}. The limit is 10 per locale and display target.")
+  end
+
+  validate_png_encoding!(files)
+end
+
+def uploadable_screenshot_locales(options)
+  requested_locales = screenshot_locales(options).map { |locale| app_store_locale(locale) }
+  available_locales = screenshot_pngs.map { |path| File.basename(File.dirname(path)) }.uniq
+  locales = requested_locales & available_locales
+
+  UI.user_error!("No prepared iOS screenshots match locales: #{requested_locales.join(', ')}.") if locales.empty?
+
+  only_locale = options[:locale] || options[:only_locale] || ENV["SCREENSHOT_UPLOAD_LOCALE"]
+  if only_locale
+    locale = app_store_locale(only_locale.to_s)
+    UI.user_error!("No prepared iOS screenshots found for #{locale}.") unless available_locales.include?(locale)
+
+    return [locale]
+  end
+
+  start_locale = options[:start_locale] || ENV["SCREENSHOT_UPLOAD_START_LOCALE"]
+  if start_locale
+    locale = app_store_locale(start_locale.to_s)
+    index = locales.index(locale)
+    UI.user_error!("Cannot resume from #{locale}; available upload locales are #{locales.join(', ')}.") unless index
+
+    locales = locales.drop(index)
+  end
+
+  locales
+end
+
+def screenshot_files_for(locale, target)
+  prefix = "#{target.fetch(:name)}_"
+  screenshot_pngs.select do |path|
+    File.basename(File.dirname(path)) == locale &&
+      File.basename(path).start_with?(prefix)
+  end
+end
+
+def upload_to_app_store_screenshots(options, screenshots_path:, overwrite_screenshots:)
+  upload_to_app_store(
+    {
+      app_identifier: app_identifier,
+      screenshots_path: screenshots_path,
+      metadata_path: app_store_metadata_path,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_screenshots: false,
+      overwrite_screenshots: overwrite_screenshots,
+      submit_for_review: false,
+      run_precheck_before_submit: false,
+      force: truthy?(options[:force]),
+    }.merge(app_store_credentials!)
+  )
+end
+
+def upload_screenshot_batch(options, locale:, target:, files:, overwrite_screenshots:)
+  attempts = screenshot_upload_retries(options) + 1
+  attempt = 1
+
+  begin
+    Dir.mktmpdir(["ecounity-ios-screenshots-", "#{locale}-#{target.fetch(:name)}"]) do |temp_root|
+      destination = File.join(temp_root, locale)
+      FileUtils.mkdir_p(destination)
+      files.each do |path|
+        FileUtils.cp(path, File.join(destination, File.basename(path)))
+      end
+
+      upload_to_app_store_screenshots(
+        options,
+        screenshots_path: temp_root,
+        overwrite_screenshots: overwrite_screenshots
+      )
+    end
+  rescue => error
+    raise error if attempt >= attempts
+
+    UI.error("Screenshot upload failed for #{locale}/#{target.fetch(:name)} on attempt #{attempt}/#{attempts}.")
+    UI.verbose(error.message)
+    delay = screenshot_upload_retry_delay(options)
+    UI.important("Waiting #{delay} seconds before retrying this screenshot batch.")
+    sleep(delay)
+    attempt += 1
+    retry
+  end
+end
+
+def upload_ios_store_screenshots_in_batches(options, targets)
+  locales = uploadable_screenshot_locales(options)
+  overwrite_requested = !truthy?(options[:append])
+  uploads_all_default_targets = targets.map { |target| target.fetch(:name) }.sort == IOS_SCREENSHOT_TARGET_NAMES.sort
+
+  locales.each do |locale|
+    targets.each_with_index do |target, index|
+      files = screenshot_files_for(locale, target)
+      UI.user_error!("Missing screenshots for #{locale}/#{target.fetch(:name)}.") if files.empty?
+
+      overwrite_screenshots = overwrite_requested && uploads_all_default_targets && index.zero?
+      UI.important("Uploading #{files.length} screenshots for #{locale}/#{target.fetch(:name)}.")
+      upload_screenshot_batch(
+        options,
+        locale: locale,
+        target: target,
+        files: files,
+        overwrite_screenshots: overwrite_screenshots
+      )
+    end
+  end
+end
+
+def app_store_api_key_credentials
+  api_key_path = env_value("APP_STORE_CONNECT_API_KEY_PATH")
+  if api_key_path
+    UI.user_error!("Couldn't find App Store Connect API key JSON at #{api_key_path}") unless File.exist?(api_key_path)
+
+    return { api_key_path: api_key_path }
+  end
+
+  key_id = env_value("APP_STORE_CONNECT_API_KEY_KEY_ID")
+  issuer_id = env_value("APP_STORE_CONNECT_API_KEY_ISSUER_ID")
+  key_filepath = env_value("APP_STORE_CONNECT_API_KEY_KEY_FILEPATH") ||
+    env_value("APP_STORE_CONNECT_API_KEY_FILEPATH")
+  key_content = env_value("APP_STORE_CONNECT_API_KEY_KEY") ||
+    env_value("APP_STORE_CONNECT_API_KEY_CONTENT")
+
+  return nil unless key_id || key_filepath || key_content
+
+  missing = []
+  missing << "APP_STORE_CONNECT_API_KEY_KEY_ID" unless key_id
+  missing << "APP_STORE_CONNECT_API_KEY_KEY_FILEPATH or APP_STORE_CONNECT_API_KEY_KEY" unless key_filepath || key_content
+  UI.user_error!("Incomplete App Store Connect API key config: missing #{missing.join(', ')}.") unless missing.empty?
+  UI.user_error!("Set either APP_STORE_CONNECT_API_KEY_KEY_FILEPATH or APP_STORE_CONNECT_API_KEY_KEY, not both.") if key_filepath && key_content
+  UI.user_error!("Couldn't find App Store Connect API key p8 at #{key_filepath}") if key_filepath && !File.exist?(key_filepath)
+
+  api_key_options = {
+    key_id: key_id,
+    duration: (env_value("APP_STORE_CONNECT_API_KEY_DURATION") || "500").to_i,
+    in_house: truthy?(env_value("APP_STORE_CONNECT_API_KEY_IN_HOUSE")),
+  }
+  api_key_options[:issuer_id] = issuer_id if issuer_id
+  api_key_options[:key_filepath] = key_filepath if key_filepath
+  api_key_options[:key_content] = key_content if key_content
+  api_key_options[:is_key_content_base64] = truthy?(env_value("APP_STORE_CONNECT_API_KEY_IS_KEY_CONTENT_BASE64")) if key_content
+
+  {
+    api_key: app_store_connect_api_key(**api_key_options),
+  }
+end
+
+def app_store_credentials
+  api_key_credentials = app_store_api_key_credentials
+  return api_key_credentials if api_key_credentials
+
+  credentials = {}
+  credentials[:username] = env_value("APP_STORE_CONNECT_USERNAME") if env_value("APP_STORE_CONNECT_USERNAME")
+  credentials[:team_id] = env_value("APP_STORE_CONNECT_TEAM_ID") if env_value("APP_STORE_CONNECT_TEAM_ID")
+  credentials[:team_name] = env_value("APP_STORE_CONNECT_TEAM_NAME") if env_value("APP_STORE_CONNECT_TEAM_NAME")
+  credentials[:itc_provider] = env_value("APP_STORE_CONNECT_ITC_PROVIDER") if env_value("APP_STORE_CONNECT_ITC_PROVIDER")
+  credentials
+end
+
+def app_store_credentials!
+  credentials = app_store_credentials
+  return credentials unless credentials.empty?
+
+  UI.user_error!(
+    "Missing App Store Connect credentials. Copy ios/fastlane/.env.example to ios/fastlane/.env " \
+    "and set APP_STORE_CONNECT_API_KEY_PATH, or APP_STORE_CONNECT_API_KEY_KEY_ID plus " \
+    "APP_STORE_CONNECT_API_KEY_KEY_FILEPATH/APP_STORE_CONNECT_API_KEY_KEY."
+  )
+end
+
+def configure_app_store_connect_token(credentials)
+  if credentials[:api_key_path]
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.from(filepath: credentials[:api_key_path])
+  elsif credentials[:api_key]
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(**credentials[:api_key])
+  else
+    UI.user_error!("The credential check lane requires App Store Connect API-key credentials.")
+  end
+end
+
+def latest_ipa
+  ipa = Dir[File.join(project_root, "build/ios/ipa/*.ipa")].max_by { |path| File.mtime(path) }
+  UI.user_error!("No IPA found under build/ios/ipa. Run the ios build lane first.") unless ipa
+  ipa
+end
+
+def signing_output_path
+  File.expand_path("../signing", __dir__)
+end
+
+def app_store_profile_name
+  env_value("APP_STORE_PROFILE_NAME") || "Ecounity App Store"
+end
+
+def signing_credentials
+  credentials = app_store_credentials!
+  signing = {}
+  signing[:api_key_path] = credentials[:api_key_path] if credentials[:api_key_path]
+  signing[:api_key] = credentials[:api_key] if credentials[:api_key]
+  signing[:username] = credentials[:username] if credentials[:username]
+  signing[:team_id] = developer_team_id if developer_team_id
+  signing[:team_name] = env_value("APP_STORE_CONNECT_TEAM_NAME") if env_value("APP_STORE_CONNECT_TEAM_NAME")
+  signing
+end
+
+def setup_app_store_signing_assets(options)
+  credentials = signing_credentials
+  FileUtils.mkdir_p(signing_output_path)
+
+  cert_options = {
+    development: false,
+    generate_apple_certs: true,
+    output_path: signing_output_path,
+    platform: "ios",
+    skip_set_partition_list: !truthy?(options[:set_partition_list]),
+  }.merge(credentials)
+  cert_id = get_certificates(cert_options)
+
+  profile_options = {
+    app_identifier: app_identifier,
+    cert_id: cert_id || ENV["CER_CERTIFICATE_ID"],
+    filename: "#{app_identifier}.AppStore.mobileprovision",
+    output_path: signing_output_path,
+    platform: "ios",
+    provisioning_name: app_store_profile_name,
+  }.merge(credentials)
+  profile_options[:readonly] = true if truthy?(options[:readonly])
+  profile_options[:force] = true if truthy?(options[:force_profile]) && !profile_options[:readonly]
+
+  get_provisioning_profile(profile_options)
+end
+
+def ios_export_options_path(profile_name)
+  output_dir = File.join(project_root, "build/fastlane/ios")
+  FileUtils.mkdir_p(output_dir)
+  path = File.join(output_dir, "ExportOptions.plist")
+  File.write(
+    path,
+    {
+      "method" => "app-store",
+      "teamID" => developer_team_id,
+      "signingStyle" => "manual",
+      "signingCertificate" => "Apple Distribution",
+      "provisioningProfiles" => {
+        app_identifier => profile_name,
+      },
+      "manageAppVersionAndBuildNumber" => false,
+    }.to_plist
+  )
+  path
+end
+
+def ios_export_options(options)
+  explicit_path = options[:export_options_plist] || env_value("IOS_EXPORT_OPTIONS_PLIST")
+  return explicit_path if explicit_path
+
+  return nil unless truthy?(options[:setup_signing]) || truthy?(env_value("IOS_SETUP_SIGNING"))
+
+  setup_app_store_signing_assets(options)
+  ios_export_options_path(ENV["SIGH_NAME"] || app_store_profile_name)
+end
+
+platform :ios do
+  desc "Validate App Store Connect API-key credentials without uploading"
+  lane :check_app_store_credentials do
+    credentials = app_store_credentials!
+    configure_app_store_connect_token(credentials)
+
+    app = Spaceship::ConnectAPI::App.find(app_identifier)
+    UI.user_error!("Connected to App Store Connect, but #{app_identifier} was not found.") unless app
+
+    UI.success("App Store Connect credentials can access #{app.name} (#{app.bundle_id}).")
+  end
+
+  desc "Generate localized Flutter screenshots and place them in App Store screenshot folders"
+  lane :screenshots do |options|
+    capture_flutter_screenshots(options)
+    prepare_store_screenshots(options)
+  end
+
+  desc "Validate generated screenshots without uploading"
+  lane :validate_screenshots do |options|
+    validate_ios_store_screenshots!(screenshot_targets(options))
+    UI.success("iOS store screenshots are ready for upload.")
+  end
+
+  desc "Upload generated screenshots to App Store Connect"
+  lane :upload_screenshots do |options|
+    targets = screenshot_targets(options)
+    validate_ios_store_screenshots!(targets)
+    upload_ios_store_screenshots_in_batches(options, targets)
+  end
+
+  desc "Validate App Store metadata without uploading"
+  lane :validate_metadata do |options|
+    ensure_app_store_metadata!(options)
+    UI.success("App Store metadata is ready.")
+  end
+
+  desc "Upload App Store metadata"
+  lane :upload_metadata do |options|
+    upload_app_store_metadata!(options)
+  end
+
+  desc "Create/download App Store signing certificate and provisioning profile"
+  lane :setup_app_store_signing do |options|
+    setup_app_store_signing_assets(options)
+    UI.success("App Store signing assets are ready.")
+  end
+
+  desc "Build a signed iOS IPA with Flutter"
+  lane :build do |options|
+    export_options = ios_export_options(options)
+    args = [flutter_bin, "build", "ipa", "--release", *flutter_build_args(options)]
+    args << "--export-options-plist=#{export_options}" if export_options
+
+    run_at_project_root(
+      shell_join(args)
+    )
+  end
+
+  desc "Build and upload to TestFlight"
+  lane :beta do |options|
+    build(options) unless truthy?(options[:skip_build])
+
+    upload_to_testflight(
+      {
+        app_identifier: app_identifier,
+        ipa: latest_ipa,
+        skip_waiting_for_build_processing: !truthy?(options[:wait_for_processing]),
+      }.merge(app_store_credentials!)
+    )
+  end
+
+  desc "Build and upload an App Store release without submitting by default"
+  lane :release do |options|
+    build(options) unless truthy?(options[:skip_build])
+    validate_ios_store_screenshots!(screenshot_targets(options)) if truthy?(options[:upload_screenshots])
+    ensure_app_store_metadata!(options) if truthy?(options[:upload_metadata])
+    metadata_path = truthy?(options[:upload_metadata]) ? selected_app_store_metadata_path(options) : app_store_metadata_path
+
+    begin
+      upload_to_app_store(
+        {
+          app_identifier: app_identifier,
+          ipa: latest_ipa,
+          screenshots_path: "fastlane/screenshots",
+          metadata_path: metadata_path,
+          skip_metadata: !truthy?(options[:upload_metadata]),
+          skip_screenshots: !truthy?(options[:upload_screenshots]),
+          overwrite_screenshots: truthy?(options[:upload_screenshots]) && !truthy?(options[:append_screenshots]),
+          submit_for_review: truthy?(options[:submit_for_review]),
+          automatic_release: truthy?(options[:automatic_release]),
+          force: truthy?(options[:force]),
+        }.merge(app_store_credentials!)
+      )
+    ensure
+      cleanup_selected_app_store_metadata_path(metadata_path)
+    end
+  end
+end

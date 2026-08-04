@@ -5,8 +5,12 @@ import '../../../util/router.dart';
 import 'badge_displays.dart';
 import 'package:core/core.dart' as core;
 
-Widget dashboardBadgesWidget(core.User user, List<EcoUnityBadge> badges, BuildContext context) {
-  return  ListTile(
+Widget dashboardBadgesWidget(
+  core.User user,
+  List<EcoUnityBadge> badges,
+  BuildContext context,
+) {
+  return ListTile(
     visualDensity: const VisualDensity(vertical: VisualDensity.maximumDensity),
     onTap: () {
       AppRouter.navigate(context, '/achievements', 0, replaceRoute: false);
@@ -17,18 +21,16 @@ Widget dashboardBadgesWidget(core.User user, List<EcoUnityBadge> badges, BuildCo
     ),
     trailing: badges.isNotEmpty
         ? SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: badgeDisplays(
-          badges,
-          user.getValue('activitycount') ?? 0,
-          context,
-        ),
-      ),
-    )
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: badgeDisplays(
+                badges,
+                user.getValue('activitycount') ?? 0,
+                context,
+              ),
+            ),
+          )
         : const Icon(Icons.shield),
   );
-
-
 }

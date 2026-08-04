@@ -10,6 +10,7 @@ import '../../../util/ecounity_storage.dart';
 import '../../../util/router.dart';
 import '../../../util/settings.dart';
 import '../../../util/utils.dart';
+import 'dashboard_loading_indicator.dart';
 
 class DashboardProgressCard extends StatefulWidget {
   const DashboardProgressCard({super.key});
@@ -155,7 +156,9 @@ class _DashboardProgressCardState extends State<DashboardProgressCard> {
                               backgroundColor: Theme.of(
                                 context,
                               ).colorScheme.surfaceContainerHighest,
-                              progressColor: Theme.of(context).colorScheme.primary,
+                              progressColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
                               center: Text(
                                 '${(progress * 100).round()}%',
                                 style: Theme.of(context).textTheme.titleMedium
@@ -181,20 +184,21 @@ class _DashboardProgressCardState extends State<DashboardProgressCard> {
                                 ),
                                 const SizedBox(height: 10),
                                 Text(
-                                  context.l10n.learning_contents_completion_summary(
-                                    completedPages,
-                                    totalPages,
-                                  ),
+                                  context.l10n
+                                      .learning_contents_completion_summary(
+                                        completedPages,
+                                        totalPages,
+                                      ),
                                   style: Theme.of(context).textTheme.bodyMedium,
                                 ),
                               ],
                             ),
-                          ]
-                        )
-                      )
+                          ],
+                        ),
+                      ),
                     ],
                   )
-                : const Center(child: CircularProgressIndicator()),
+                : const Center(child: DashboardLoadingIndicator()),
           ),
         ),
       ),

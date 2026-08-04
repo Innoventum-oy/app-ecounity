@@ -1,0 +1,1179 @@
+require "fileutils"
+require "timeout"
+require "shellwords"
+require "fastimage"
+require "logger"
+require "supply/client"
+
+default_platform(:android)
+
+ENV["FASTLANE_SKIP_UPDATE_CHECK"] = "1"
+ENV["FASTLANE_HIDE_CHANGELOG"] = "1"
+ENV["LC_ALL"] ||= "en_US.UTF-8"
+ENV["LANG"] ||= "en_US.UTF-8"
+
+opt_out_usage
+
+Google::Apis.logger.level = Logger::WARN if defined?(Google::Apis) && Google::Apis.respond_to?(:logger) && Google::Apis.logger
+
+ANDROID_SCREENSHOT_TARGETS = {
+  "phone" => {
+    output_dir: "phone",
+    device_option: :phone_device,
+    device_env: "SCREENSHOT_PHONE_DEVICE",
+    avd_option: :phone_avd,
+    avd_env: "SCREENSHOT_PHONE_AVD",
+    default_avd: "Pixel_6_API_33",
+  },
+  "seven_inch" => {
+    output_dir: "seven_inch",
+    device_option: :seven_inch_device,
+    device_env: "SCREENSHOT_SEVEN_INCH_DEVICE",
+    avd_option: :seven_inch_avd,
+    avd_env: "SCREENSHOT_SEVEN_INCH_AVD",
+    default_avd: "Ecounity_7in_API_33",
+  },
+  "ten_inch" => {
+    output_dir: "ten_inch",
+    device_option: :ten_inch_device,
+    device_env: "SCREENSHOT_TEN_INCH_DEVICE",
+    avd_option: :ten_inch_avd,
+    avd_env: "SCREENSHOT_TEN_INCH_AVD",
+    default_avd: "Ecounity_10in_API_33",
+  },
+}.freeze
+
+PLAY_STORE_LOCALES = {
+  "en" => "en-GB",
+  "de" => "de-DE",
+  "es" => "es-ES",
+  "fi" => "fi-FI",
+  "it" => "it-IT",
+  "pl" => "pl-PL",
+  "pt" => "pt-PT",
+  "ro" => "ro-RO",
+  "uk" => "uk",
+}.freeze
+
+PLAY_STORE_PRIMARY_LOCALE = "en-GB"
+DEFAULT_PLAY_METADATA_LOCALES = PLAY_STORE_LOCALES.values.freeze
+
+PLAY_STORE_TEXT_LIMITS = {
+  "title.txt" => 30,
+  "short_description.txt" => 80,
+  "full_description.txt" => 4_000,
+}.freeze
+
+PLAY_STORE_IMAGE_FILES = {
+  "feature_graphic.png" => "featureGraphic",
+  "app_icon.png" => "icon",
+}.freeze
+
+PLAY_STORE_IMAGE_SIZES = {
+  "feature_graphic.png" => [1024, 500],
+  "app_icon.png" => [512, 512],
+}.freeze
+
+PLAY_STORE_IMAGE_MAX_BYTES = {
+  "app_icon.png" => 1024 * 1024,
+}.freeze
+
+PLAY_STORE_IMAGE_ALPHA_RULES = {
+  "feature_graphic.png" => :forbid,
+  "app_icon.png" => :require,
+}.freeze
+
+PLAY_STORE_IMAGE_FALLBACK_LOCALES = {
+  "app_icon.png" => PLAY_STORE_PRIMARY_LOCALE,
+}.freeze
+
+class ScreenshotDriveFailure < StandardError; end
+class ScreenshotDriveTimeout < StandardError; end
+
+def project_root
+  File.expand_path("../..", __dir__)
+end
+
+def flutter_bin
+  ENV["FLUTTER_BIN"] || "flutter"
+end
+
+def shell_join(parts)
+  parts.compact.map(&:to_s).map(&:shellescape).join(" ")
+end
+
+def run_at_project_root(command)
+  sh("cd #{project_root.shellescape} && #{command}")
+end
+
+def truthy?(value)
+  %w[1 true yes y].include?(value.to_s.downcase)
+end
+
+def env_value(name)
+  value = ENV[name]
+  return nil if value.to_s.strip.empty?
+
+  value
+end
+
+def android_package_name
+  env_value("ANDROID_PACKAGE_NAME") || "app.ecounity.ecounity"
+end
+
+def android_sdk_root
+  env_value("ANDROID_SDK_ROOT") || env_value("ANDROID_HOME") || File.expand_path("~/Library/Android/sdk")
+end
+
+def adb_bin
+  File.join(android_sdk_root, "platform-tools", "adb")
+end
+
+def emulator_bin
+  File.join(android_sdk_root, "emulator", "emulator")
+end
+
+def flutter_build_args(options)
+  args = []
+  args << "--build-name=#{options[:build_name]}" if options[:build_name]
+  args << "--build-number=#{options[:build_number]}" if options[:build_number]
+  args << "--dart-define-from-file=#{ENV["DART_DEFINE_FILE"]}" if ENV["DART_DEFINE_FILE"]
+  args
+end
+
+def screenshot_locales(options)
+  (options[:locales] || ENV["SCREENSHOT_LOCALES"] || "en,de,es,fi,it,pl,pt,ro,uk")
+    .split(",")
+    .map(&:strip)
+    .reject(&:empty?)
+end
+
+def screenshot_target_names(options)
+  (options[:targets] || ENV["SCREENSHOT_TARGETS"] || "phone")
+    .split(",")
+    .map(&:strip)
+    .reject(&:empty?)
+end
+
+def screenshot_drive_retries(options)
+  (options[:drive_retries] || ENV["SCREENSHOT_DRIVE_RETRIES"] || "1").to_i
+end
+
+def screenshot_drive_timeout(options)
+  (options[:drive_timeout] || ENV["SCREENSHOT_DRIVE_TIMEOUT"] || "600").to_i
+end
+
+def screenshot_resume?(options)
+  truthy?(options[:resume]) ||
+    truthy?(options[:skip_existing]) ||
+    truthy?(env_value("SCREENSHOT_RESUME"))
+end
+
+def screenshot_minimum_count(options)
+  minimum = (options[:minimum_screenshots] || ENV["SCREENSHOT_MINIMUM_COUNT"] || "10").to_i
+  [minimum, 1].max
+end
+
+def screenshot_files_for_run(output_dir, locale)
+  Dir[File.join(output_dir, locale, "*.png")]
+    .select { |path| File.file?(path) && File.size?(path).to_i.positive? }
+    .sort
+end
+
+def screenshot_run_complete?(output_dir, locale, options)
+  screenshot_files_for_run(output_dir, locale).length >= screenshot_minimum_count(options)
+end
+
+def clean_screenshot_locale_output(output_dir, locale)
+  FileUtils.rm_rf(File.join(output_dir, locale))
+end
+
+def screenshot_targets(options)
+  screenshot_target_names(options).map do |target_name|
+    normalized = target_name.tr("-", "_")
+    target = ANDROID_SCREENSHOT_TARGETS[normalized]
+    UI.user_error!(
+      "Unknown Android screenshot target '#{target_name}'. Use phone, seven_inch, and/or ten_inch."
+    ) unless target
+
+    target.merge(name: normalized)
+  end
+end
+
+def android_screenshot_device(target, options)
+  explicit_device = options[target.fetch(:device_option)] || env_value(target.fetch(:device_env))
+  explicit_device ||= options[:device] || env_value("SCREENSHOT_DEVICE") if target.fetch(:name) == "phone"
+  return explicit_device if explicit_device
+
+  avd_name = options[target.fetch(:avd_option)] || env_value(target.fetch(:avd_env)) || target.fetch(:default_avd)
+  boot_android_avd(avd_name)
+end
+
+def running_android_emulators
+  return [] unless File.exist?(adb_bin)
+
+  `#{adb_bin.shellescape} devices`.lines.filter_map do |line|
+    serial, state = line.strip.split(/\s+/, 2)
+    serial if serial&.start_with?("emulator-") && state == "device"
+  end
+end
+
+def running_android_emulator_for_avd(avd_name)
+  running_android_emulators.find do |serial|
+    output = `#{adb_bin.shellescape} -s #{serial.shellescape} emu avd name 2>/dev/null`
+    output.lines.first.to_s.strip == avd_name
+  end
+end
+
+def android_boot_completed?(serial)
+  `#{adb_bin.shellescape} -s #{serial.shellescape} shell getprop sys.boot_completed 2>/dev/null`.strip == "1"
+end
+
+def boot_android_avd(avd_name)
+  UI.user_error!("Android adb not found at #{adb_bin}. Set ANDROID_SDK_ROOT in android/fastlane/.env.") unless File.exist?(adb_bin)
+  UI.user_error!("Android emulator not found at #{emulator_bin}. Set ANDROID_SDK_ROOT in android/fastlane/.env.") unless File.exist?(emulator_bin)
+
+  existing = running_android_emulator_for_avd(avd_name)
+  return existing if existing && android_boot_completed?(existing)
+
+  unless existing
+    log_path = File.join(project_root, "build/fastlane/android-emulator-#{avd_name}.log")
+    FileUtils.mkdir_p(File.dirname(log_path))
+    UI.message("Launching Android emulator #{avd_name}")
+    pid = Process.spawn(
+      emulator_bin,
+      "-avd",
+      avd_name,
+      "-no-snapshot-save",
+      "-no-boot-anim",
+      out: log_path,
+      err: [:child, :out]
+    )
+    Process.detach(pid)
+  end
+
+  Timeout.timeout(180) do
+    loop do
+      serial = running_android_emulator_for_avd(avd_name)
+      return serial if serial && android_boot_completed?(serial)
+
+      sleep(3)
+    end
+  end
+rescue Timeout::Error
+  UI.user_error!("Timed out waiting for Android emulator #{avd_name} to boot.")
+end
+
+def kill_process_group(pid)
+  begin
+    Process.kill("TERM", -pid)
+  rescue Errno::ESRCH
+    return
+  end
+
+  sleep(5)
+  begin
+    Process.kill("KILL", -pid)
+  rescue Errno::ESRCH
+    nil
+  end
+end
+
+def keep_macos_awake_for(pid)
+  return nil unless RUBY_PLATFORM.include?("darwin")
+  return nil unless File.executable?("/usr/bin/caffeinate")
+
+  caffeinate_pid = Process.spawn(
+    "/usr/bin/caffeinate",
+    "-dimsu",
+    "-w",
+    pid.to_s,
+    out: File::NULL,
+    err: File::NULL
+  )
+  Process.detach(caffeinate_pid)
+  caffeinate_pid
+rescue => error
+  UI.verbose("Could not start caffeinate for screenshot drive: #{error.message}")
+  nil
+end
+
+def run_command_with_timeout(command, timeout_seconds)
+  UI.command(command)
+  pid = Process.spawn(command, pgroup: true)
+  keep_macos_awake_for(pid)
+  deadline = Time.now + timeout_seconds
+
+  loop do
+    result = Process.wait2(pid, Process::WNOHANG)
+    if result
+      status = result.last
+      return if status.success?
+
+      raise ScreenshotDriveFailure, "Command failed with #{status}: #{command}"
+    end
+
+    if Time.now >= deadline
+      UI.important("Command timed out after #{timeout_seconds} seconds; terminating it.")
+      kill_process_group(pid)
+      begin
+        Process.wait(pid)
+      rescue Errno::ECHILD
+        nil
+      end
+      raise ScreenshotDriveTimeout, "Timed out after #{timeout_seconds} seconds: #{command}"
+    end
+
+    sleep(1)
+  end
+rescue Interrupt
+  kill_process_group(pid) if pid
+  raise
+end
+
+def run_at_project_root_with_timeout(command, timeout_seconds)
+  Dir.chdir(project_root) do
+    run_command_with_timeout(command, timeout_seconds)
+  end
+end
+
+def force_stop_android_app(device)
+  return unless device && File.exist?(adb_bin)
+
+  system(
+    "#{adb_bin.shellescape} -s #{device.shellescape} shell am force-stop #{android_package_name.shellescape} >/dev/null 2>&1"
+  )
+end
+
+def run_screenshot_drive(command, options, device:, output_dir:, locale:, target_name:)
+  attempts = screenshot_drive_retries(options) + 1
+  timeout_seconds = screenshot_drive_timeout(options)
+  attempt = 1
+
+  begin
+    clean_screenshot_locale_output(output_dir, locale)
+    force_stop_android_app(device)
+    run_at_project_root_with_timeout(command, timeout_seconds)
+  rescue ScreenshotDriveFailure, ScreenshotDriveTimeout => error
+    force_stop_android_app(device)
+    screenshot_count = screenshot_files_for_run(output_dir, locale).length
+    if screenshot_run_complete?(output_dir, locale, options)
+      UI.important(
+        "Flutter screenshot drive failed for #{target_name}/#{locale}, but " \
+        "#{screenshot_count} screenshot(s) were written; continuing."
+      )
+      UI.verbose(error.message)
+      return
+    end
+
+    if attempt >= attempts
+      UI.user_error!(
+        "Flutter screenshot drive failed after #{attempts} attempt(s). " \
+        "#{screenshot_count}/#{screenshot_minimum_count(options)} screenshot(s) " \
+        "were written for #{target_name}/#{locale}. #{error.message}"
+      )
+    end
+
+    UI.important(
+      "Flutter screenshot drive failed on attempt #{attempt}/#{attempts}; " \
+      "#{screenshot_count}/#{screenshot_minimum_count(options)} screenshot(s) " \
+      "were written for #{target_name}/#{locale}; retrying."
+    )
+    UI.verbose(error.message)
+    attempt += 1
+    retry
+  end
+end
+
+def capture_flutter_screenshots(options)
+  output_root = File.join(project_root, "build/fastlane/raw/android")
+  resume = screenshot_resume?(options)
+  locales = screenshot_locales(options)
+
+  if resume
+    FileUtils.mkdir_p(output_root)
+    UI.message("Resuming Android screenshots from #{output_root}.")
+  else
+    FileUtils.rm_rf(output_root)
+  end
+
+  screenshot_targets(options).each do |target|
+    output_dir = File.join(output_root, target.fetch(:output_dir))
+    if resume && locales.all? { |locale| screenshot_run_complete?(output_dir, locale, options) }
+      UI.message("Skipping #{target.fetch(:name)}; all selected locales already exist.")
+      next
+    end
+
+    device = android_screenshot_device(target, options)
+
+    locales.each do |locale|
+      if resume && screenshot_run_complete?(output_dir, locale, options)
+        screenshot_count = screenshot_files_for_run(output_dir, locale).length
+        UI.message(
+          "Skipping #{target.fetch(:name)}/#{locale}; " \
+          "#{screenshot_count} screenshot(s) already exist."
+        )
+        next
+      end
+
+      args = [
+        flutter_bin,
+        "drive",
+        "--driver=test_driver/integration_test.dart",
+        "--target=integration_test/store_screenshots_test.dart",
+        "--dart-define=SCREENSHOT_MODE=true",
+        "--dart-define=SCREENSHOT_LOCALE=#{locale}",
+      ]
+      args += ["-d", device] if device
+
+      env = [
+        "SCREENSHOT_OUTPUT_DIR=#{output_dir.shellescape}",
+        "SCREENSHOT_LOCALE=#{locale.shellescape}",
+        "SCREENSHOT_PLATFORM=android",
+        "SCREENSHOT_TARGET=#{target.fetch(:name).shellescape}",
+      ].join(" ")
+
+      run_screenshot_drive(
+        "#{env} #{shell_join(args)}",
+        options,
+        device: device,
+        output_dir: output_dir,
+        locale: locale,
+        target_name: target.fetch(:name)
+      )
+    end
+  end
+end
+
+def prepare_store_screenshots(options)
+  args = [
+    "dart",
+    "tool/prepare_store_screenshots.dart",
+    "--platform",
+    "android",
+    "--raw-dir",
+    "build/fastlane/raw/android",
+    "--android-targets",
+    screenshot_targets(options).map { |target| target.fetch(:name) }.join(","),
+    "--locales",
+    screenshot_locales(options).join(","),
+    "--clean",
+  ]
+
+  run_at_project_root(shell_join(args))
+end
+
+def play_store_locale(locale)
+  normalized = locale.to_s.strip.tr("_", "-")
+  PLAY_STORE_LOCALES.fetch(normalized, normalized)
+end
+
+def metadata_locales(options)
+  configured = options[:metadata_locales] || ENV["PLAY_METADATA_LOCALES"]
+  return DEFAULT_PLAY_METADATA_LOCALES if configured.to_s.strip.empty?
+
+  configured
+    .split(",")
+    .map { |locale| play_store_locale(locale) }
+    .reject(&:empty?)
+end
+
+def android_metadata_path
+  File.join("fastlane", "metadata", "android")
+end
+
+def android_metadata_root
+  File.join(__dir__, "metadata", "android")
+end
+
+def fastlane_relative_path(path)
+  path.sub("#{__dir__}/", "")
+end
+
+def store_listing_text_path(locale, file_name)
+  File.join(android_metadata_root, locale, file_name)
+end
+
+def store_listing_image_path(locale, file_name)
+  File.join(android_metadata_root, locale, file_name)
+end
+
+def store_listing_image_source_path(locale, file_name)
+  path = store_listing_image_path(locale, file_name)
+  return path if File.exist?(path) && File.size?(path).to_i.positive?
+
+  fallback_locale = PLAY_STORE_IMAGE_FALLBACK_LOCALES[file_name]
+  return nil if fallback_locale.to_s.empty? || fallback_locale == locale
+
+  fallback = store_listing_image_path(fallback_locale, file_name)
+  return fallback if File.exist?(fallback) && File.size?(fallback).to_i.positive?
+
+  nil
+end
+
+def store_listing_image_source_label(locale, file_name, path)
+  locale_path = store_listing_image_path(locale, file_name)
+  label = fastlane_relative_path(path)
+  return label if path == locale_path
+
+  "#{label} (fallback for #{locale})"
+end
+
+def store_listing_text(locale, file_name)
+  File.read(store_listing_text_path(locale, file_name), encoding: "UTF-8").strip
+end
+
+def store_listing_images_enabled?(options, default: true)
+  return false if truthy?(options[:skip_images]) || truthy?(options[:skip_upload_images])
+  return truthy?(options[:upload_images]) unless options[:upload_images].nil?
+
+  default
+end
+
+def store_listing_metadata_present?(locale)
+  PLAY_STORE_TEXT_LIMITS.keys.all? do |file_name|
+    path = store_listing_text_path(locale, file_name)
+    File.exist?(path) && !File.read(path, encoding: "UTF-8").strip.empty?
+  end
+end
+
+def store_listing_images_present?(locale)
+  PLAY_STORE_IMAGE_FILES.keys.all? do |file_name|
+    !store_listing_image_source_path(locale, file_name).nil?
+  end
+end
+
+def png_color_type(path)
+  header = File.binread(path, 26)
+  png_signature = [137, 80, 78, 71, 13, 10, 26, 10]
+  return nil unless header.bytes.first(8) == png_signature
+  return nil unless header.byteslice(12, 4) == "IHDR"
+
+  header.bytes[25]
+rescue
+  nil
+end
+
+def png_has_alpha_channel?(path)
+  [4, 6].include?(png_color_type(path))
+end
+
+def update_store_listing_for_locale!(client, locale)
+  client.update_listing_for_language(
+    language: locale,
+    title: store_listing_text(locale, "title.txt"),
+    short_description: store_listing_text(locale, "short_description.txt"),
+    full_description: store_listing_text(locale, "full_description.txt")
+  )
+end
+
+def upload_store_listing_images_for_locale!(client, locale)
+  uploaded_count = 0
+
+  PLAY_STORE_IMAGE_FILES.each do |file_name, image_type|
+    path = store_listing_image_source_path(locale, file_name)
+    next unless path
+
+    UI.message(
+      "Uploading #{locale} #{image_type} from " \
+      "#{store_listing_image_source_label(locale, file_name, path)}..."
+    )
+    client.upload_image(
+      image_path: File.expand_path(path),
+      image_type: image_type,
+      language: locale
+    )
+
+    remote_count = client.fetch_images(image_type: image_type, language: locale).length
+    UI.user_error!("Google Play did not attach #{locale} #{image_type}.") if remote_count < 1
+
+    uploaded_count += 1
+  end
+
+  uploaded_count
+end
+
+def sync_store_listing_images_for_supply!(options)
+  metadata_locales(options).each do |locale|
+    PLAY_STORE_IMAGE_FILES.each do |file_name, image_type|
+      source = store_listing_image_source_path(locale, file_name)
+      next unless source
+
+      destination = File.join(
+        android_metadata_root,
+        locale,
+        Supply::IMAGES_FOLDER_NAME,
+        "#{image_type}.png"
+      )
+      FileUtils.mkdir_p(File.dirname(destination))
+      FileUtils.cp(source, destination)
+    end
+  end
+end
+
+def screenshot_paths(locale, image_type)
+  pattern = File.join(android_metadata_root, locale, Supply::IMAGES_FOLDER_NAME, image_type, "*.{png,jpg,jpeg}")
+  Dir.glob(pattern, File::FNM_CASEFOLD).sort
+end
+
+def prepared_screenshot_locales
+  return [] unless Dir.exist?(android_metadata_root)
+
+  Dir.children(android_metadata_root)
+    .select { |locale| File.directory?(File.join(android_metadata_root, locale)) }
+    .select do |locale|
+      Supply::SCREENSHOT_TYPES.any? do |image_type|
+        screenshot_paths(locale, image_type).any?
+      end
+    end
+    .sort
+end
+
+def screenshot_upload_locales(options)
+  configured = options[:locales] || options[:screenshot_locales] || ENV["SCREENSHOT_UPLOAD_LOCALES"]
+  if configured.to_s.strip.empty?
+    prepared_screenshot_locales
+  else
+    configured
+      .split(",")
+      .map { |locale| play_store_locale(locale) }
+      .reject(&:empty?)
+  end
+end
+
+def android_relative_path(path)
+  candidates = [
+    File.expand_path(path, android_dir),
+    File.expand_path(path, project_root),
+    File.expand_path(path, __dir__),
+  ].uniq
+
+  candidates.find { |candidate| File.exist?(candidate) } || candidates.first
+end
+
+def ensure_store_listing_images!(options)
+  missing_or_empty = []
+  invalid = []
+
+  metadata_locales(options).each do |locale|
+    PLAY_STORE_IMAGE_FILES.each_key do |file_name|
+      path = store_listing_image_source_path(locale, file_name)
+      unless path
+        expected = fastlane_relative_path(store_listing_image_path(locale, file_name))
+        fallback_locale = PLAY_STORE_IMAGE_FALLBACK_LOCALES[file_name]
+        if fallback_locale && fallback_locale != locale
+          fallback = fastlane_relative_path(store_listing_image_path(fallback_locale, file_name))
+          missing_or_empty << "#{expected} or #{fallback}"
+        else
+          missing_or_empty << expected
+        end
+        next
+      end
+
+      expected_size = PLAY_STORE_IMAGE_SIZES[file_name]
+      if expected_size
+        actual_size = FastImage.size(path)
+        unless actual_size == expected_size
+          invalid << "#{store_listing_image_source_label(locale, file_name, path)} is #{actual_size&.join('x') || 'unknown size'}, expected #{expected_size.join('x')}"
+        end
+      end
+
+      max_bytes = PLAY_STORE_IMAGE_MAX_BYTES[file_name]
+      if max_bytes && File.size(path) > max_bytes
+        invalid << "#{store_listing_image_source_label(locale, file_name, path)} is #{File.size(path)} bytes, expected at most #{max_bytes}"
+      end
+
+      case PLAY_STORE_IMAGE_ALPHA_RULES[file_name]
+      when :forbid
+        if File.extname(path).downcase == ".png" && png_has_alpha_channel?(path)
+          invalid << "#{store_listing_image_source_label(locale, file_name, path)} has an alpha channel; use a 24-bit PNG or JPEG"
+        end
+      when :require
+        if File.extname(path).downcase != ".png"
+          invalid << "#{store_listing_image_source_label(locale, file_name, path)} must be a PNG"
+        elsif !png_has_alpha_channel?(path)
+          invalid << "#{store_listing_image_source_label(locale, file_name, path)} must be a 32-bit PNG with an alpha channel"
+        end
+      end
+    end
+  end
+
+  if missing_or_empty.any?
+    UI.user_error!(
+      "Missing or empty Google Play listing image files:\n- #{missing_or_empty.join("\n- ")}"
+    )
+  end
+  if invalid.any?
+    UI.user_error!("Invalid Google Play listing image files:\n- #{invalid.join("\n- ")}")
+  end
+end
+
+def play_store_asset_check_image_types(options)
+  configured = options[:image_types] || options[:types] || ENV["PLAY_IMAGE_TYPES"]
+  return (PLAY_STORE_IMAGE_FILES.values + %w[phoneScreenshots sevenInchScreenshots tenInchScreenshots]) if configured.to_s.strip.empty?
+
+  configured
+    .split(",")
+    .map { |image_type| image_type.to_s.strip }
+    .reject(&:empty?)
+end
+
+def expected_local_image_count(locale, image_type)
+  file_name = PLAY_STORE_IMAGE_FILES.key(image_type)
+  return store_listing_image_source_path(locale, file_name) ? 1 : 0 if file_name
+
+  return screenshot_paths(locale, image_type).length if Supply::SCREENSHOT_TYPES.include?(image_type)
+
+  0
+end
+
+def verify_play_store_images!(options)
+  locales = metadata_locales(options)
+  image_types = play_store_asset_check_image_types(options)
+  missing = []
+  client = nil
+
+  begin
+    client = Supply::Client.make_from_config(params: google_play_credentials!)
+    client.begin_edit(package_name: android_package_name)
+
+    locales.each do |locale|
+      image_types.each do |image_type|
+        remote_count = client.fetch_images(image_type: image_type, language: locale).length
+        expected_count = expected_local_image_count(locale, image_type)
+        UI.message("#{locale} #{image_type}: #{remote_count} uploaded / #{expected_count} local")
+        missing << "#{locale} #{image_type}: expected #{expected_count}, found #{remote_count}" if expected_count.positive? && remote_count < expected_count
+      end
+    end
+  rescue Google::Apis::ClientError, Google::Apis::AuthorizationError => error
+    UI.user_error!(
+      "Google Play API rejected the listing asset check: #{error.message}\n" \
+      "#{error.respond_to?(:body) ? error.body : ''}"
+    )
+  rescue Signet::AuthorizationError => error
+    UI.user_error!("Google could not authorize the service-account JSON: #{error.message}")
+  rescue Faraday::ConnectionFailed, SocketError => error
+    UI.user_error!("Could not reach Google APIs while checking listing assets: #{error.message}")
+  ensure
+    begin
+      client&.abort_current_edit
+    rescue => error
+      UI.important("Could not abort the temporary Google Play edit cleanly: #{error.message}")
+    end
+  end
+
+  if missing.any?
+    message = "Google Play listing asset counts are lower than local files:\n- #{missing.join("\n- ")}"
+    truthy?(options[:strict]) ? UI.user_error!(message) : UI.important(message)
+  end
+end
+
+def ensure_store_listing_metadata!(options, require_images: true)
+  missing_or_empty = []
+  too_long = []
+
+  metadata_locales(options).each do |locale|
+    PLAY_STORE_TEXT_LIMITS.each do |file_name, limit|
+      path = store_listing_text_path(locale, file_name)
+      unless File.exist?(path)
+        missing_or_empty << fastlane_relative_path(path)
+        next
+      end
+
+      text = File.read(path).strip
+      if text.empty?
+        missing_or_empty << fastlane_relative_path(path)
+        next
+      end
+
+      character_count = text.length
+      if character_count > limit
+        too_long << "#{fastlane_relative_path(path)} is #{character_count}/#{limit} characters"
+      end
+    end
+  end
+
+  if missing_or_empty.any?
+    UI.user_error!(
+      "Missing or empty Google Play listing text files:\n- #{missing_or_empty.join("\n- ")}"
+    )
+  end
+  if too_long.any?
+    UI.user_error!("Google Play listing text exceeds store limits:\n- #{too_long.join("\n- ")}")
+  end
+  ensure_store_listing_images!(options) if store_listing_images_enabled?(options, default: require_images)
+end
+
+def google_play_credentials
+  json_key = env_value("GOOGLE_PLAY_JSON_KEY_FILE")
+  json_key_data = env_value("GOOGLE_PLAY_JSON_KEY_DATA")
+  UI.user_error!("Set either GOOGLE_PLAY_JSON_KEY_FILE or GOOGLE_PLAY_JSON_KEY_DATA, not both.") if json_key && json_key_data
+
+  if json_key
+    json_key = android_relative_path(json_key)
+    UI.user_error!("Couldn't find Google Play service account JSON at #{json_key}.") unless File.exist?(json_key)
+  end
+
+  credentials = {}
+  credentials[:json_key] = json_key if json_key
+  credentials[:json_key_data] = json_key_data if json_key_data
+  credentials
+end
+
+def google_play_credentials!
+  credentials = google_play_credentials
+  return credentials unless credentials.empty?
+
+  UI.user_error!(
+    "Missing Google Play credentials. Copy android/fastlane/.env.example to android/fastlane/.env " \
+    "and set GOOGLE_PLAY_JSON_KEY_FILE or GOOGLE_PLAY_JSON_KEY_DATA."
+  )
+end
+
+def ensure_google_play_credentials!
+  client = nil
+  begin
+    client = Supply::Client.make_from_config(params: google_play_credentials!)
+    client.begin_edit(package_name: android_package_name)
+    UI.success("Created a Google Play edit for #{android_package_name}.")
+  rescue Google::Apis::ClientError, Google::Apis::AuthorizationError => error
+    UI.user_error!(
+      "Google Play API rejected the service-account JSON for #{android_package_name}: #{error.message}\n" \
+      "#{error.respond_to?(:body) ? error.body : ''}"
+    )
+  rescue Signet::AuthorizationError => error
+    UI.user_error!(
+      "Google could not authorize the service-account JSON: #{error.message}. " \
+      "Check that the JSON key is active and belongs to the Cloud project linked in Play Console API access."
+    )
+  rescue Faraday::ConnectionFailed, SocketError => error
+    UI.user_error!(
+      "Could not reach Google APIs while validating Play credentials: #{error.message}. " \
+      "Check local DNS/network access to www.googleapis.com and try again."
+    )
+  rescue => error
+    UI.user_error!("Google Play credential check failed: #{error.class}: #{error.message}")
+  ensure
+    begin
+      client&.abort_current_edit
+    rescue => error
+      UI.important("Could not abort the temporary Google Play edit cleanly: #{error.message}")
+    end
+  end
+end
+
+def upload_store_listing_metadata!(options)
+  client = nil
+  committed = false
+
+  begin
+    client = Supply::Client.make_from_config(params: google_play_credentials!)
+    client.begin_edit(package_name: android_package_name)
+
+    metadata_locales(options).each do |locale|
+      update_store_listing_for_locale!(client, locale)
+      UI.message("Prepared Google Play listing text for #{locale}.")
+
+      if store_listing_images_enabled?(options)
+        image_count = upload_store_listing_images_for_locale!(client, locale)
+        UI.message("Prepared #{image_count} Google Play listing image(s) for #{locale}.")
+      end
+    end
+
+    if truthy?(options[:validate_only])
+      client.validate_current_edit!
+      UI.success("Validated Google Play listing metadata without committing.")
+    else
+      client.client.commit_edit(
+        android_package_name,
+        client.current_edit.id,
+        changes_not_sent_for_review: truthy?(options[:changes_not_sent_for_review])
+      )
+      committed = true
+      UI.success("Uploaded Google Play listing metadata.")
+    end
+  rescue Google::Apis::ClientError, Google::Apis::AuthorizationError => error
+    UI.user_error!(
+      "Google Play API rejected the listing metadata upload: #{error.message}\n" \
+      "#{error.respond_to?(:body) ? error.body : ''}"
+    )
+  rescue Signet::AuthorizationError => error
+    UI.user_error!("Google could not authorize the service-account JSON: #{error.message}")
+  rescue Faraday::ConnectionFailed, SocketError => error
+    UI.user_error!("Could not reach Google APIs while uploading listing metadata: #{error.message}")
+  rescue => error
+    UI.user_error!("Google Play listing metadata upload failed: #{error.class}: #{error.message}")
+  ensure
+    if client && !committed
+      begin
+        client.abort_current_edit
+      rescue => error
+        UI.important("Could not abort the temporary Google Play edit cleanly: #{error.message}")
+      end
+    end
+  end
+end
+
+def ensure_store_listing_for_screenshots!(client, locale)
+  begin
+    client.client.get_edit_listing(android_package_name, client.current_edit.id, locale)
+    return
+  rescue Google::Apis::ClientError => error
+    raise unless error.status_code == 404
+  end
+
+  if store_listing_metadata_present?(locale)
+    update_store_listing_for_locale!(client, locale)
+    UI.message("Created Google Play listing text for #{locale} before screenshot upload.")
+  else
+    UI.user_error!(
+      "Google Play has no store listing for #{locale}, which is required before screenshot upload. " \
+      "Add title.txt, short_description.txt, and full_description.txt under " \
+      "#{File.expand_path(File.join(android_metadata_root, locale))}, or pass locales:en-GB."
+    )
+  end
+end
+
+def upload_store_listing_screenshots!(options)
+  locales = screenshot_upload_locales(options)
+  UI.user_error!(
+    "No Google Play screenshots found under #{File.expand_path(android_metadata_root)}. " \
+    "Run `bundle exec fastlane screenshots` first."
+  ) if locales.empty?
+
+  client = nil
+  committed = false
+
+  begin
+    client = Supply::Client.make_from_config(params: google_play_credentials!)
+    client.begin_edit(package_name: android_package_name)
+
+    locales.each do |locale|
+      uploaded_for_locale = 0
+
+      ensure_store_listing_for_screenshots!(client, locale)
+
+      Supply::SCREENSHOT_TYPES.each do |image_type|
+        paths = screenshot_paths(locale, image_type)
+        next if paths.empty?
+
+        client.clear_screenshots(image_type: image_type, language: locale)
+        paths.each do |path|
+          UI.message("Uploading #{locale} #{image_type} screenshot #{File.basename(path)}...")
+          client.upload_image(
+            image_path: File.expand_path(path),
+            image_type: image_type,
+            language: locale
+          )
+        end
+        remote_count = client.fetch_images(image_type: image_type, language: locale).length
+        UI.user_error!(
+          "Google Play only shows #{remote_count}/#{paths.length} #{locale} #{image_type} screenshots in the pending edit."
+        ) if remote_count < paths.length
+        uploaded_for_locale += paths.length
+      end
+
+      UI.message("Prepared #{uploaded_for_locale} Google Play screenshots for #{locale}.")
+    end
+
+    if truthy?(options[:validate_only])
+      client.validate_current_edit!
+      UI.success("Validated Google Play screenshots without committing.")
+    else
+      client.client.commit_edit(
+        android_package_name,
+        client.current_edit.id,
+        changes_not_sent_for_review: truthy?(options[:changes_not_sent_for_review])
+      )
+      committed = true
+      UI.success("Uploaded Google Play screenshots.")
+    end
+  rescue Google::Apis::ClientError, Google::Apis::AuthorizationError => error
+    UI.user_error!(
+      "Google Play API rejected the screenshot upload: #{error.message}\n" \
+      "#{error.respond_to?(:body) ? error.body : ''}"
+    )
+  rescue Signet::AuthorizationError => error
+    UI.user_error!("Google could not authorize the service-account JSON: #{error.message}")
+  rescue Faraday::ConnectionFailed, SocketError => error
+    UI.user_error!("Could not reach Google APIs while uploading screenshots: #{error.message}")
+  rescue => error
+    UI.user_error!("Google Play screenshot upload failed: #{error.class}: #{error.message}")
+  ensure
+    if client && !committed
+      begin
+        client.abort_current_edit
+      rescue => error
+        UI.important("Could not abort the temporary Google Play edit cleanly: #{error.message}")
+      end
+    end
+  end
+end
+
+def android_dir
+  File.join(project_root, "android")
+end
+
+def android_app_dir
+  File.join(android_dir, "app")
+end
+
+def android_key_properties_path(options)
+  File.expand_path(
+    options[:key_properties] || env_value("ANDROID_KEY_PROPERTIES") || "android/key.properties",
+    project_root
+  )
+end
+
+def android_release_aab(options)
+  File.expand_path(
+    options[:aab] || env_value("ANDROID_RELEASE_AAB") || "build/app/outputs/bundle/release/app-release.aab",
+    project_root
+  )
+end
+
+def read_properties(path)
+  properties = {}
+  File.readlines(path, chomp: true).each do |line|
+    stripped = line.strip
+    next if stripped.empty? || stripped.start_with?("#") || stripped.start_with?("!")
+
+    separator = [stripped.index("="), stripped.index(":")].compact.min
+    if separator
+      key = stripped[0...separator].strip
+      value = stripped[(separator + 1)..].to_s.strip
+    else
+      key, value = stripped.split(/\s+/, 2)
+    end
+    properties[key] = value.to_s if key
+  end
+  properties
+end
+
+def android_keystore_path(store_file)
+  candidates = [
+    File.expand_path(store_file, android_dir),
+    File.expand_path(store_file, android_app_dir),
+  ].uniq
+  candidates.find { |path| File.exist?(path) } || candidates.first
+end
+
+def ensure_android_release_signing!(options)
+  return if truthy?(options[:allow_debug_signing]) || truthy?(env_value("ANDROID_ALLOW_DEBUG_SIGNING"))
+
+  path = android_key_properties_path(options)
+  UI.user_error!(
+    "Missing Android release signing config at #{path}. Create android/key.properties " \
+    "or pass allow_debug_signing:true for a debug-signed local build check."
+  ) unless File.exist?(path)
+
+  properties = read_properties(path)
+  required_keys = %w[storePassword keyPassword keyAlias storeFile]
+  missing = required_keys.select { |key| properties[key].to_s.empty? }
+  UI.user_error!("Missing Android signing properties in #{path}: #{missing.join(', ')}.") unless missing.empty?
+
+  keystore = android_keystore_path(properties.fetch("storeFile"))
+  UI.user_error!(
+    "Missing Android upload keystore at #{keystore}. The storeFile value in #{path} " \
+    "should point to the ignored release keystore."
+  ) unless File.exist?(keystore)
+end
+
+def ensure_android_aab!(options)
+  aab = android_release_aab(options)
+  UI.user_error!("No Android AAB found at #{aab}. Run the android build lane first.") unless File.exist?(aab)
+  aab
+end
+
+platform :android do
+  desc "Validate Google Play service-account credentials without uploading"
+  lane :check_google_play_credentials do
+    ensure_google_play_credentials!
+    UI.success("Google Play credentials are valid.")
+  end
+
+  desc "Generate localized Flutter screenshots and place them in Google Play metadata folders"
+  lane :screenshots do |options|
+    capture_flutter_screenshots(options)
+    prepare_store_screenshots(options)
+  end
+
+  desc "Upload generated screenshots to Google Play"
+  lane :upload_screenshots do |options|
+    upload_store_listing_screenshots!(options)
+  end
+
+  desc "Validate Google Play store listing metadata without uploading"
+  lane :validate_metadata do |options|
+    ensure_store_listing_metadata!(options)
+    UI.message("Validated Google Play metadata for #{metadata_locales(options).join(', ')}.")
+    UI.success("Google Play store listing metadata is ready.")
+  end
+
+  desc "Read back Google Play listing image counts from the API"
+  lane :check_store_listing_assets do |options|
+    verify_play_store_images!(options)
+  end
+
+  desc "Upload Google Play store listing metadata"
+  lane :upload_metadata do |options|
+    ensure_store_listing_metadata!(options)
+    upload_store_listing_metadata!(options)
+  end
+
+  desc "Build the signed release Android App Bundle with Flutter"
+  lane :build do |options|
+    ensure_android_release_signing!(options)
+
+    run_at_project_root(
+      shell_join([flutter_bin, "build", "appbundle", "--release", *flutter_build_args(options)])
+    )
+
+    UI.success("Built Android App Bundle: #{ensure_android_aab!(options)}")
+  end
+
+  desc "Build and upload an AAB to the Google Play internal track"
+  lane :internal do |options|
+    build(options) unless truthy?(options[:skip_build])
+    aab = ensure_android_aab!(options)
+
+    upload_to_play_store(
+      {
+        package_name: android_package_name,
+        track: options[:track] || "internal",
+        aab: aab,
+        skip_upload_metadata: true,
+        skip_upload_changelogs: true,
+        skip_upload_images: true,
+        skip_upload_screenshots: true,
+      }.merge(google_play_credentials!)
+    )
+  end
+
+  desc "Build and create a draft Google Play release"
+  lane :release do |options|
+    build(options) unless truthy?(options[:skip_build])
+    aab = ensure_android_aab!(options)
+    if truthy?(options[:upload_metadata])
+      ensure_store_listing_metadata!(options, require_images: truthy?(options[:upload_images]))
+    elsif truthy?(options[:upload_images])
+      ensure_store_listing_images!(options)
+    end
+    sync_store_listing_images_for_supply!(options) if truthy?(options[:upload_images])
+
+    params = {
+      package_name: android_package_name,
+      track: options[:track] || "production",
+      aab: aab,
+      release_status: options[:release_status] || "draft",
+      metadata_path: android_metadata_path,
+      skip_upload_metadata: !truthy?(options[:upload_metadata]),
+      skip_upload_changelogs: !truthy?(options[:upload_changelogs]),
+      skip_upload_images: !truthy?(options[:upload_images]),
+      skip_upload_screenshots: !truthy?(options[:upload_screenshots]),
+    }.merge(google_play_credentials!)
+    params[:rollout] = options[:rollout] if options[:rollout]
+
+    upload_to_play_store(params)
+  end
+end

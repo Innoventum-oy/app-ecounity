@@ -15,7 +15,25 @@ class EcoUnityStorage {
   EcoUnityStorage(this._fileStorage);
 
   void _registerAppAdapter<T>(TypeAdapter<T> adapter) {
-    Hive.registerAdapter<T>(adapter, override: true);
+    if (_isAdapterRegisteredForType<T>()) {
+      return;
+    }
+
+    if (Hive.isAdapterRegistered(adapter.typeId)) {
+      // Web hot restart can leave Hive with a stale adapter for the numeric
+      // typeId but no adapter for the current Dart runtime type.
+      Hive.registerAdapter<T>(adapter, override: true);
+    } else {
+      Hive.registerAdapter<T>(adapter);
+    }
+  }
+
+  bool _isAdapterRegisteredForType<T>() {
+    try {
+      return (Hive as dynamic).findAdapterForType<T>() != null;
+    } catch (_) {
+      return false;
+    }
   }
 
   static bool completedPathwaysEqual(
@@ -81,10 +99,8 @@ class EcoUnityStorage {
   Future<void> registerAdapters() async {
     log('Ensuring adapters are registered', name: 'EcoUnityStorage');
 
-    // Re-register app-specific adapters explicitly by type. This keeps the
-    // registry aligned with the current runtime types across web reloads and
-    // startup retries, where old adapter instances may still occupy the same
-    // typeId but no longer match the current library instance of the type.
+    // Register app-specific adapters by Dart type, not just numeric typeId.
+    // Hot restart on web can leave stale typeId entries behind.
     _registerAppAdapter<BadgeStatusItem>(BadgeStatusItemAdapter());
     _registerAppAdapter<EcoUnityBadge>(EcoUnityBadgeAdapter());
     _registerAppAdapter<PathwayStage>(PathwayStageAdapter());
@@ -95,12 +111,42 @@ class EcoUnityStorage {
     log('All adapters ensured successfully', name: 'EcoUnityStorage');
   }
 
+  Future<void> _purgeCompletedPathwaysStorage() async {
+    try {
+      final Box<dynamic>? box = await _fileStorage.init('userData');
+      if (box == null) {
+        return;
+      }
+      if (box.containsKey('completedPathways')) {
+        await box.delete('completedPathways');
+      }
+    } catch (error) {
+      log(
+        'Failed to remove corrupted completedPathways entry: $error',
+        name: 'EcoUnityStorage',
+      );
+    }
+  }
+
   Future<List<PathwayStatusItem>?> getCompletedPathways() async {
-    final List<PathwayStatusItem>? items =
-        (await _fileStorage.getObject('completedPathways', boxName: 'userData')
-                as List<dynamic>?)
-            ?.map((item) => item as PathwayStatusItem)
-            .toList();
+    List<PathwayStatusItem>? items;
+    try {
+      items =
+          (await _fileStorage.getObject(
+                    'completedPathways',
+                    boxName: 'userData',
+                  )
+                  as List<dynamic>?)
+              ?.map((item) => item as PathwayStatusItem)
+              .toList();
+    } catch (error) {
+      log(
+        'Unable to read completedPathways Hive entry. Removing only that key: $error',
+        name: 'EcoUnityStorage',
+      );
+      await _purgeCompletedPathwaysStorage();
+      return <PathwayStatusItem>[];
+    }
 
     return normalizeCompletedPathways(items);
   }

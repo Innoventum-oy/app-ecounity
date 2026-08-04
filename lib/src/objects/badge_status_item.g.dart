@@ -8,7 +8,7 @@ part of 'badge_status_item.dart';
 
 class BadgeStatusItemAdapter extends TypeAdapter<BadgeStatusItem> {
   @override
-  final typeId = 206;
+  final typeId = 1206;
 
   @override
   BadgeStatusItem read(BinaryReader reader) {

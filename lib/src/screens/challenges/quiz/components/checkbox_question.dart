@@ -28,7 +28,6 @@ class CheckboxQuestion extends StatefulWidget {
 
 class CheckboxGroupWidget extends State<CheckboxQuestion> {
   List<dynamic> selectedOptionValues = [];
-  List<dynamic>? options;
 
   @override
   void initState() {
@@ -45,75 +44,92 @@ class CheckboxGroupWidget extends State<CheckboxQuestion> {
     }
   }
 
+  List<Widget> _buildOptions(List<dynamic> options) {
+    return options
+        .map(
+          (data) => Card(
+            child: CheckboxListTile(
+              title: Text("${data.value}"),
+              value: selectedOptionValues.contains(data.id),
+              onChanged: (val) {
+                setState(() {
+                  if (val == true) {
+                    if (!selectedOptionValues.contains(data.id)) {
+                      selectedOptionValues.add(data.id);
+                    }
+                  } else {
+                    selectedOptionValues.remove(data.id);
+                  }
+                  widget.onChanged(List<dynamic>.from(selectedOptionValues));
+                });
+              },
+            ),
+          ),
+        )
+        .toList();
+  }
+
+  List<Widget> _buildQuestionContent(List<Widget> options) {
+    return [
+      Text(
+        widget.element.title ?? '',
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: 12),
+      if (widget.element.description != null)
+        Text(widget.element.description ?? ''),
+      ...options,
+    ];
+  }
+
+  List<Widget> _buildPageControls() {
+    return [
+      const SizedBox(height: 12),
+      if (widget.buttons != null)
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Expanded(
+              child: Wrap(
+                alignment: WrapAlignment.spaceAround,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                runSpacing: 10,
+                children: widget.buttons ?? [],
+              ),
+            ),
+          ],
+        ),
+      const SizedBox(height: 12),
+      Center(
+        child: Text(
+          "${widget.index} / ${widget.pageCount}",
+          style: const TextStyle(fontSize: 14),
+        ),
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
-    options = widget.element.elements;
+    final List<dynamic> options = widget.element.elements ?? [];
     if (kDebugMode) {
       log(
         'Building Question ${widget.element.id} ${widget.element.title} with ${widget.element.elements?.length} options, selected: ${widget.selectedOptions}',
       );
     }
-    List<Widget> children = [];
 
-    children.addAll(
-      options!.map(
-        (data) => Card(
-          child: CheckboxListTile(
-            title: Text("${data.value}"),
-            value: selectedOptionValues.contains(data.id),
-            onChanged: (val) {
-              setState(() {
-                if (val == true) {
-                  if (!selectedOptionValues.contains(data.id)) {
-                    selectedOptionValues.add(data.id);
-                  }
-                } else {
-                  if (selectedOptionValues.contains(data.id)) {
-                    selectedOptionValues.remove(data.id);
-                  }
-                }
-                widget.onChanged(List<dynamic>.from(selectedOptionValues));
-              });
-            },
-          ),
-        ),
-      ),
+    final List<Widget> questionContent = _buildQuestionContent(
+      _buildOptions(options),
     );
+    final List<Widget> pageControls = _buildPageControls();
 
-    return Column(
-      children: [
-        Text(
-          widget.element.title ?? '',
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 12),
-        if (widget.element.description != null)
-          Text(widget.element.description ?? ''),
-        ...children,
-        SizedBox(height: 12),
-        if (widget.buttons != null)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Expanded(
-                child: Wrap(
-                  alignment: WrapAlignment.spaceAround,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  runSpacing: 10,
-                  children: widget.buttons ?? [],
-                ),
-              ),
-            ],
-          ),
-        const SizedBox(height: 12),
-        Center(
-          child: Text(
-            "${widget.index} / ${widget.pageCount}",
-            style: const TextStyle(fontSize: 14),
-          ),
-        ),
-      ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [...questionContent, ...pageControls],
+      ),
     );
   }
 }

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class DragDropItem {
@@ -24,6 +23,8 @@ class DragDropItem {
   Widget? feedbackItem;
   //Child to leave at source when dragging
   Widget? childWhenDragging;
+  // Identifier of the draggable item currently accepted by this target.
+  String? acceptedFromValue;
   //whether a drop target will accept this model or not
   //[boolean]
   bool willAccept = true;
@@ -34,32 +35,23 @@ class DragDropItem {
   //default text style for a drag/drop children
   TextStyle? defaultTextStyle;
 
-  DragDropItem(
-      {required this.key,
-        required this.value,
-        this.iconData,
-        this.dragChild,
-        this.dropChild,
-        this.feedbackItem,
-        this.childWhenDragging,
-        this.isAccepted = false,
-        this.isCorrect = false,
-        this.defaultTextStyle}) {
+  DragDropItem({
+    required this.key,
+    required this.value,
+    this.iconData,
+    this.dragChild,
+    this.dropChild,
+    this.feedbackItem,
+    this.childWhenDragging,
+    this.isAccepted = false,
+    this.isCorrect = false,
+    this.defaultTextStyle,
+  }) {
     feedbackItem = dragChild ?? Icon(iconData, size: 30, color: Colors.teal);
 
-    dropChild = dropChild ??
-        Text(value,
-            style: TextStyle(
-              fontSize: 20,
-            ));
-    childWhenDragging = dragChild ??
-        Text(value,
-            style: TextStyle(
-              fontSize: 20,
-            ));
-
+    dropChild = dropChild ?? Text(value, style: TextStyle(fontSize: 20));
+    childWhenDragging =
+        dragChild ?? Text(value, style: TextStyle(fontSize: 20));
   }
   bool get isDraggable => dragChild != null;
-
-
 }

@@ -2,7 +2,7 @@ import 'package:hive_ce/hive.dart';
 
 part 'pathway_type.g.dart';
 
-@HiveType(typeId: 204)
+@HiveType(typeId: 1204)
 enum PathwayType {
   @HiveField(0)
   wiki,
@@ -13,5 +13,5 @@ enum PathwayType {
   @HiveField(3)
   video,
   @HiveField(4)
-  slides
+  slides,
 }

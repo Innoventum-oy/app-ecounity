@@ -1,25 +1,30 @@
 import 'dart:developer';
+
+import 'package:core/core.dart' as core;
+import 'package:ecounity/l10n/app_localizations_extension.dart';
+import 'package:ecounity/src/providers/ecounity_badge_provider.dart';
+import 'package:ecounity/src/providers/locale_provider.dart';
+import 'package:ecounity/src/providers/selected_pathway_notifier.dart';
+import 'package:ecounity/src/screens/dashboard/dashboard.dart';
+import 'package:ecounity/src/screens/login/login_form.dart';
+import 'package:ecounity/src/util/app_theme.dart';
+import 'package:ecounity/src/util/core_compat.dart';
+import 'package:ecounity/src/util/ecounity_storage.dart';
+import 'package:ecounity/src/util/utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:loader_overlay/loader_overlay.dart';
 import 'package:provider/provider.dart';
-import 'package:ecounity/src/util/utils.dart';
-import 'package:ecounity/src/util/core_compat.dart';
-import 'package:ecounity/l10n/app_localizations_extension.dart';
-import 'package:core/core.dart' as core;
-import 'package:ecounity/src/providers/locale_provider.dart';
-import 'package:ecounity/src/providers/ecounity_badge_provider.dart';
-import 'package:ecounity/src/providers/selected_pathway_notifier.dart';
-import 'package:ecounity/src/screens/dashboard/dashboard.dart';
-import 'package:ecounity/src/screens/login/login_form.dart';
-import 'package:ecounity/src/util/app_theme.dart';
-import 'package:ecounity/src/util/ecounity_storage.dart';
 
 final navigatorKey = NavigationService.navigatorKey;
+const bool _screenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
+const String _screenshotLocaleCode = String.fromEnvironment(
+  'SCREENSHOT_LOCALE',
+);
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   late core.FileStorage fileStorage;
@@ -47,11 +52,23 @@ void main() async {
     await EcoUnityStorage(fileStorage).registerAdapters();
   }
 
+  if (_screenshotLocaleCode.isNotEmpty) {
+    await core.Settings().setLanguage(_screenshotLocaleCode);
+  }
+
   runApp(
     // Create providers for the application to enable state management
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(
+          create: (_) {
+            final LocaleProvider localeProvider = LocaleProvider();
+            if (_screenshotLocaleCode.isNotEmpty) {
+              localeProvider.setLocale(Locale(_screenshotLocaleCode));
+            }
+            return localeProvider;
+          },
+        ),
         ChangeNotifierProvider(
           create: (_) => core.AuthProvider(),
         ), // AuthProvider
@@ -98,6 +115,10 @@ class EcounityState extends State<Ecounity> with WidgetsBindingObserver {
   }
 
   void initLocale() async {
+    if (_screenshotLocaleCode.isNotEmpty) {
+      return;
+    }
+
     String? savedLocale = await core.Settings().getLanguage();
     if (savedLocale != null && mounted) {
       Provider.of<LocaleProvider>(
@@ -117,6 +138,9 @@ class EcounityState extends State<Ecounity> with WidgetsBindingObserver {
   @override
   void didChangeLocales(List<Locale>? locales) {
     super.didChangeLocales(locales);
+    if (_screenshotMode) {
+      return;
+    }
     if (kDebugMode) {
       log(
         'System language changed: ${locales?.map((locale) => locale.toString()).join(', ')}',
@@ -128,12 +152,6 @@ class EcounityState extends State<Ecounity> with WidgetsBindingObserver {
   }
 
   void _handleProcessing() {
-    if (kDebugMode || kProfileMode) {
-      log(
-        'ApiClient isProcessingNotifier: ${core.ApiClient().isProcessingNotifier.value}',
-        name: 'main.dart EcounityState',
-      );
-    }
     // if the ApiClient is processing, show the loader overlay
     if (core.ApiClient().isProcessingNotifier.value) {
       context.loaderOverlay.show();
@@ -171,6 +189,8 @@ class AppLocalizationState extends StatefulWidget {
 
 class _AppLocalizationState extends State<AppLocalizationState>
     with WidgetsBindingObserver {
+  bool _openedDataRefreshStarted = false;
+
   Future<core.User> getUserData() async {
     return await Provider.of<core.AuthProvider>(context).user;
   }
@@ -178,16 +198,45 @@ class _AppLocalizationState extends State<AppLocalizationState>
   @override
   void initState() {
     super.initState();
-    initSavedLocale();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initSavedLocaleAndRefreshCachedData();
+    });
   }
 
-  void initSavedLocale() async {
+  Future<void> _initSavedLocaleAndRefreshCachedData() async {
+    if (_openedDataRefreshStarted) {
+      return;
+    }
+    _openedDataRefreshStarted = true;
+
+    if (_screenshotMode) {
+      return;
+    }
+
     String? savedLocale = await core.Settings().getLanguage();
     if (savedLocale == null && mounted) {
       // set the current locale to settings
       String language = Localizations.localeOf(context).languageCode;
       await core.Settings().setLanguage(language);
+      if (!mounted) {
+        return;
+      }
       setState(() {});
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    try {
+      await updateAppVersionDate(context, forceRefresh: true);
+    } catch (e, stackTrace) {
+      if (kDebugMode || kProfileMode) {
+        log(
+          'Could not refresh cached app data on startup: $e',
+          stackTrace: stackTrace,
+        );
+      }
     }
   }
 

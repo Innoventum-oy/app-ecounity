@@ -11,16 +11,18 @@ import 'package:core/core.dart' as core;
 import 'package:ecounity/src/util/core_compat.dart';
 import 'package:ecounity/src/widgets/webpage_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../widgets/mark_pathway_completed.dart';
+import '../../widgets/screen_footer.dart';
 import '../../widgets/screenscaffold.dart';
 
 class Slides extends WebpageScreen {
-  const Slides(
-      {super.key,
-      required super.navIndex,
-      required super.webPage,
-      super.openIntroduction = false,
-      super.pathways});
+  const Slides({
+    super.key,
+    required super.navIndex,
+    required super.webPage,
+    super.openIntroduction = false,
+    super.skipAutoIntroduction = false,
+    super.pathways,
+  });
 
   @override
   State<StatefulWidget> createState() => SlidesState();
@@ -30,7 +32,6 @@ class SlidesState extends WebpageScreenState<Slides> {
   final _pageViewController = PageController(initialPage: 0);
   List<List<core.ImageObject>> imageLists = [];
   bool loading = false;
-  bool isCompleted = false;
 
   @override
   void initState() {
@@ -47,8 +48,8 @@ class SlidesState extends WebpageScreenState<Slides> {
   Widget _buildSingleImage(core.ImageObject image) {
     List<String>? externalLinks =
         image.externalLinks is String && image.externalLinks!.isNotEmpty
-            ? image.externalLinks!.split(';')
-            : null;
+        ? image.externalLinks!.split(';')
+        : null;
 
     return Column(
       children: [
@@ -70,25 +71,25 @@ class SlidesState extends WebpageScreenState<Slides> {
           Padding(
             padding: const EdgeInsets.only(top: 20, bottom: 10),
             child: Text(
-              AppLocalizations.of(context)!.links,
+              AppLocalizations.of(context).links,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+          ...externalLinks.map(
+            (link) => Padding(
+              padding: const EdgeInsets.only(
+                left: 0,
+                right: 0,
+                top: 5,
+                bottom: 5,
+              ),
+              child: ElevatedButton(
+                onPressed: () => _goToUrl(link),
+                child: Text(link, style: const TextStyle(color: Colors.orange)),
               ),
             ),
           ),
-          ...externalLinks.map((link) => Padding(
-                padding:
-                    const EdgeInsets.only(left: 0, right: 0, top: 5, bottom: 5),
-                child: ElevatedButton(
-                  onPressed: () => _goToUrl(link),
-                  child: Text(
-                    link,
-                    style: const TextStyle(color: Colors.orange),
-                  ),
-                ),
-              )),
         ],
       ],
     );
@@ -114,30 +115,34 @@ class SlidesState extends WebpageScreenState<Slides> {
     if (folders != null) {
       // Get images for each folder
       for (Map<dynamic, dynamic> folder in folders) {
-        List<core.ImageObject> images = await imageProvider
-            .getItems({'category': folder['objectid']}, reload: true);
+        List<core.ImageObject> images = await imageProvider.getItems({
+          'category': folder['objectid'],
+        }, reload: true);
         if (images.isNotEmpty) {
           // Add images to the list
           imageLists.add(images);
         }
       }
     }
-    isCompleted = await widget.webPage.isCompleted();
     if (mounted) {
       setState(() {});
     }
   }
 
   @override
-  Widget buildScreen(BuildContext context, {List<Widget> buttons = const []}) {
+  Widget buildScreen(BuildContext context) {
+    final bool isContentCompleted = status == PathwayStatus.completed;
     String currentLanguage = Localizations.localeOf(context).languageCode;
     List<List<core.ImageObject>> filteredImageLists = [];
 
     if (imageLists.isNotEmpty) {
       for (List<core.ImageObject> imageList in imageLists) {
         List<core.ImageObject> filteredImages = imageList
-            .where((el) =>
-                (el.filelanguage == null || el.filelanguage == currentLanguage))
+            .where(
+              (el) =>
+                  (el.filelanguage == null ||
+                  el.filelanguage == currentLanguage),
+            )
             .toList();
         if (filteredImages.isNotEmpty) {
           filteredImageLists.add(filteredImages);
@@ -156,26 +161,32 @@ class SlidesState extends WebpageScreenState<Slides> {
           List<Widget> quizButtons = [];
           List<core.ImageObject> e = imageLists.elementAt(index);
           if (index > 0) {
-            quizButtons.add(ElevatedButton.icon(
-              onPressed: () => _pageViewController.previousPage(
+            quizButtons.add(
+              ElevatedButton.icon(
+                onPressed: () => _pageViewController.previousPage(
                   duration: const Duration(milliseconds: 300),
-                  curve: Curves.linear),
-              icon: const Icon(Icons.arrow_back),
-              label: Text(context.l10n.button_previous),
-            ));
+                  curve: Curves.linear,
+                ),
+                icon: const Icon(Icons.arrow_back),
+                label: Text(context.l10n.button_previous),
+              ),
+            );
           }
           if (index < imageLists.length - 1) {
-            quizButtons.add(ElevatedButton.icon(
-              onPressed: () {
-                if (_pageViewController.hasClients) {
-                  _pageViewController.nextPage(
+            quizButtons.add(
+              ElevatedButton.icon(
+                onPressed: () {
+                  if (_pageViewController.hasClients) {
+                    _pageViewController.nextPage(
                       duration: const Duration(milliseconds: 300),
-                      curve: Curves.linear);
-                }
-              },
-              icon: const Icon(Icons.arrow_forward),
-              label: Text(context.l10n.button_next),
-            ));
+                      curve: Curves.linear,
+                    );
+                  }
+                },
+                icon: const Icon(Icons.arrow_forward),
+                label: Text(context.l10n.button_next),
+              ),
+            );
           } else if (index == imageLists.length - 1) {}
 
           return SingleChildScrollView(
@@ -186,40 +197,21 @@ class SlidesState extends WebpageScreenState<Slides> {
                   _buildSingleImage(e.first)
                 else
                   SlidesCarousel(images: e),
-
-                // Button for marking completion
-                Padding(
-                    padding: const EdgeInsets.only(
-                        left: 0, right: 0, top: 20, bottom: 10),
-                    child: Consumer<core.FileStorage>(
-                      builder: (context, fileStorage, child) {
-                        return FutureBuilder(
-                          future: completePathwayButton(
-                              context, widget.webPage, fileStorage),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.done) {
-                              if (snapshot.hasData) {
-                                return snapshot.data!;
-                              } else {
-                                return Text(AppLocalizations.of(context)!
-                                    .error_occurred);
-                              }
-                            }
-                            return const CircularProgressIndicator();
-                          },
-                          initialData: const CircularProgressIndicator(),
-                        );
-                      },
-                    ))
               ],
             ),
           );
         },
       ),
     );
+    if (imageLists.isNotEmpty) {
+      slidesContent = KeyedSubtree(
+        key: const ValueKey('screenshot-content-slides-loaded'),
+        child: slidesContent,
+      );
+    }
 
     return ScreenScaffold(
+      key: const ValueKey('screenshot-content-slides-screen'),
       fullWidth: true,
       title: widget.webPage.title,
       child: Column(
@@ -232,7 +224,7 @@ class SlidesState extends WebpageScreenState<Slides> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                isCompleted
+                isContentCompleted
                     ? Expanded(
                         child: ListTile(
                           leading: const FaIcon(FontAwesomeIcons.check),
@@ -250,11 +242,13 @@ class SlidesState extends WebpageScreenState<Slides> {
               child: slidesContent,
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children:
-                // Previous button
-                buttons,
+          ScreenFooter(
+            webPage: widget.webPage,
+            navIndex: widget.navIndex,
+            pathways: widget.pathways,
+            isCompleted: isContentCompleted,
+            showOpenIntroduction: true,
+            showMarkCompleted: true,
           ),
         ],
       ),

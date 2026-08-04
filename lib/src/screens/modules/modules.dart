@@ -10,6 +10,7 @@ import 'package:ecounity/src/util/core_compat.dart';
 import '../../providers/selected_pathway_notifier.dart';
 import '../../objects/pathway_status_item.dart';
 import '../../util/ecounity_storage.dart';
+import '../../util/image_from_url.dart';
 import '../../util/router.dart';
 import '../../widgets/screenscaffold.dart';
 import 'package:ecounity/src/util/settings.dart';
@@ -127,6 +128,41 @@ class ModulesViewState extends State<ModulesView> {
     return a.pathwayName!.compareTo(b.pathwayName!);
   }
 
+  bool _isPathwayCompleted(
+    int? pathwayId,
+    List<PathwayStatusItem>? completedPathways,
+  ) {
+    if (pathwayId == null || completedPathways == null) {
+      return false;
+    }
+    return completedPathways.any(
+      (element) =>
+          element.id == pathwayId && element.status == PathwayStatus.completed,
+    );
+  }
+
+  bool _isModuleCompleted(
+    WebPage module,
+    List<WebPage> modules,
+    List<PathwayStatusItem>? completedPathways,
+  ) {
+    final List<WebPage> moduleContents = modules
+        .where((element) => element.parent == module.id)
+        .toList();
+
+    if (moduleContents.isEmpty) {
+      return _isPathwayCompleted(module.id, completedPathways);
+    }
+
+    for (final content in moduleContents) {
+      if (!_isPathwayCompleted(content.id, completedPathways)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (kDebugMode) {
@@ -187,6 +223,11 @@ class ModulesViewState extends State<ModulesView> {
               if (modulelist.isNotEmpty) {
                 for (var value in modulelist) {
                   String? imageurl = thumbnails[value.id]?.imageUrl;
+                  final bool moduleCompleted = _isModuleCompleted(
+                    value,
+                    modules,
+                    completedPathways,
+                  );
 
                   itemlist.add(
                     GestureDetector(
@@ -226,26 +267,50 @@ class ModulesViewState extends State<ModulesView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (imageurl is String)
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10.0),
-                                child: Image.network(
-                                  imageurl,
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: 200,
+                            Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  child: SizedBox(
+                                    width: double.infinity,
+                                    height: 200,
+                                    child:
+                                        imageurl != null && imageurl.isNotEmpty
+                                        ? ImageFromUrl.get(
+                                            imageurl,
+                                            fillContainer: true,
+                                            loadedKey: ValueKey(
+                                              'screenshot-module-thumbnail-loaded-${value.id}',
+                                            ),
+                                          )
+                                        : Image.asset(
+                                            'assets/images/ecounity-logo.png',
+                                            fit: BoxFit.cover,
+                                            width: double.infinity,
+                                            height: 200,
+                                          ),
+                                  ),
                                 ),
-                              )
-                            else
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10.0),
-                                child: Image.asset(
-                                  'assets/images/ecounity-logo.png',
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: 200,
-                                ),
-                              ),
+                                if (moduleCompleted)
+                                  Positioned(
+                                    top: 8,
+                                    right: 8,
+                                    child: CircleAvatar(
+                                      radius: 14,
+                                      backgroundColor: Theme.of(
+                                        context,
+                                      ).colorScheme.primaryContainer,
+                                      child: Icon(
+                                        Icons.check_circle,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimaryContainer,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                             const SizedBox(height: 5),
                             Text(
                               value.title,
@@ -278,59 +343,31 @@ class ModulesViewState extends State<ModulesView> {
                 case <= 600 && > 550:
                   aspectratio = 1 / 1.6;
                   break;
-                case <= 550 && > 500:
+                case <= 550:
                   axiscount = 1;
-                  aspectratio = 1.4 / 1;
-                  break;
-                case <= 500 && > 450:
-                  axiscount = 1;
-                  aspectratio = 1.2 / 1;
-                  break;
-                case <= 450 && > 400:
-                  axiscount = 1;
-                  aspectratio = 1 / 1;
-                  break;
-                case <= 400 && > 350:
-                  axiscount = 1;
-                  aspectratio = 1 / 1.2;
-                  break;
-                case <= 350 && > 300:
-                  axiscount = 1;
-                  aspectratio = 1 / 1.5;
-                  break;
-                case <= 300 && > 250:
-                  axiscount = 1;
-                  aspectratio = 1 / 1.9;
-                  break;
-                case <= 250 && > 200:
-                  axiscount = 1;
-                  aspectratio = 1 / 2.8;
-                  break;
-                case <= 200 && > 150:
-                  axiscount = 1;
-                  aspectratio = 1 / 4.5;
-                  break;
-                case <= 150:
-                  axiscount = 1;
-                  aspectratio = 1 / 5.5;
+
                   break;
               }
 
               return ScreenScaffold(
+                key: const ValueKey('screenshot-modules-list-screen'),
                 onRefresh: _refresh,
                 title: screenTitle,
                 navigationIndex: widget.navIndex,
 
                 child: SingleChildScrollView(
+                  key: const ValueKey('screenshot-modules-list'),
                   child: Container(
                     margin: EdgeInsets.only(top: 25, left: 25),
-                    child: GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: axiscount,
-                      childAspectRatio: aspectratio,
-                      children: itemlist.toList(),
-                    ),
+                    child: axiscount > 1
+                        ? GridView.count(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisCount: axiscount,
+                            childAspectRatio: aspectratio,
+                            children: itemlist.toList(),
+                          )
+                        : Column(children: itemlist.toList()),
                   ),
                 ),
               );

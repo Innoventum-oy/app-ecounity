@@ -17,6 +17,21 @@ import '../../widgets/content_page.dart';
 import '../../widgets/language_selector.dart';
 import '../../widgets/popupdialog.dart';
 
+const bool _screenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
+
+const String _defaultFundingLogoAsset =
+    'assets/images/EN_Co-fundedbytheEU_RGB_NEG.png';
+
+const Map<String, String> _fundingLogoAssetsByLanguage = {
+  'de': 'assets/images/DE_Co-fundedbytheEU_RGB_NEG.png',
+  'en': _defaultFundingLogoAsset,
+  'fi': 'assets/images/FI_Co-fundedbytheEU_RGB_NEG.png',
+  'it': 'assets/images/IT_Co-fundedbytheEU_RGB_NEG.png',
+  'pl': 'assets/images/PL_Co-fundedbytheEU_RGB_NEG.png',
+  'pt': 'assets/images/PT_Co-fundedbytheEU_RGB_NEG.png',
+  'uk': 'assets/images/UK_Co-fundedbytheEU_RGB_NEG.png',
+};
+
 /// Login screen mode
 enum LoginMode { initial, login, register, reset }
 
@@ -48,6 +63,11 @@ class LoginState extends State<Login> {
   LoginMode mode = LoginMode.initial; // login mode
   String versionInfo = '';
   String appDataVersion = '';
+
+  String _fundingLogoAssetFor(Locale locale) {
+    return _fundingLogoAssetsByLanguage[locale.languageCode] ??
+        _defaultFundingLogoAsset;
+  }
 
   LoginState() {
     PackageInfo.fromPlatform()
@@ -81,7 +101,6 @@ class LoginState extends State<Login> {
       listen: false,
     ); // get user provider
     getServers(); // get servers
-    updateAppVersionDate(context, forceRefresh: true);
   }
 
   void getServers() async {
@@ -122,66 +141,65 @@ class LoginState extends State<Login> {
   }
 
   Widget serverSelect() {
-    return Expanded(
-      flex: 2,
-      child: Wrap(
-        children: [
-          DropdownMenu<String>(
-            label: Text(context.l10n.server),
-            initialSelection: serverName,
-            onSelected: (String? newValue) async {
-              serverName = newValue!;
-              await core.ApiClient().setServer(serverName);
-              if (mounted) {
-                appDataVersion = await updateAppVersionDate(context) ?? '';
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        DropdownMenu<String>(
+          label: Text(context.l10n.server),
+          initialSelection: serverName,
+          onSelected: (String? newValue) async {
+            serverName = newValue!;
+            await core.ApiClient().setServer(serverName);
+            if (mounted) {
+              appDataVersion = await updateAppVersionDate(context) ?? '';
+            }
+            setState(() {});
+          },
+          dropdownMenuEntries: servers!.keys.map<DropdownMenuEntry<String>>((
+            dynamic value,
+          ) {
+            return DropdownMenuEntry<String>(
+              value: value as String,
+              label: value,
+            );
+          }).toList(),
+        ),
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: context.l10n.refresh,
+          onPressed: () async {
+            try {
+              // First try to empty the file storage normally
+              await core.FileStorage().empty();
+            } catch (e) {
+              // If that fails (due to corrupted data), force clear everything
+              if (kDebugMode) {
+                log('Error emptying storage: $e. Force clearing...');
               }
-              setState(() {});
-            },
-            dropdownMenuEntries: servers!.keys.map<DropdownMenuEntry<String>>((
-              dynamic value,
-            ) {
-              return DropdownMenuEntry<String>(
-                value: value as String,
-                label: value,
-              );
-            }).toList(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: context.l10n.refresh,
-            onPressed: () async {
               try {
-                // First try to empty the file storage normally
-                await core.FileStorage().empty();
-              } catch (e) {
-                // If that fails (due to corrupted data), force clear everything
+                await Hive.close();
+                await Hive.deleteFromDisk();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(context.l10n.cache_cleared),
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
+                }
+              } catch (clearError) {
                 if (kDebugMode) {
-                  log('Error emptying storage: $e. Force clearing...');
-                }
-                try {
-                  await Hive.close();
-                  await Hive.deleteFromDisk();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(context.l10n.cache_cleared),
-                        duration: const Duration(seconds: 3),
-                      ),
-                    );
-                  }
-                } catch (clearError) {
-                  if (kDebugMode) {
-                    log('Error force clearing storage: $clearError');
-                  }
+                  log('Error force clearing storage: $clearError');
                 }
               }
-              if (mounted) {
-                await updateAppVersionDate(context, forceRefresh: true);
-              }
-            },
-          ),
-        ]
-      )
+            }
+            if (mounted) {
+              await updateAppVersionDate(context, forceRefresh: true);
+            }
+          },
+        ),
+      ],
     );
   }
 
@@ -356,10 +374,13 @@ class LoginState extends State<Login> {
     List<Widget> contents = [];
     //if(kDebugMode)
     contents.add(const SizedBox(height: 15));
-    if (serversLoaded && kDebugMode) rowChildren.add(serverSelect());
+    if (serversLoaded && kDebugMode && !_screenshotMode) {
+      rowChildren.add(serverSelect());
+    }
     // add language select to columnChildren
     rowChildren.add(
       IconButton(
+        key: const ValueKey('screenshot-language-button'),
         tooltip: context.l10n.choose_language,
         icon: const Icon(Icons.language),
         onPressed: () {
@@ -369,17 +390,15 @@ class LoginState extends State<Login> {
       ),
     );
     contents.add(
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: rowChildren
-            )
-          )
-        ],
+      SizedBox(
+        width: double.infinity,
+        child: Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
+          children: rowChildren,
+        ),
       ),
     );
     switch (mode) {
@@ -439,6 +458,7 @@ class LoginState extends State<Login> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
+              key: const ValueKey('screenshot-continue-button'),
               onPressed: () {
                 auth.setRegisteredStatus(core.Status.notRegistered);
                 auth.loginGuest();
@@ -504,35 +524,32 @@ class LoginState extends State<Login> {
                       children: [
                         ...contents,
 
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Wrap(
-                                alignment: WrapAlignment.spaceBetween,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  policyLink(),
-                                  //  Text(serverName),
-                                  versionWidget()
-                                ]
-                              )
-                            ),
-                          ],
+                        SizedBox(
+                          width: double.infinity,
+                          child: Wrap(
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              policyLink(),
+                              //  Text(serverName),
+                              versionWidget(),
+                            ],
+                          ),
                         ),
-                        // Erasmus logo and Sepie logo
+                        // EU co-funded logo.
                         Column(
                           children: [
                             const SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                              children: [
-                                Image.asset(
-                                  'assets/images/erasmusplus.png',
-                                  width: 100,
+                            Center(
+                              child: Image.asset(
+                                _fundingLogoAssetFor(
+                                  Localizations.localeOf(context),
                                 ),
-                              ],
+                                width: 220,
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ],
                         ),
