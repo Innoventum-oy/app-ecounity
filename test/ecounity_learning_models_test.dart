@@ -121,6 +121,58 @@ void main() {
       expect(layers.last.effectiveZIndex, 30);
     });
 
+    test('keeps drawable layers when comic media only has backend IDs', () {
+      final EcoUnityComicScene scene = EcoUnityComicScene.fromJson(
+        <String, dynamic>{
+          'id': 301,
+          'scene_key': 'start',
+          'orderno': 1,
+          'title': <String, dynamic>{'en': 'Start'},
+          'backgrounds': <Map<String, dynamic>>[],
+          'props': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 601,
+              'orderno': 1,
+              'prop': <String, dynamic>{
+                'slug': 'recycling-bin',
+                'name': <String, dynamic>{'en': 'Recycling bin'},
+                'image': <String, dynamic>{'id': 901},
+              },
+            },
+          ],
+          'cast': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 701,
+              'orderno': 2,
+              'character': <String, dynamic>{
+                'slug': 'aada',
+                'name': <String, dynamic>{'en': 'Aada'},
+              },
+              'pose_layer': <String, dynamic>{
+                'slug': 'aada-happy',
+                'generated_image': <String, dynamic>{'id': 902},
+              },
+            },
+          ],
+          'decisions': <Map<String, dynamic>>[],
+        },
+      );
+
+      final List<EcoUnityComicDrawableLayer> layers = scene.drawableLayersFor(
+        EcoUnityComicViewportKind.portrait,
+      );
+
+      expect(layers, hasLength(2));
+      expect(
+        layers.map((EcoUnityComicDrawableLayer layer) => layer.media?.id),
+        containsAll(<int>[901, 902]),
+      );
+      expect(
+        layers.map((EcoUnityComicDrawableLayer layer) => layer.imageUrl),
+        everyElement(isNull),
+      );
+    });
+
     test('builds dialogue timeline with ready audio and text fallback', () {
       final EcoUnityComicScene startScene = EcoUnityComic.fromJson(
         _comicActivityFixture(),

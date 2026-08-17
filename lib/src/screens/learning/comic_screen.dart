@@ -103,6 +103,7 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
       child: EcoUnityComicPlayer(
         comic: comic,
         language: data.language,
+        loadingAdditionalScenes: data.loadingAdditionalScenes,
         onCompleted: () => _markCompleted(activity, data.language),
         onSpeechCueChanged: (EcoUnityComicSpeechItem? speech) {
           unawaited(_speechAudioController.playCue(speech));
@@ -116,16 +117,72 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
         Provider.of<EcoUnityLearningProvider>(context, listen: false);
     final String language = await core.Settings().getLanguage() ?? 'en';
     EcoUnityLearningActivity? activity = widget.activity;
-    final int? activityId = widget.activityId;
+    final int? activityId = widget.activityId ?? widget.activity?.id;
 
-    if (activity == null && activityId != null) {
-      activity = await learningProvider.loadActivity(
-        activityId,
-        language: language,
-      );
+    if (activityId != null) {
+      activity =
+          await learningProvider.loadActivity(
+            activityId,
+            language: language,
+            comicSceneLimit: 1,
+          ) ??
+          widget.activity;
+      if (activity != null && activity.isComic) {
+        _loadRemainingComicScenes(activityId, language, activity);
+        return _ComicScreenData(
+          activity: activity,
+          language: language,
+          loadingAdditionalScenes: true,
+        );
+      }
     }
 
-    return _ComicScreenData(activity: activity, language: language);
+    return _ComicScreenData(
+      activity: activity,
+      language: language,
+      loadingAdditionalScenes: false,
+    );
+  }
+
+  void _loadRemainingComicScenes(
+    int activityId,
+    String language,
+    EcoUnityLearningActivity initialActivity,
+  ) {
+    unawaited(() async {
+      try {
+        final EcoUnityLearningActivity? fullActivity =
+            await Provider.of<EcoUnityLearningProvider>(
+              context,
+              listen: false,
+            ).loadActivity(activityId, language: language);
+        if (!mounted || fullActivity == null) {
+          return;
+        }
+        setState(() {
+          _future = Future<_ComicScreenData>.value(
+            _ComicScreenData(
+              activity: fullActivity,
+              language: language,
+              loadingAdditionalScenes: false,
+            ),
+          );
+        });
+      } catch (_) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _future = Future<_ComicScreenData>.value(
+            _ComicScreenData(
+              activity: initialActivity,
+              language: language,
+              loadingAdditionalScenes: false,
+            ),
+          );
+        });
+      }
+    }());
   }
 
   Future<void> _markCompleted(
@@ -151,8 +208,13 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
 }
 
 class _ComicScreenData {
-  const _ComicScreenData({required this.activity, required this.language});
+  const _ComicScreenData({
+    required this.activity,
+    required this.language,
+    required this.loadingAdditionalScenes,
+  });
 
   final EcoUnityLearningActivity? activity;
   final String language;
+  final bool loadingAdditionalScenes;
 }

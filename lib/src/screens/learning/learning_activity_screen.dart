@@ -97,7 +97,11 @@ class _EcoUnityLearningActivityScreenState
     }
 
     final Widget content = switch (activity.type) {
-      EcoUnityActivityType.comic => _buildComic(activity, data.language),
+      EcoUnityActivityType.comic => _buildComic(
+        activity,
+        data.language,
+        loadingAdditionalScenes: data.loadingAdditionalScenes,
+      ),
       EcoUnityActivityType.quiz => _QuizActivityView(
         activity: activity,
         reviewPanel: _reviewPanel(activity, data.language),
@@ -136,7 +140,11 @@ class _EcoUnityLearningActivityScreenState
     );
   }
 
-  Widget _buildComic(EcoUnityLearningActivity activity, String language) {
+  Widget _buildComic(
+    EcoUnityLearningActivity activity,
+    String language, {
+    required bool loadingAdditionalScenes,
+  }) {
     if (activity.comicScenes.isEmpty) {
       return Column(
         children: <Widget>[
@@ -159,6 +167,7 @@ class _EcoUnityLearningActivityScreenState
               rawData: activity.rawData,
             ),
             language: language,
+            loadingAdditionalScenes: loadingAdditionalScenes,
             onCompleted: () => _markCompleted(
               activity,
               language,
@@ -205,7 +214,11 @@ class _EcoUnityLearningActivityScreenState
     if (mounted && updatedActivity != null) {
       setState(() {
         _future = Future<_ActivityScreenData>.value(
-          _ActivityScreenData(activity: updatedActivity, language: language),
+          _ActivityScreenData(
+            activity: updatedActivity,
+            language: language,
+            loadingAdditionalScenes: false,
+          ),
         );
       });
     }
@@ -220,11 +233,68 @@ class _EcoUnityLearningActivityScreenState
     EcoUnityLearningActivity? activity = widget.activity;
     if (activityId != null) {
       activity =
-          await provider.loadActivity(activityId, language: language) ??
+          await provider.loadActivity(
+            activityId,
+            language: language,
+            comicSceneLimit: 1,
+          ) ??
           widget.activity;
+      if (activity != null && activity.isComic) {
+        _loadRemainingComicScenes(activityId, language, activity);
+        return _ActivityScreenData(
+          activity: activity,
+          language: language,
+          loadingAdditionalScenes: true,
+        );
+      }
     }
 
-    return _ActivityScreenData(activity: activity, language: language);
+    return _ActivityScreenData(
+      activity: activity,
+      language: language,
+      loadingAdditionalScenes: false,
+    );
+  }
+
+  void _loadRemainingComicScenes(
+    int activityId,
+    String language,
+    EcoUnityLearningActivity initialActivity,
+  ) {
+    unawaited(() async {
+      try {
+        final EcoUnityLearningActivity? fullActivity =
+            await Provider.of<EcoUnityLearningProvider>(
+              context,
+              listen: false,
+            ).loadActivity(activityId, language: language);
+        if (!mounted || fullActivity == null) {
+          return;
+        }
+        setState(() {
+          _future = Future<_ActivityScreenData>.value(
+            _ActivityScreenData(
+              activity: fullActivity,
+              language: language,
+              loadingAdditionalScenes: false,
+            ),
+          );
+        });
+      } catch (_) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _future = Future<_ActivityScreenData>.value(
+            _ActivityScreenData(
+              activity: initialActivity,
+              language: language,
+              loadingAdditionalScenes: false,
+            ),
+          );
+        });
+      }
+    }());
   }
 
   Future<void> _markCompleted(
@@ -625,10 +695,15 @@ class _QuizResultPanel extends StatelessWidget {
 }
 
 class _ActivityScreenData {
-  const _ActivityScreenData({required this.activity, required this.language});
+  const _ActivityScreenData({
+    required this.activity,
+    required this.language,
+    required this.loadingAdditionalScenes,
+  });
 
   final EcoUnityLearningActivity? activity;
   final String language;
+  final bool loadingAdditionalScenes;
 }
 
 int _questionKey(EcoUnityQuizQuestion question) {

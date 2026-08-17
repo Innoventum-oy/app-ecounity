@@ -632,7 +632,9 @@ class EcoUnityComicScene {
       ...cast.map((castLayer) => castLayer.toDrawableLayer(kind)),
     ];
     layers.removeWhere(
-      (layer) => layer.imageUrl == null || layer.imageUrl!.isEmpty,
+      (layer) =>
+          layer.media == null &&
+          (layer.imageUrl == null || layer.imageUrl!.isEmpty),
     );
     layers.sort(_compareDrawableLayers);
     return layers;
@@ -862,6 +864,7 @@ class EcoUnityComicCastLayer {
       kind: EcoUnityComicLayerKind.character,
       id: id,
       label: character?.name ?? poseLayer?.slug ?? '',
+      media: poseLayer?.generatedImage,
       imageUrl: poseLayer?.generatedImage?.url,
       altText: altText.isNotEmpty ? altText : poseLayer?.altText ?? '',
       layout: layout,
@@ -925,6 +928,7 @@ class EcoUnityComicPropLayer {
       kind: EcoUnityComicLayerKind.prop,
       id: id,
       label: prop?.name ?? prop?.slug ?? '',
+      media: prop?.image,
       imageUrl: prop?.image?.url,
       altText: altText.isNotEmpty ? altText : prop?.altText ?? '',
       layout: layout,
@@ -1011,6 +1015,7 @@ class EcoUnityComicDecision {
       kind: EcoUnityComicLayerKind.decision,
       id: id,
       label: label,
+      media: choiceImage,
       imageUrl: choiceImage?.url,
       altText: altText,
       layout: layout,
@@ -1219,6 +1224,7 @@ class EcoUnityComicDrawableLayer {
     required this.kind,
     required this.id,
     required this.label,
+    required this.media,
     required this.imageUrl,
     required this.altText,
     required this.layout,
@@ -1229,6 +1235,7 @@ class EcoUnityComicDrawableLayer {
   final EcoUnityComicLayerKind kind;
   final int? id;
   final String label;
+  final EcoUnityMedia? media;
   final String? imageUrl;
   final String altText;
   final EcoUnityComicLayout layout;

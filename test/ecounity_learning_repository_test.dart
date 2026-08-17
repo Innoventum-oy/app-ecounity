@@ -210,6 +210,138 @@ void main() {
       expect(backend.listRequests.single.params['activity'], 36);
     });
 
+    test('can hydrate only the first comic scene for progressive loading', () async {
+      final Map<String, dynamic> comicActivity =
+          _activityResponse(id: 36, orderNo: 10, type: 'comic')
+            ..['comic_scenes'] = <Map<String, dynamic>>[
+              <String, dynamic>{'objectid': 2},
+              <String, dynamic>{'objectid': 3},
+            ];
+      final _FakeLearningBackend backend = _FakeLearningBackend()
+        ..detailResponses['${EcoUnityLearningRepository.activityObjectType}:36'] =
+            comicActivity
+        ..listResponses[EcoUnityLearningRepository.comicSceneObjectType] =
+            <dynamic>[
+              _sceneResponse(
+                id: 2,
+                sceneKey: 'start',
+                orderNo: 10,
+                props: <Map<String, dynamic>>[
+                  <String, dynamic>{'objectid': 201},
+                ],
+                decisions: <Map<String, dynamic>>[
+                  <String, dynamic>{'objectid': 1},
+                ],
+              ),
+              _sceneResponse(
+                id: 3,
+                sceneKey: 'next',
+                orderNo: 20,
+                props: <Map<String, dynamic>>[
+                  <String, dynamic>{'objectid': 202},
+                ],
+              ),
+            ]
+        ..detailResponses['${EcoUnityLearningRepository.scenePropObjectType}:201'] =
+            _propLayerResponse(id: 201)
+        ..detailResponses['${EcoUnityLearningRepository.scenePropObjectType}:202'] =
+            _propLayerResponse(id: 202)
+        ..detailResponses['${EcoUnityLearningRepository.comicDecisionObjectType}:1'] =
+            <String, dynamic>{
+              'id': 1,
+              'orderno': 10,
+              'label': 'Continue',
+              'target_scene': <String, dynamic>{'objectid': 3},
+            };
+
+      final EcoUnityLearningRepository repository = EcoUnityLearningRepository(
+        backend: backend,
+      );
+
+      final EcoUnityLearningActivity? activity = await repository.loadActivity(
+        36,
+        comicSceneLimit: 1,
+      );
+
+      expect(activity?.comicScenes.map((scene) => scene.sceneKey), <String>[
+        'start',
+      ]);
+      expect(activity?.comicScenes.single.props.single.id, 201);
+      expect(
+        activity?.comicScenes.single.decisions.single.targetSceneKey,
+        'next',
+      );
+      expect(
+        backend.detailRequestKeys,
+        isNot(
+          contains('${EcoUnityLearningRepository.scenePropObjectType}:202'),
+        ),
+      );
+    });
+
+    test('hydrates comic scene relation details in parallel', () async {
+      final Map<String, dynamic> comicActivity = _activityResponse(
+        id: 36,
+        orderNo: 10,
+        type: 'comic',
+      );
+      final _FakeLearningBackend backend = _FakeLearningBackend()
+        ..detailDelay = const Duration(milliseconds: 20)
+        ..detailResponses['${EcoUnityLearningRepository.activityObjectType}:36'] =
+            comicActivity
+        ..listResponses[EcoUnityLearningRepository.comicSceneObjectType] =
+            <dynamic>[
+              _sceneResponse(
+                id: 2,
+                sceneKey: 'start',
+                orderNo: 10,
+                backgrounds: <Map<String, dynamic>>[
+                  <String, dynamic>{'objectid': 101},
+                  <String, dynamic>{'objectid': 102},
+                ],
+                props: <Map<String, dynamic>>[
+                  <String, dynamic>{'objectid': 201},
+                  <String, dynamic>{'objectid': 202},
+                ],
+                cast: <Map<String, dynamic>>[
+                  <String, dynamic>{'objectid': 301},
+                  <String, dynamic>{'objectid': 302},
+                ],
+                decisions: <Map<String, dynamic>>[
+                  <String, dynamic>{'objectid': 401},
+                  <String, dynamic>{'objectid': 402},
+                ],
+              ),
+            ]
+        ..detailResponses['${EcoUnityLearningRepository.sceneBackgroundObjectType}:101'] =
+            _backgroundResponse(id: 101)
+        ..detailResponses['${EcoUnityLearningRepository.sceneBackgroundObjectType}:102'] =
+            _backgroundResponse(id: 102)
+        ..detailResponses['${EcoUnityLearningRepository.scenePropObjectType}:201'] =
+            _propLayerResponse(id: 201)
+        ..detailResponses['${EcoUnityLearningRepository.scenePropObjectType}:202'] =
+            _propLayerResponse(id: 202)
+        ..detailResponses['${EcoUnityLearningRepository.sceneCastObjectType}:301'] =
+            _castLayerResponse(id: 301)
+        ..detailResponses['${EcoUnityLearningRepository.sceneCastObjectType}:302'] =
+            _castLayerResponse(id: 302)
+        ..detailResponses['${EcoUnityLearningRepository.comicDecisionObjectType}:401'] =
+            _decisionResponse(id: 401)
+        ..detailResponses['${EcoUnityLearningRepository.comicDecisionObjectType}:402'] =
+            _decisionResponse(id: 402);
+
+      final EcoUnityLearningRepository repository = EcoUnityLearningRepository(
+        backend: backend,
+      );
+
+      final EcoUnityLearningActivity? activity = await repository.loadActivity(
+        36,
+      );
+
+      expect(activity?.comicScenes.single.props, hasLength(2));
+      expect(backend.maxActiveDetailRequests, greaterThan(1));
+    });
+
     test('saves progress with backend field names and JSON payload', () async {
       final _FakeLearningBackend backend = _FakeLearningBackend();
       final EcoUnityLearningRepository repository = EcoUnityLearningRepository(
@@ -328,6 +460,9 @@ Map<String, dynamic> _sceneResponse({
   required int id,
   required String sceneKey,
   required int orderNo,
+  List<Map<String, dynamic>> backgrounds = const <Map<String, dynamic>>[],
+  List<Map<String, dynamic>> cast = const <Map<String, dynamic>>[],
+  List<Map<String, dynamic>> props = const <Map<String, dynamic>>[],
   List<Map<String, dynamic>> decisions = const <Map<String, dynamic>>[],
 }) {
   return <String, dynamic>{
@@ -335,11 +470,57 @@ Map<String, dynamic> _sceneResponse({
     'scene_key': sceneKey,
     'orderno': orderNo,
     'title': <String, dynamic>{'en': 'Scene $id'},
-    'backgrounds': <Map<String, dynamic>>[],
-    'cast': <Map<String, dynamic>>[],
-    'props': <Map<String, dynamic>>[],
+    'backgrounds': backgrounds,
+    'cast': cast,
+    'props': props,
     'decisions': decisions,
     'content_status': 'draft',
+  };
+}
+
+Map<String, dynamic> _backgroundResponse({required int id}) {
+  return <String, dynamic>{
+    'id': id,
+    'category': 'home',
+    'title': 'Background $id',
+    'viewports': <Map<String, dynamic>>[],
+  };
+}
+
+Map<String, dynamic> _propLayerResponse({required int id}) {
+  return <String, dynamic>{
+    'id': id,
+    'orderno': id,
+    'prop': <String, dynamic>{
+      'slug': 'prop-$id',
+      'name': <String, dynamic>{'en': 'Prop $id'},
+      'image': <String, dynamic>{'id': 900 + id},
+    },
+  };
+}
+
+Map<String, dynamic> _castLayerResponse({required int id}) {
+  return <String, dynamic>{
+    'id': id,
+    'orderno': id,
+    'character': <String, dynamic>{
+      'slug': 'character-$id',
+      'name': <String, dynamic>{'en': 'Character $id'},
+    },
+    'pose_layer': <String, dynamic>{
+      'slug': 'pose-$id',
+      'generated_image': <String, dynamic>{'id': 1000 + id},
+    },
+    'dialogue_entries': <Map<String, dynamic>>[],
+  };
+}
+
+Map<String, dynamic> _decisionResponse({required int id}) {
+  return <String, dynamic>{
+    'id': id,
+    'orderno': id,
+    'label': <String, dynamic>{'en': 'Choice $id'},
+    'target_scene_key': 'start',
   };
 }
 
@@ -347,6 +528,11 @@ class _FakeLearningBackend implements EcoUnityLearningBackend {
   final Map<String, dynamic> listResponses = <String, dynamic>{};
   final Map<String, dynamic> detailResponses = <String, dynamic>{};
   final List<_ListRequest> listRequests = <_ListRequest>[];
+  final List<String> detailRequestKeys = <String>[];
+
+  Duration detailDelay = Duration.zero;
+  int _activeDetailRequests = 0;
+  int maxActiveDetailRequests = 0;
 
   int? savedObjectId;
   String? savedObjectType;
@@ -365,7 +551,20 @@ class _FakeLearningBackend implements EcoUnityLearningBackend {
 
   @override
   Future<dynamic> getDetails(String objectType, int objectId) async {
-    return detailResponses['$objectType:$objectId'];
+    final String key = '$objectType:$objectId';
+    detailRequestKeys.add(key);
+    _activeDetailRequests += 1;
+    if (_activeDetailRequests > maxActiveDetailRequests) {
+      maxActiveDetailRequests = _activeDetailRequests;
+    }
+    try {
+      if (detailDelay > Duration.zero) {
+        await Future<void>.delayed(detailDelay);
+      }
+      return detailResponses[key];
+    } finally {
+      _activeDetailRequests -= 1;
+    }
   }
 
   @override

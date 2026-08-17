@@ -63,8 +63,13 @@ class EcoUnityLearningProvider with ChangeNotifier {
   Future<EcoUnityLearningActivity?> loadActivity(
     int activityId, {
     String language = 'en',
+    int? comicSceneLimit,
   }) {
-    return _repository.loadActivity(activityId, language: language);
+    return _repository.loadActivity(
+      activityId,
+      language: language,
+      comicSceneLimit: comicSceneLimit,
+    );
   }
 
   Future<EcoUnitySdgModule?> loadModule(

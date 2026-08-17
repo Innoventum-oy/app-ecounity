@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
+import 'package:ecounity/src/learning/widgets/ecounity_media_image.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -21,6 +22,7 @@ class EcoUnityComicPlayer extends StatefulWidget {
     this.onReadySpeech,
     this.onSpeechCueChanged,
     this.imageBuilder,
+    this.loadingAdditionalScenes = false,
   });
 
   final EcoUnityComic comic;
@@ -29,6 +31,7 @@ class EcoUnityComicPlayer extends StatefulWidget {
   final ValueChanged<EcoUnityComicSpeechItem>? onReadySpeech;
   final ValueChanged<EcoUnityComicSpeechItem?>? onSpeechCueChanged;
   final EcoUnityComicImageBuilder? imageBuilder;
+  final bool loadingAdditionalScenes;
 
   @override
   State<EcoUnityComicPlayer> createState() => _EcoUnityComicPlayerState();
@@ -48,11 +51,29 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
   @override
   void didUpdateWidget(covariant EcoUnityComicPlayer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.comic != widget.comic ||
-        oldWidget.language != widget.language) {
+    if (oldWidget.language != widget.language) {
       _sceneKey = widget.comic.startScene?.sceneKey;
       _timelineIndex = 0;
       _lastSpeechCueKey = null;
+      return;
+    }
+
+    if (oldWidget.comic != widget.comic) {
+      final EcoUnityComicScene? currentScene = widget.comic.sceneByKey(
+        _sceneKey,
+      );
+      if (currentScene == null) {
+        _sceneKey = widget.comic.startScene?.sceneKey;
+        _timelineIndex = 0;
+        _lastSpeechCueKey = null;
+        return;
+      }
+      final int timelineLength = currentScene
+          .dialogueTimeline(widget.language)
+          .length;
+      if (timelineLength > 0 && _timelineIndex >= timelineLength) {
+        _timelineIndex = timelineLength;
+      }
     }
   }
 
@@ -89,7 +110,11 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
           currentEntry: currentEntry,
           onContinue: () => _continue(scene, timeline),
           onDecisionSelected: _selectDecision,
+          canSelectDecision: (EcoUnityComicDecision decision) {
+            return widget.comic.sceneForDecision(decision) != null;
+          },
           onCompleted: widget.onCompleted,
+          loadingAdditionalScenes: widget.loadingAdditionalScenes,
         ),
       ],
     );
@@ -281,13 +306,15 @@ class _PositionedComicLayer extends StatelessWidget {
             1.0,
           ),
           child: _ComicImage(
-            media: EcoUnityMedia(
-              id: layer.id,
-              url: layer.imageUrl,
-              title: layer.label,
-              altText: layer.altText,
-              rawData: const <String, dynamic>{},
-            ),
+            media:
+                layer.media ??
+                EcoUnityMedia(
+                  id: layer.id,
+                  url: layer.imageUrl,
+                  title: layer.label,
+                  altText: layer.altText,
+                  rawData: const <String, dynamic>{},
+                ),
             altText: layer.altText,
             fit: BoxFit.contain,
             imageBuilder: imageBuilder,
@@ -382,7 +409,9 @@ class _ComicControls extends StatelessWidget {
     required this.currentEntry,
     required this.onContinue,
     required this.onDecisionSelected,
+    required this.canSelectDecision,
     required this.onCompleted,
+    required this.loadingAdditionalScenes,
   });
 
   final EcoUnityComicScene scene;
@@ -391,7 +420,9 @@ class _ComicControls extends StatelessWidget {
   final EcoUnityComicTimelineEntry? currentEntry;
   final VoidCallback onContinue;
   final ValueChanged<EcoUnityComicDecision> onDecisionSelected;
+  final bool Function(EcoUnityComicDecision decision) canSelectDecision;
   final VoidCallback? onCompleted;
+  final bool loadingAdditionalScenes;
 
   @override
   Widget build(BuildContext context) {
@@ -470,8 +501,15 @@ class _ComicControls extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: ElevatedButton.icon(
-              onPressed: () => onDecisionSelected(decision),
-              icon: const Icon(Icons.alt_route),
+              onPressed: canSelectDecision(decision)
+                  ? () => onDecisionSelected(decision)
+                  : null,
+              icon: loadingAdditionalScenes && !canSelectDecision(decision)
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.alt_route),
               label: Align(
                 alignment: AlignmentDirectional.centerStart,
                 child: Text(
@@ -482,6 +520,16 @@ class _ComicControls extends StatelessWidget {
               ),
             ),
           ),
+        if (loadingAdditionalScenes) ...<Widget>[
+          const SizedBox(height: 2),
+          Text(
+            'Loading next scenes...',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: EcoUnityColors.textSecondary,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -506,21 +554,19 @@ class _ComicImage extends StatelessWidget {
       return imageBuilder!(context, media, altText, fit);
     }
 
-    final String? url = media?.url;
-    if (url == null || url.isEmpty) {
+    final EcoUnityMedia? value = media;
+    if (value == null ||
+        ((value.url ?? '').trim().isEmpty && value.id == null)) {
       return _ComicImagePlaceholder(altText: altText);
     }
 
     return Semantics(
       image: true,
       label: altText.isEmpty ? null : altText,
-      child: Image.network(
-        url,
+      child: EcoUnityMediaImage(
+        media: value,
         fit: fit,
-        errorBuilder:
-            (BuildContext context, Object error, StackTrace? stackTrace) {
-              return _ComicImagePlaceholder(altText: altText);
-            },
+        fallback: _ComicImagePlaceholder(altText: altText),
       ),
     );
   }

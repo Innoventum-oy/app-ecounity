@@ -219,6 +219,7 @@ class EcoUnityLearningRepository {
   Future<EcoUnityLearningActivity?> loadActivity(
     int activityId, {
     String language = 'en',
+    int? comicSceneLimit,
   }) async {
     final dynamic rawData = await _backend.getDetails(
       activityObjectType,
@@ -231,6 +232,7 @@ class EcoUnityLearningRepository {
     final Map<String, dynamic> hydrated = await _hydrateActivityDetails(
       data,
       language: language,
+      comicSceneLimit: comicSceneLimit,
     );
     return EcoUnityLearningActivity.fromJson(hydrated, language: language);
   }
@@ -377,6 +379,7 @@ class EcoUnityLearningRepository {
   Future<Map<String, dynamic>> _hydrateActivityDetails(
     Map<String, dynamic> activityData, {
     required String language,
+    int? comicSceneLimit,
   }) async {
     final Map<String, dynamic> hydrated = Map<String, dynamic>.from(
       activityData,
@@ -394,6 +397,7 @@ class EcoUnityLearningRepository {
       hydrated['comic_scenes'] = await _hydrateComicScenes(
         hydrated,
         language: language,
+        limit: comicSceneLimit,
       );
     }
 
@@ -403,6 +407,7 @@ class EcoUnityLearningRepository {
   Future<List<Map<String, dynamic>>> _hydrateComicScenes(
     Map<String, dynamic> activityData, {
     required String language,
+    int? limit,
   }) async {
     final int? activityId = _relationId(activityData);
     final List<int> relationIds = _relationIds(activityData['comic_scenes']);
@@ -439,28 +444,43 @@ class EcoUnityLearningRepository {
           _relationId(scene)!: _readStringValue(scene['scene_key']),
     };
 
-    final List<Map<String, dynamic>> hydratedScenes = <Map<String, dynamic>>[];
-    for (final Map<String, dynamic> scene in sceneMaps) {
-      final Map<String, dynamic> hydrated = Map<String, dynamic>.from(scene);
-      hydrated['backgrounds'] = await _hydrateRelationList(
-        hydrated['backgrounds'],
-        sceneBackgroundObjectType,
-        keepStubsOnFailure: true,
-      );
-      hydrated['cast'] = await _hydrateCastLayers(hydrated['cast']);
-      hydrated['props'] = await _hydrateRelationList(
-        hydrated['props'],
-        scenePropObjectType,
-        keepStubsOnFailure: true,
-      );
-      hydrated['decisions'] = await _hydrateDecisions(
-        hydrated['decisions'],
-        sceneKeyById: sceneKeyById,
-      );
-      hydratedScenes.add(hydrated);
-    }
+    final Iterable<Map<String, dynamic>> scenesToHydrate = limit == null
+        ? sceneMaps
+        : sceneMaps.take(limit);
 
-    return hydratedScenes;
+    return Future.wait(
+      scenesToHydrate.map((Map<String, dynamic> scene) {
+        return _hydrateComicScene(scene, sceneKeyById: sceneKeyById);
+      }),
+    );
+  }
+
+  Future<Map<String, dynamic>> _hydrateComicScene(
+    Map<String, dynamic> scene, {
+    required Map<int, String> sceneKeyById,
+  }) async {
+    final Map<String, dynamic> hydrated = Map<String, dynamic>.from(scene);
+    final List<List<Map<String, dynamic>>> hydratedRelations =
+        await Future.wait(<Future<List<Map<String, dynamic>>>>[
+          _hydrateRelationList(
+            hydrated['backgrounds'],
+            sceneBackgroundObjectType,
+            keepStubsOnFailure: true,
+          ),
+          _hydrateCastLayers(hydrated['cast']),
+          _hydrateRelationList(
+            hydrated['props'],
+            scenePropObjectType,
+            keepStubsOnFailure: true,
+          ),
+          _hydrateDecisions(hydrated['decisions'], sceneKeyById: sceneKeyById),
+        ]);
+
+    hydrated['backgrounds'] = hydratedRelations[0];
+    hydrated['cast'] = hydratedRelations[1];
+    hydrated['props'] = hydratedRelations[2];
+    hydrated['decisions'] = hydratedRelations[3];
+    return hydrated;
   }
 
   Future<List<Map<String, dynamic>>> _hydrateCastLayers(dynamic rawCast) async {
@@ -470,17 +490,17 @@ class EcoUnityLearningRepository {
       keepStubsOnFailure: true,
     );
 
-    final List<Map<String, dynamic>> hydratedCast = <Map<String, dynamic>>[];
-    for (final Map<String, dynamic> castLayer in castLayers) {
-      final Map<String, dynamic> hydrated = Map<String, dynamic>.from(
-        castLayer,
-      );
-      hydrated['dialogue_entries'] = await _hydrateDialogueEntries(
-        hydrated['dialogue_entries'],
-      );
-      hydratedCast.add(hydrated);
-    }
-    return hydratedCast;
+    return Future.wait(
+      castLayers.map((Map<String, dynamic> castLayer) async {
+        final Map<String, dynamic> hydrated = Map<String, dynamic>.from(
+          castLayer,
+        );
+        hydrated['dialogue_entries'] = await _hydrateDialogueEntries(
+          hydrated['dialogue_entries'],
+        );
+        return hydrated;
+      }),
+    );
   }
 
   Future<List<Map<String, dynamic>>> _hydrateDialogueEntries(
@@ -493,19 +513,19 @@ class EcoUnityLearningRepository {
           keepStubsOnFailure: true,
         );
 
-    final List<Map<String, dynamic>> hydratedEntries = <Map<String, dynamic>>[];
-    for (final Map<String, dynamic> dialogueEntry in dialogueEntries) {
-      final Map<String, dynamic> hydrated = Map<String, dynamic>.from(
-        dialogueEntry,
-      );
-      hydrated['speech_items'] = await _hydrateRelationList(
-        hydrated['speech_items'],
-        sceneSpeechObjectType,
-        keepStubsOnFailure: true,
-      );
-      hydratedEntries.add(hydrated);
-    }
-    return hydratedEntries;
+    return Future.wait(
+      dialogueEntries.map((Map<String, dynamic> dialogueEntry) async {
+        final Map<String, dynamic> hydrated = Map<String, dynamic>.from(
+          dialogueEntry,
+        );
+        hydrated['speech_items'] = await _hydrateRelationList(
+          hydrated['speech_items'],
+          sceneSpeechObjectType,
+          keepStubsOnFailure: true,
+        );
+        return hydrated;
+      }),
+    );
   }
 
   Future<List<Map<String, dynamic>>> _hydrateDecisions(
@@ -537,26 +557,23 @@ class EcoUnityLearningRepository {
     bool keepStubsOnFailure = false,
   }) async {
     final List<Map<String, dynamic>> stubs = _asMapList(rawRelations);
-    final List<Map<String, dynamic>> hydrated = <Map<String, dynamic>>[];
-
-    for (final Map<String, dynamic> stub in stubs) {
-      final int? objectId = _relationId(stub);
-      if (objectId == null) {
-        hydrated.add(stub);
-        continue;
-      }
-      final Map<String, dynamic>? detail = await _loadDetailMap(
-        objectType,
-        objectId,
-      );
-      if (detail != null) {
-        hydrated.add(detail);
-      } else if (keepStubsOnFailure) {
-        hydrated.add(stub);
-      }
-    }
-
-    return hydrated;
+    final List<Map<String, dynamic>?> items = await Future.wait(
+      stubs.map((Map<String, dynamic> stub) async {
+        final int? objectId = _relationId(stub);
+        if (objectId == null) {
+          return stub;
+        }
+        final Map<String, dynamic>? detail = await _loadDetailMap(
+          objectType,
+          objectId,
+        );
+        if (detail != null) {
+          return detail;
+        }
+        return keepStubsOnFailure ? stub : null;
+      }),
+    );
+    return items.whereType<Map<String, dynamic>>().toList();
   }
 
   Future<Map<String, dynamic>?> _loadDetailMap(
