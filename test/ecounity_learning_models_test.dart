@@ -209,10 +209,10 @@ void main() {
             <String, dynamic>{
               'id': 601,
               'orderno': 1,
+              'prop_image_url': 'https://cdn.example.com/prop-table.png',
               'prop': <String, dynamic>{
                 'objectid': 12,
                 'name': 'Prototype table',
-                'image_url': 'https://cdn.example.com/prop-table.png',
               },
             },
           ],
@@ -220,12 +220,12 @@ void main() {
             <String, dynamic>{
               'id': 701,
               'orderno': 2,
+              'pose_layer_image_url':
+                  'https://cdn.example.com/sofia-neutral.png',
               'character': <String, dynamic>{'objectid': 3, 'name': 'Sofia'},
               'pose_layer': <String, dynamic>{
                 'objectid': 31,
                 'name': 'sofia-neutral-standing',
-                'generated_image_url':
-                    'https://cdn.example.com/sofia-neutral.png',
               },
               'portrait_layout_json':
                   '{&quot;x&quot;:0.63,&quot;y&quot;:0.57,'

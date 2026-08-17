@@ -835,7 +835,29 @@ class EcoUnityComicCastLayer {
         language: language,
       ),
       poseLayer: EcoUnityComicPoseLayer.fromJson(
-        data['pose_layer'],
+        _relationWithFallbackMedia(
+          data['pose_layer'],
+          data,
+          mediaField: 'generated_image',
+          objectKeys: const ['pose_layer_image', 'generated_image', 'image'],
+          urlKeys: const [
+            'pose_layer_image_url',
+            'pose_image_url',
+            'generated_image_url',
+            'image_url',
+            'imageurl',
+            'url',
+          ],
+          idKeys: const [
+            'pose_layer_image_id',
+            'pose_image_id',
+            'generated_image_id',
+            'image_id',
+            'imageid',
+            'fileid',
+          ],
+          language: language,
+        ),
         language: language,
       ),
       orderNo: _readInt(data['orderno']) ?? 0,
@@ -914,7 +936,30 @@ class EcoUnityComicPropLayer {
     final Map<String, dynamic> data = _unwrapData(response);
     return EcoUnityComicPropLayer(
       id: _readAnyInt(data, const ['id', 'objectid']),
-      prop: EcoUnityComicProp.fromJson(data['prop'], language: language),
+      prop: EcoUnityComicProp.fromJson(
+        _relationWithFallbackMedia(
+          data['prop'],
+          data,
+          mediaField: 'image',
+          objectKeys: const ['prop_image', 'image'],
+          urlKeys: const [
+            'prop_image_url',
+            'prop_layer_image_url',
+            'image_url',
+            'imageurl',
+            'url',
+          ],
+          idKeys: const [
+            'prop_image_id',
+            'prop_layer_image_id',
+            'image_id',
+            'imageid',
+            'fileid',
+          ],
+          language: language,
+        ),
+        language: language,
+      ),
       orderNo: _readInt(data['orderno']) ?? 0,
       zIndex: _readInt(data['z_index']) ?? 20,
       portraitLayout: EcoUnityComicLayout.fromJson(
@@ -1598,6 +1643,47 @@ EcoUnityMedia? _readMediaFromFields(
         : _readLocalizedString(data, 'description', language),
     rawData: data,
   );
+}
+
+dynamic _relationWithFallbackMedia(
+  dynamic rawRelation,
+  Map<String, dynamic> parentData, {
+  required String mediaField,
+  required List<String> objectKeys,
+  required List<String> urlKeys,
+  required List<String> idKeys,
+  String language = 'en',
+}) {
+  final Map<String, dynamic>? relationData = _firstMap(rawRelation);
+  if (relationData == null) {
+    return rawRelation;
+  }
+  if (EcoUnityMedia.fromJson(relationData[mediaField], language: language) !=
+      null) {
+    return relationData;
+  }
+
+  final EcoUnityMedia? media = _readMediaFromFields(
+    parentData,
+    objectKeys: objectKeys,
+    urlKeys: urlKeys,
+    idKeys: idKeys,
+    language: language,
+  );
+  if (media == null) {
+    return relationData;
+  }
+
+  return <String, dynamic>{...relationData, mediaField: _mediaAsMap(media)};
+}
+
+Map<String, dynamic> _mediaAsMap(EcoUnityMedia media) {
+  return <String, dynamic>{
+    if (media.id != null) 'id': media.id,
+    if (media.url != null) 'url': media.url,
+    if (media.title.isNotEmpty) 'title': media.title,
+    if (media.altText.isNotEmpty) 'alt_text': media.altText,
+  };
 }
 
 List<EcoUnityComicViewport> _backgroundViewportsWithFallbackMedia(
