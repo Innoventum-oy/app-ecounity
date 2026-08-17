@@ -241,6 +241,57 @@ void main() {
       expect(saved?.status, EcoUnityProgressStatus.completed);
       expect(saved?.payload, <String, dynamic>{'score': 3});
     });
+
+    test('updates module content status and reloads the module', () async {
+      final Map<String, dynamic> moduleResponse = _moduleResponse(sdgNumber: 12)
+        ..['content_status'] = 'approved';
+      final _FakeLearningBackend backend = _FakeLearningBackend()
+        ..detailResponses['${EcoUnityLearningRepository.sdgModuleObjectType}:12'] =
+            moduleResponse;
+      final EcoUnityLearningRepository repository = EcoUnityLearningRepository(
+        backend: backend,
+      );
+
+      final EcoUnitySdgModule? module = await repository
+          .updateModuleContentStatus(12, EcoUnityContentStatus.approved);
+
+      expect(
+        backend.savedObjectType,
+        EcoUnityLearningRepository.sdgModuleObjectType,
+      );
+      expect(backend.savedObjectId, 12);
+      expect(backend.savedObjectData, <String, dynamic>{
+        'content_status': 'approved',
+      });
+      expect(module?.contentStatus, EcoUnityContentStatus.approved);
+    });
+
+    test('updates activity content status and reloads the activity', () async {
+      final Map<String, dynamic> activityResponse = _activityResponse(
+        id: 201,
+        orderNo: 10,
+        type: 'mlr',
+      )..['content_status'] = 'draft';
+      final _FakeLearningBackend backend = _FakeLearningBackend()
+        ..detailResponses['${EcoUnityLearningRepository.activityObjectType}:201'] =
+            activityResponse;
+      final EcoUnityLearningRepository repository = EcoUnityLearningRepository(
+        backend: backend,
+      );
+
+      final EcoUnityLearningActivity? activity = await repository
+          .updateActivityContentStatus(201, EcoUnityContentStatus.draft);
+
+      expect(
+        backend.savedObjectType,
+        EcoUnityLearningRepository.activityObjectType,
+      );
+      expect(backend.savedObjectId, 201);
+      expect(backend.savedObjectData, <String, dynamic>{
+        'content_status': 'draft',
+      });
+      expect(activity?.contentStatus, EcoUnityContentStatus.draft);
+    });
   });
 }
 

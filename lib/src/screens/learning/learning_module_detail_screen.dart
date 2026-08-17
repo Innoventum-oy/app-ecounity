@@ -2,6 +2,7 @@ import 'package:core/core.dart' as core;
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/learning/ecounity_learning_text_utils.dart';
+import 'package:ecounity/src/learning/widgets/ecounity_content_review_panel.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_learning_copy.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/util/router.dart';
@@ -83,6 +84,12 @@ class _EcoUnityLearningModuleDetailScreenState
         padding: const EdgeInsets.all(16),
         children: <Widget>[
           _ModuleHeader(module: module),
+          EcoUnityContentReviewPanel(
+            status: module.contentStatus,
+            onStatusChanged: (EcoUnityContentStatus status) {
+              return _updateModuleContentStatus(module, status);
+            },
+          ),
           const SizedBox(height: 16),
           if (module.activities.isEmpty)
             const _EmptyActivitiesMessage()
@@ -118,6 +125,32 @@ class _EcoUnityLearningModuleDetailScreenState
     final String language = await core.Settings().getLanguage() ?? 'en';
     return await provider.loadModule(moduleId, language: language) ??
         widget.module;
+  }
+
+  Future<void> _updateModuleContentStatus(
+    EcoUnitySdgModule module,
+    EcoUnityContentStatus status,
+  ) async {
+    final int? moduleId = module.id;
+    if (moduleId == null) {
+      throw StateError('Module id is missing');
+    }
+
+    final EcoUnityLearningProvider provider =
+        Provider.of<EcoUnityLearningProvider>(context, listen: false);
+    final String language = await core.Settings().getLanguage() ?? 'en';
+    final EcoUnitySdgModule? updatedModule = await provider
+        .updateModuleContentStatus(
+          moduleId: moduleId,
+          status: status,
+          language: language,
+        );
+
+    if (mounted && updatedModule != null) {
+      setState(() {
+        _future = Future<EcoUnitySdgModule?>.value(updatedModule);
+      });
+    }
   }
 }
 

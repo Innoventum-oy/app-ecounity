@@ -4,6 +4,7 @@ import 'package:core/core.dart' as core;
 import 'package:ecounity/src/learning/ecounity_comic_speech_audio_controller.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
+import 'package:ecounity/src/learning/widgets/ecounity_content_review_panel.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_learning_copy.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_comic_player.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
@@ -99,12 +100,14 @@ class _EcoUnityLearningActivityScreenState
       EcoUnityActivityType.comic => _buildComic(activity, data.language),
       EcoUnityActivityType.quiz => _QuizActivityView(
         activity: activity,
+        reviewPanel: _reviewPanel(activity, data.language),
         onCompleted: (Map<String, dynamic> payload) {
           return _markCompleted(activity, data.language, payload: payload);
         },
       ),
       EcoUnityActivityType.reflection => _ReflectionActivityView(
         activity: activity,
+        reviewPanel: _reviewPanel(activity, data.language),
         submitLabel: 'Submit reflection',
         onCompleted: (Map<String, dynamic> payload) {
           return _markCompleted(activity, data.language, payload: payload);
@@ -112,6 +115,7 @@ class _EcoUnityLearningActivityScreenState
       ),
       EcoUnityActivityType.challenge => _ReflectionActivityView(
         activity: activity,
+        reviewPanel: _reviewPanel(activity, data.language),
         submitLabel: 'Complete challenge',
         onCompleted: (Map<String, dynamic> payload) {
           return _markCompleted(activity, data.language, payload: payload);
@@ -119,6 +123,7 @@ class _EcoUnityLearningActivityScreenState
       ),
       _ => _ReadableActivityView(
         activity: activity,
+        reviewPanel: _reviewPanel(activity, data.language),
         onCompleted: () {
           return _markCompleted(activity, data.language);
         },
@@ -133,25 +138,77 @@ class _EcoUnityLearningActivityScreenState
 
   Widget _buildComic(EcoUnityLearningActivity activity, String language) {
     if (activity.comicScenes.isEmpty) {
-      return const Center(child: Text('No comic scenes available'));
+      return Column(
+        children: <Widget>[
+          _reviewPanel(activity, language),
+          const Expanded(
+            child: Center(child: Text('No comic scenes available')),
+          ),
+        ],
+      );
     }
 
-    return EcoUnityComicPlayer(
-      comic: EcoUnityComic(
-        activity: activity,
-        scenes: activity.comicScenes,
-        rawData: activity.rawData,
-      ),
-      language: language,
-      onCompleted: () => _markCompleted(
-        activity,
-        language,
-        payload: const <String, dynamic>{'activity_type': 'comic'},
-      ),
-      onSpeechCueChanged: (EcoUnityComicSpeechItem? speech) {
-        unawaited(_speechAudioController.playCue(speech));
+    return Column(
+      children: <Widget>[
+        _reviewPanel(activity, language),
+        Expanded(
+          child: EcoUnityComicPlayer(
+            comic: EcoUnityComic(
+              activity: activity,
+              scenes: activity.comicScenes,
+              rawData: activity.rawData,
+            ),
+            language: language,
+            onCompleted: () => _markCompleted(
+              activity,
+              language,
+              payload: const <String, dynamic>{'activity_type': 'comic'},
+            ),
+            onSpeechCueChanged: (EcoUnityComicSpeechItem? speech) {
+              unawaited(_speechAudioController.playCue(speech));
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _reviewPanel(EcoUnityLearningActivity activity, String language) {
+    return EcoUnityContentReviewPanel(
+      status: activity.contentStatus,
+      onStatusChanged: (EcoUnityContentStatus status) {
+        return _updateActivityContentStatus(activity, status, language);
       },
     );
+  }
+
+  Future<void> _updateActivityContentStatus(
+    EcoUnityLearningActivity activity,
+    EcoUnityContentStatus status,
+    String language,
+  ) async {
+    final int? activityId = activity.id;
+    if (activityId == null) {
+      throw StateError('Activity id is missing');
+    }
+
+    final EcoUnityLearningActivity? updatedActivity =
+        await Provider.of<EcoUnityLearningProvider>(
+          context,
+          listen: false,
+        ).updateActivityContentStatus(
+          activityId: activityId,
+          status: status,
+          language: language,
+        );
+
+    if (mounted && updatedActivity != null) {
+      setState(() {
+        _future = Future<_ActivityScreenData>.value(
+          _ActivityScreenData(activity: updatedActivity, language: language),
+        );
+      });
+    }
   }
 
   Future<_ActivityScreenData> _loadActivityData() async {
@@ -199,10 +256,12 @@ class _EcoUnityLearningActivityScreenState
 class _ReadableActivityView extends StatelessWidget {
   const _ReadableActivityView({
     required this.activity,
+    required this.reviewPanel,
     required this.onCompleted,
   });
 
   final EcoUnityLearningActivity activity;
+  final Widget reviewPanel;
   final Future<void> Function() onCompleted;
 
   @override
@@ -211,6 +270,7 @@ class _ReadableActivityView extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: <Widget>[
         _ActivityIntro(activity: activity),
+        reviewPanel,
         if (activity.body.isNotEmpty) ...<Widget>[
           const SizedBox(height: 16),
           HtmlWidget(activity.body),
@@ -231,9 +291,14 @@ class _ReadableActivityView extends StatelessWidget {
 }
 
 class _QuizActivityView extends StatefulWidget {
-  const _QuizActivityView({required this.activity, required this.onCompleted});
+  const _QuizActivityView({
+    required this.activity,
+    required this.reviewPanel,
+    required this.onCompleted,
+  });
 
   final EcoUnityLearningActivity activity;
+  final Widget reviewPanel;
   final Future<void> Function(Map<String, dynamic> payload) onCompleted;
 
   @override
@@ -250,6 +315,7 @@ class _QuizActivityViewState extends State<_QuizActivityView> {
       padding: const EdgeInsets.all(16),
       children: <Widget>[
         _ActivityIntro(activity: widget.activity),
+        widget.reviewPanel,
         const SizedBox(height: 16),
         for (final EcoUnityQuizQuestion question in widget.activity.questions)
           Padding(
@@ -373,11 +439,13 @@ class _QuestionCard extends StatelessWidget {
 class _ReflectionActivityView extends StatefulWidget {
   const _ReflectionActivityView({
     required this.activity,
+    required this.reviewPanel,
     required this.submitLabel,
     required this.onCompleted,
   });
 
   final EcoUnityLearningActivity activity;
+  final Widget reviewPanel;
   final String submitLabel;
   final Future<void> Function(Map<String, dynamic> payload) onCompleted;
 
@@ -402,6 +470,7 @@ class _ReflectionActivityViewState extends State<_ReflectionActivityView> {
       padding: const EdgeInsets.all(16),
       children: <Widget>[
         _ActivityIntro(activity: widget.activity),
+        widget.reviewPanel,
         if (widget.activity.body.isNotEmpty) ...<Widget>[
           const SizedBox(height: 16),
           HtmlWidget(widget.activity.body),

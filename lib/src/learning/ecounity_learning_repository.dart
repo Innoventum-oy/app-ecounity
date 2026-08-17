@@ -291,6 +291,28 @@ class EcoUnityLearningRepository {
     return EcoUnityProgressEntry.fromJson(data);
   }
 
+  Future<EcoUnitySdgModule?> updateModuleContentStatus(
+    int moduleId,
+    EcoUnityContentStatus status, {
+    String language = 'en',
+  }) async {
+    await _backend.saveObject(moduleId, sdgModuleObjectType, <String, dynamic>{
+      'content_status': _contentStatusToWire(status),
+    });
+    return loadModule(moduleId, language: language);
+  }
+
+  Future<EcoUnityLearningActivity?> updateActivityContentStatus(
+    int activityId,
+    EcoUnityContentStatus status, {
+    String language = 'en',
+  }) async {
+    await _backend.saveObject(activityId, activityObjectType, <String, dynamic>{
+      'content_status': _contentStatusToWire(status),
+    });
+    return loadActivity(activityId, language: language);
+  }
+
   Future<List<Map<String, dynamic>>> _loadActivityMaps({
     required String language,
     int? moduleId,
@@ -670,5 +692,16 @@ String _progressStatusToWire(EcoUnityProgressStatus status) {
     EcoUnityProgressStatus.completed => 'completed',
     EcoUnityProgressStatus.submitted => 'submitted',
     EcoUnityProgressStatus.reset => 'reset',
+  };
+}
+
+String _contentStatusToWire(EcoUnityContentStatus status) {
+  return switch (status) {
+    EcoUnityContentStatus.draft => 'draft',
+    EcoUnityContentStatus.review => 'review',
+    EcoUnityContentStatus.approved => 'approved',
+    EcoUnityContentStatus.published => 'published',
+    EcoUnityContentStatus.archived => 'archived',
+    EcoUnityContentStatus.unknown => 'review',
   };
 }

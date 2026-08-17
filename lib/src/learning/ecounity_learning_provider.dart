@@ -161,4 +161,37 @@ class EcoUnityLearningProvider with ChangeNotifier {
 
     return saved;
   }
+
+  Future<EcoUnitySdgModule?> updateModuleContentStatus({
+    required int moduleId,
+    required EcoUnityContentStatus status,
+    String language = 'en',
+  }) async {
+    final EcoUnitySdgModule? module = await _repository
+        .updateModuleContentStatus(moduleId, status, language: language);
+    if (module != null) {
+      modules =
+          <EcoUnitySdgModule>[
+            ...modules.where((EcoUnitySdgModule item) => item.id != module.id),
+            module,
+          ]..sort((EcoUnitySdgModule a, EcoUnitySdgModule b) {
+            return (a.sdgNumber ?? 0).compareTo(b.sdgNumber ?? 0);
+          });
+      notifyListeners();
+    }
+    return module;
+  }
+
+  Future<EcoUnityLearningActivity?> updateActivityContentStatus({
+    required int activityId,
+    required EcoUnityContentStatus status,
+    String language = 'en',
+  }) async {
+    final EcoUnityLearningActivity? activity = await _repository
+        .updateActivityContentStatus(activityId, status, language: language);
+    if (activity != null) {
+      notifyListeners();
+    }
+    return activity;
+  }
 }
