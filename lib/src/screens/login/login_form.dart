@@ -10,13 +10,12 @@ import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:core/core.dart' as core;
 import 'package:ecounity/l10n/app_localizations_extension.dart';
+import 'package:ecounity/src/providers/locale_provider.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/util/utils.dart';
 import '../../util/router.dart';
 import '../../util/settings.dart';
 import '../../widgets/content_page.dart';
-import '../../widgets/language_selector.dart';
-import '../../widgets/popupdialog.dart';
 
 const bool _screenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
 
@@ -32,6 +31,16 @@ const Map<String, String> _fundingLogoAssetsByLanguage = {
   'pt': 'assets/images/PT_Co-fundedbytheEU_RGB_NEG.png',
   'uk': 'assets/images/UK_Co-fundedbytheEU_RGB_NEG.png',
 };
+
+const List<Locale> _welcomeLocales = <Locale>[
+  Locale('en'),
+  Locale('de'),
+  Locale('es'),
+  Locale('fi'),
+  Locale('pl'),
+  Locale('ro'),
+  Locale('uk'),
+];
 
 /// Login screen mode
 enum LoginMode { initial, login, register, reset }
@@ -367,94 +376,33 @@ class LoginState extends State<Login> {
       }
     }
 
-    List<Widget> rowChildren = [];
-    List<Widget> contents = [];
-    //if(kDebugMode)
-    contents.add(const SizedBox(height: 15));
+    final List<Widget> debugControls = [];
+    final List<Widget> contents = [];
     if (serversLoaded && kDebugMode && !_screenshotMode) {
-      rowChildren.add(serverSelect());
+      debugControls.add(serverSelect());
     }
-    // add language select to columnChildren
-    rowChildren.add(
-      IconButton(
-        key: const ValueKey('screenshot-language-button'),
-        tooltip: context.l10n.choose_language,
-        icon: const Icon(Icons.language),
-        onPressed: () {
-          // open language chooser
-          popupDialog(context.l10n.language, LanguageSelector(), context);
-        },
-      ),
-    );
-    contents.add(
-      SizedBox(
-        width: double.infinity,
-        child: Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 8,
-          runSpacing: 8,
-          children: rowChildren,
-        ),
-      ),
-    );
+
     switch (mode) {
       case LoginMode.initial:
-        // Show buttons to Login / Create Account / Continue as Guest
-        contents.insert(
-          0,
-          Padding(
-            padding: EdgeInsets.only(bottom: 10.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 10.0, // spacing between children
-
-              children: [
-                Text(
-                  context.l10n.welcome_title,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  context.l10n.login_introduction_text,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+        contents.addAll(<Widget>[
+          const _WelcomeHeader(),
+          const SizedBox(height: 18),
+          Text(
+            context.l10n.choose_language,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: EcoUnityColors.textSecondary,
             ),
           ),
-        );
-        contents.addAll([
-          /* SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  mode = LoginMode.login;
-                });
-              },
-              child: Text(AppLocalizations.of(context)!.button_login),
-            ),
-          ),
-          const SizedBox(height: 15.0),
+          const SizedBox(height: 10),
+          const _WelcomeLanguageSelector(),
+          if (debugControls.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 12),
+            Wrap(spacing: 8, runSpacing: 8, children: debugControls),
+          ],
+          const SizedBox(height: 18),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                auth.setRegisteredStatus(core.Status.notRegistered);
-                AppRouter.navigate(context,AppRoutes.register, 0);
-              },
-              child: Text(AppLocalizations.of(context)!.button_create_account),
-            ),
-          ),*/
-          const SizedBox(height: 15.0),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
+            child: FilledButton(
               key: const ValueKey('screenshot-continue-button'),
               onPressed: () {
                 auth.setRegisteredStatus(core.Status.notRegistered);
@@ -462,7 +410,18 @@ class LoginState extends State<Login> {
 
                 AppRouter.navigate(context, AppRoutes.dashboard, 0);
               },
-              child: Text(context.l10n.button_continue),
+              child: Text(context.l10n.start),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton(
+              onPressed: () {
+                setState(() {
+                  mode = LoginMode.login;
+                });
+              },
+              child: Text(context.l10n.button_login),
             ),
           ),
         ]);
@@ -470,6 +429,32 @@ class LoginState extends State<Login> {
       case LoginMode.login:
         // Show login form
         contents.addAll([
+          Row(
+            children: <Widget>[
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    mode = LoginMode.initial;
+                  });
+                },
+                icon: const Icon(Icons.arrow_back),
+              ),
+              Expanded(
+                child: Text(
+                  context.l10n.button_login,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: EcoUnityColors.deepTeal,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (debugControls.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 10),
+            Wrap(spacing: 8, runSpacing: 8, children: debugControls),
+          ],
+          const SizedBox(height: 18),
           Text(context.l10n.email_or_phone_number),
           const SizedBox(height: 5.0),
           contactField,
@@ -507,16 +492,8 @@ class LoginState extends State<Login> {
           child: Container(
             constraints: const BoxConstraints(maxWidth: 800),
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
+              padding: const EdgeInsets.fromLTRB(16, 28, 16, 20),
               children: <Widget>[
-                Center(
-                  child: Image.asset(
-                    'assets/images/ecounity-logo.png',
-                    height: 96,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-                const SizedBox(height: 12),
                 Form(
                   key: formKey,
                   child: Column(
@@ -616,6 +593,158 @@ class LoginState extends State<Login> {
         ),
       ),
     );
+  }
+}
+
+class _WelcomeHeader extends StatelessWidget {
+  const _WelcomeHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        Image.asset(
+          'assets/images/ecounity-logo.png',
+          height: 96,
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          context.l10n.application_name,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            color: EcoUnityColors.deepTeal,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Together for Planet!',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: EcoUnityColors.textSecondary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          context.l10n.login_introduction_text,
+          textAlign: TextAlign.center,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: EcoUnityColors.textSecondary),
+        ),
+      ],
+    );
+  }
+}
+
+class _WelcomeLanguageSelector extends StatelessWidget {
+  const _WelcomeLanguageSelector();
+
+  @override
+  Widget build(BuildContext context) {
+    final Locale currentLocale =
+        Provider.of<LocaleProvider>(context).locale ??
+        Localizations.localeOf(context);
+
+    return Column(
+      children: <Widget>[
+        for (final Locale locale in _welcomeLocales)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _WelcomeLanguageOption(
+              locale: locale,
+              selected: currentLocale.languageCode == locale.languageCode,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _WelcomeLanguageOption extends StatelessWidget {
+  const _WelcomeLanguageOption({required this.locale, required this.selected});
+
+  final Locale locale;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final String languageCode = locale.languageCode.toUpperCase();
+    final Color borderColor = selected
+        ? EcoUnityColors.turquoise
+        : EcoUnityColors.outlineVariant;
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => _selectLocale(context, locale),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOut,
+          constraints: const BoxConstraints(minHeight: 46),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFE6F8F7) : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? EcoUnityColors.turquoise
+                      : EcoUnityColors.surfaceContainer,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  languageCode,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: selected ? Colors.white : EcoUnityColors.deepTeal,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  context.l10n.locale(locale.languageCode),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: EcoUnityColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                selected ? 'Selected' : 'Choose',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: EcoUnityColors.textSecondary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectLocale(BuildContext context, Locale locale) async {
+    Provider.of<LocaleProvider>(context, listen: false).setLocale(locale);
+    await core.Settings().setLanguage(locale.languageCode);
+    if (context.mounted) {
+      await loadAppData(context);
+    }
   }
 }
 
