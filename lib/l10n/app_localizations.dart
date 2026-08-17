@@ -847,7 +847,7 @@ abstract class AppLocalizations {
   /// No description provided for @login_introduction_text.
   ///
   /// In en, this message translates to:
-  /// **'Explore Flipped Classroom micro-learning resources, videos, and success stories with practical tools that complement the Ecounity Curriculum and strengthen social entrepreneurship skills.'**
+  /// **'Start exploring SDG learning modules, interactive comics, quizzes, and classroom challenges for planet-friendly action.'**
   String get login_introduction_text;
 
   /// No description provided for @srh_description.

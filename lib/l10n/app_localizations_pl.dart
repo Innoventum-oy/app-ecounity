@@ -431,7 +431,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get login_introduction_text =>
-      'Poznaj materiały mikro-nauki, filmy i historie sukcesu w modelu odwróconej klasy z praktycznymi narzędziami uzupełniającymi program Ecounity i wzmacniającymi umiejętności przedsiębiorczości społecznej.';
+      'Zacznij odkrywać moduły edukacyjne SDG, interaktywne komiksy, quizy i wyzwania klasowe, które zachęcają do działań przyjaznych planecie.';
 
   @override
   String get srh_description => 'Użyj tych pytań jako punktu do refleksji.';

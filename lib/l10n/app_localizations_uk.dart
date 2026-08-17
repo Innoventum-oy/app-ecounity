@@ -430,7 +430,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get login_introduction_text =>
-      'Вивчайте ресурси мікронавчання, відео та історії успіху у форматі Flipped Classroom з практичними інструментами, що доповнюють навчальну програму Ecounity та зміцнюють навички соціального підприємництва.';
+      'Почніть вивчати навчальні модулі ЦСР, інтерактивні комікси, вікторини та завдання для уроків, що надихають на дії, дружні до планети.';
 
   @override
   String get srh_description =>

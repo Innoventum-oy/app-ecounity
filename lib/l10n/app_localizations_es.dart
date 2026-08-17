@@ -431,7 +431,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get login_introduction_text =>
-      'Explore Flipped Classroom micro-learning resources, videos, and success stories with practical tools that complement the Ecounity Curriculum and strengthen social entrepreneurship skills.';
+      'Empieza a explorar módulos de aprendizaje sobre los ODS, cómics interactivos, cuestionarios y retos de clase para actuar a favor del planeta.';
 
   @override
   String get srh_description => 'Use these questions as a food for thought.';

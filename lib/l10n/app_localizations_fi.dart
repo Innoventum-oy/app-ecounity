@@ -430,7 +430,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get login_introduction_text =>
-      'Tutustu käänteisen luokkahuoneen mikro-oppimisresursseihin, videoihin ja menestystarinoihin käytännöllisillä työkaluilla, jotka täydentävät Ecounity-opetussuunnitelmaa ja vahvistavat sosiaalisen yrittäjyyden taitoja.';
+      'Aloita tutustumalla SDG-oppimismoduuleihin, interaktiivisiin sarjakuviin, tietovisoihin ja luokkahuonehaasteisiin, jotka innostavat ympäristöystävälliseen toimintaan.';
 
   @override
   String get srh_description => 'Käytä näitä kysymyksiä pohdinnan aiheena.';
