@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:another_flushbar/flushbar.dart';
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
@@ -9,8 +10,8 @@ import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:core/core.dart' as core;
 import 'package:ecounity/l10n/app_localizations_extension.dart';
+import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/util/utils.dart';
-import '../../util/app_theme.dart';
 import '../../util/router.dart';
 import '../../util/settings.dart';
 import '../../widgets/content_page.dart';
@@ -235,21 +236,17 @@ class LoginState extends State<Login> {
 
     String? validateContact(String? value) {
       String? msg;
-      if (value!.isEmpty) return context.l10n.please_enter_phone_or_email;
+      final String normalizedValue = value?.trim() ?? '';
+      if (normalizedValue.isEmpty) {
+        return context.l10n.please_enter_phone_or_email;
+      }
 
-      //test for phone number pattern
-      String pattern = r'(^(?:[+0])?[0-9]{10,12}$)';
-      RegExp regExp = RegExp(pattern);
-      if (regExp.hasMatch(value)) {
+      if (_isPhoneNumberInput(normalizedValue) ||
+          EmailValidator.validate(normalizedValue)) {
         return null;
       }
-      //test for email pattern
-      RegExp regex = RegExp(
-        r'^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$',
-      );
-      if (!regex.hasMatch(value)) {
-        msg = context.l10n.please_provide_valid_phone_or_email;
-      }
+
+      msg = context.l10n.please_provide_valid_phone_or_email;
       return msg;
     }
 
@@ -268,7 +265,7 @@ class LoginState extends State<Login> {
       autofocus: false,
       obscureText: !_showPassword,
       initialValue: _password,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
       validator: (value) =>
           value!.isEmpty ? context.l10n.please_enter_password : null,
       onSaved: (value) => _password = value,
@@ -503,68 +500,83 @@ class LoginState extends State<Login> {
         break;
     }
 
-    return SafeArea(
-      child: Scaffold(
-        body: Container(
-          padding: const EdgeInsets.all(40.0),
-          child: Center(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 800),
-              child: ListView(
-                children: <Widget>[
-                  Center(
-                    child: appTheme.brightness == Brightness.dark
-                        ? Image.asset('assets/images/ecounity-logo.png')
-                        : Image.asset('assets/images/ecounity-logo.png'),
+    return Scaffold(
+      backgroundColor: EcoUnityColors.surface,
+      body: SafeArea(
+        child: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
+              children: <Widget>[
+                Center(
+                  child: Image.asset(
+                    'assets/images/ecounity-logo.png',
+                    height: 96,
+                    fit: BoxFit.contain,
                   ),
-                  Form(
-                    key: formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ...contents,
+                ),
+                const SizedBox(height: 12),
+                Form(
+                  key: formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ...contents,
 
-                        SizedBox(
-                          width: double.infinity,
-                          child: Wrap(
-                            alignment: WrapAlignment.spaceBetween,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              policyLink(),
-                              //  Text(serverName),
-                              versionWidget(),
-                            ],
-                          ),
-                        ),
-                        // EU co-funded logo.
-                        Column(
+                      SizedBox(
+                        width: double.infinity,
+                        child: Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 8,
+                          runSpacing: 8,
                           children: [
-                            const SizedBox(height: 20),
-                            Center(
-                              child: Image.asset(
-                                _fundingLogoAssetFor(
-                                  Localizations.localeOf(context),
-                                ),
-                                width: 220,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
+                            policyLink(),
+                            //  Text(serverName),
+                            versionWidget(),
                           ],
                         ),
-                        const SizedBox(height: 10),
-                        Center(
-                          child: Text(
-                            context.l10n.funding_disclaimer,
-                            style: const TextStyle(fontSize: 11),
+                      ),
+                      // EU co-funded logo.
+                      Column(
+                        children: [
+                          const SizedBox(height: 20),
+                          Center(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: EcoUnityColors.deepTeal,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Image.asset(
+                                  _fundingLogoAssetFor(
+                                    Localizations.localeOf(context),
+                                  ),
+                                  width: 220,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Center(
+                        child: Text(
+                          context.l10n.funding_disclaimer,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: EcoUnityColors.textSecondary,
+                                fontSize: 11,
+                              ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -605,4 +617,25 @@ class LoginState extends State<Login> {
       ),
     );
   }
+}
+
+bool _isPhoneNumberInput(String value) {
+  int startIndex = 0;
+  if (value.startsWith('+')) {
+    startIndex = 1;
+  }
+
+  final int digitCount = value.length - startIndex;
+  final int maxDigits = value.startsWith('0') ? 13 : 12;
+  if (digitCount < 10 || digitCount > maxDigits) {
+    return false;
+  }
+
+  for (int index = startIndex; index < value.length; index += 1) {
+    final int codeUnit = value.codeUnitAt(index);
+    if (codeUnit < 0x30 || codeUnit > 0x39) {
+      return false;
+    }
+  }
+  return true;
 }
