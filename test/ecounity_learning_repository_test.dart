@@ -30,8 +30,8 @@ void main() {
         );
         expect(backend.listRequests.single.params['language'], 'uk');
         expect(
-          backend.listRequests.single.params['content_status'],
-          'published',
+          backend.listRequests.single.params.containsKey('content_status'),
+          isFalse,
         );
         expect(
           backend.listRequests.single.params['fields'],
@@ -43,6 +43,59 @@ void main() {
         );
       },
     );
+
+    test('can request only published modules when explicitly asked', () async {
+      final _FakeLearningBackend backend = _FakeLearningBackend()
+        ..listResponses[EcoUnityLearningRepository.sdgModuleObjectType] =
+            <dynamic>[];
+
+      final EcoUnityLearningRepository repository = EcoUnityLearningRepository(
+        backend: backend,
+      );
+
+      await repository.loadModules(publishedOnly: true);
+
+      expect(backend.listRequests.single.params['content_status'], 'published');
+    });
+
+    test('hydrates module activity relation stubs via SDG activity list', () async {
+      final _FakeLearningBackend backend = _FakeLearningBackend()
+        ..detailResponses['${EcoUnityLearningRepository.sdgModuleObjectType}:2'] =
+            <String, dynamic>{
+              'status': 'success',
+              'data': _moduleResponse(sdgNumber: 5)..['id'] = 2,
+            }
+        ..listResponses[EcoUnityLearningRepository.activityObjectType] =
+            <dynamic>[
+              <String, dynamic>{
+                'status': 'success',
+                'data': _activityResponse(id: 36, orderNo: 10, type: 'comic'),
+              },
+              <String, dynamic>{
+                'status': 'success',
+                'data': _activityResponse(id: 17, orderNo: 20, type: 'mlr'),
+              },
+              <String, dynamic>{
+                'status': 'success',
+                'data': _activityResponse(id: 999, orderNo: 99, type: 'mlr'),
+              },
+            ];
+      (backend.detailResponses['${EcoUnityLearningRepository.sdgModuleObjectType}:2']
+              as Map<String, dynamic>)['data']['activities'] =
+          <Map<String, dynamic>>[
+            <String, dynamic>{'objectid': 36},
+            <String, dynamic>{'objectid': 17},
+          ];
+
+      final EcoUnityLearningRepository repository = EcoUnityLearningRepository(
+        backend: backend,
+      );
+
+      final EcoUnitySdgModule? module = await repository.loadModule(2);
+
+      expect(module?.activities.map((activity) => activity.id), <int?>[36, 17]);
+      expect(backend.listRequests.single.params['sdg_number'], 5);
+    });
 
     test(
       'loads filtered activities and keeps repository-level sort order',
@@ -102,6 +155,59 @@ void main() {
 
       expect(activity?.id, 201);
       expect(activity?.type, EcoUnityActivityType.comic);
+    });
+
+    test('hydrates comic scenes and resolves decision target scene keys', () async {
+      final Map<String, dynamic> comicActivity =
+          _activityResponse(id: 36, orderNo: 10, type: 'comic')
+            ..['comic_scenes'] = <Map<String, dynamic>>[
+              <String, dynamic>{'objectid': 2},
+              <String, dynamic>{'objectid': 3},
+            ];
+      final _FakeLearningBackend backend = _FakeLearningBackend()
+        ..detailResponses['${EcoUnityLearningRepository.activityObjectType}:36'] =
+            comicActivity
+        ..listResponses[EcoUnityLearningRepository.comicSceneObjectType] =
+            <dynamic>[
+              _sceneResponse(
+                id: 2,
+                sceneKey: 'start',
+                orderNo: 10,
+                decisions: <Map<String, dynamic>>[
+                  <String, dynamic>{'objectid': 1},
+                ],
+              ),
+              _sceneResponse(id: 3, sceneKey: 'next', orderNo: 20),
+            ]
+        ..detailResponses['${EcoUnityLearningRepository.comicDecisionObjectType}:1'] =
+            <String, dynamic>{
+              'id': 1,
+              'orderno': 10,
+              'label': 'Continue',
+              'target_scene': <String, dynamic>{'objectid': 3},
+            };
+
+      final EcoUnityLearningRepository repository = EcoUnityLearningRepository(
+        backend: backend,
+      );
+
+      final EcoUnityLearningActivity? activity = await repository.loadActivity(
+        36,
+      );
+
+      expect(activity?.comicScenes.map((scene) => scene.sceneKey), <String>[
+        'start',
+        'next',
+      ]);
+      expect(
+        activity?.comicScenes.first.decisions.single.targetSceneKey,
+        'next',
+      );
+      expect(
+        backend.listRequests.single.objectType,
+        EcoUnityLearningRepository.comicSceneObjectType,
+      );
+      expect(backend.listRequests.single.params['activity'], 36);
     });
 
     test('saves progress with backend field names and JSON payload', () async {
@@ -164,6 +270,25 @@ Map<String, dynamic> _activityResponse({
     'orderno': orderNo,
     'title': <String, dynamic>{'en': 'Activity $id'},
     'content_status': 'published',
+  };
+}
+
+Map<String, dynamic> _sceneResponse({
+  required int id,
+  required String sceneKey,
+  required int orderNo,
+  List<Map<String, dynamic>> decisions = const <Map<String, dynamic>>[],
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'scene_key': sceneKey,
+    'orderno': orderNo,
+    'title': <String, dynamic>{'en': 'Scene $id'},
+    'backgrounds': <Map<String, dynamic>>[],
+    'cast': <Map<String, dynamic>>[],
+    'props': <Map<String, dynamic>>[],
+    'decisions': decisions,
+    'content_status': 'draft',
   };
 }
 

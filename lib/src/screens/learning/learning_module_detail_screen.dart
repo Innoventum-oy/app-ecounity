@@ -104,17 +104,15 @@ class _EcoUnityLearningModuleDetailScreenState
   }
 
   Future<EcoUnitySdgModule?> _loadModule() async {
-    if (widget.module != null) {
-      return widget.module;
-    }
-    final int? moduleId = widget.moduleId;
+    final int? moduleId = widget.moduleId ?? widget.module?.id;
     if (moduleId == null) {
-      return null;
+      return widget.module;
     }
     final EcoUnityLearningProvider provider =
         Provider.of<EcoUnityLearningProvider>(context, listen: false);
     final String language = await core.Settings().getLanguage() ?? 'en';
-    return provider.loadModule(moduleId, language: language);
+    return await provider.loadModule(moduleId, language: language) ??
+        widget.module;
   }
 }
 

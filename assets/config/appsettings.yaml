@@ -1,8 +1,10 @@
 ---
 appName: Ecounity
 servers:
-  primary: ecounityproject.app
-  development: dev.ecounityproject.app
+  primary: ecounity.devsite.fi
+  development: ecounity.devsite.fi
+  legacyPrimary: ecounityproject.app
+  legacyDevelopment: dev.ecounityproject.app
 endpoints:
   login: /api/login
   logout: /api/logout

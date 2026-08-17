@@ -157,11 +157,13 @@ class _EcoUnityLearningActivityScreenState
     final EcoUnityLearningProvider provider =
         Provider.of<EcoUnityLearningProvider>(context, listen: false);
     final String language = await core.Settings().getLanguage() ?? 'en';
-    EcoUnityLearningActivity? activity = widget.activity;
-    final int? activityId = widget.activityId;
+    final int? activityId = widget.activityId ?? widget.activity?.id;
 
-    if (activity == null && activityId != null) {
-      activity = await provider.loadActivity(activityId, language: language);
+    EcoUnityLearningActivity? activity = widget.activity;
+    if (activityId != null) {
+      activity =
+          await provider.loadActivity(activityId, language: language) ??
+          widget.activity;
     }
 
     return _ActivityScreenData(activity: activity, language: language);

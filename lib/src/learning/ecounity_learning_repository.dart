@@ -48,6 +48,14 @@ class EcoUnityLearningRepository {
 
   static const String sdgModuleObjectType = 'ecounitysdgmodule';
   static const String activityObjectType = 'ecounitylearningactivity';
+  static const String questionObjectType = 'ecounityquestion';
+  static const String comicSceneObjectType = 'ecounitycomicscene';
+  static const String sceneBackgroundObjectType = 'ecounityscenebackground';
+  static const String sceneCastObjectType = 'ecounityscenecast';
+  static const String scenePropObjectType = 'ecounitysceneprop';
+  static const String sceneDialogueObjectType = 'ecounityscenedialogue';
+  static const String sceneSpeechObjectType = 'ecounityscenespeech';
+  static const String comicDecisionObjectType = 'ecounitycomicdecision';
   static const String progressObjectType = 'ecounitylearningprogress';
 
   static const List<String> moduleFields = <String>[
@@ -114,11 +122,27 @@ class EcoUnityLearningRepository {
     'completed_at',
   ];
 
+  static const List<String> comicSceneFields = <String>[
+    'id',
+    'objectid',
+    'comic_activity',
+    'scene_key',
+    'orderno',
+    'title',
+    'narration',
+    'alt_text',
+    'backgrounds',
+    'cast',
+    'props',
+    'decisions',
+    'content_status',
+  ];
+
   final EcoUnityLearningBackend _backend;
 
   Future<List<EcoUnitySdgModule>> loadModules({
     String language = 'en',
-    bool publishedOnly = true,
+    bool publishedOnly = false,
     Map<String, dynamic>? additionalParams,
   }) async {
     final Map<String, dynamic> params = <String, dynamic>{
@@ -157,7 +181,11 @@ class EcoUnityLearningRepository {
     if (data == null) {
       return null;
     }
-    return EcoUnitySdgModule.fromJson(data, language: language);
+    final Map<String, dynamic> hydrated = await _hydrateModuleActivities(
+      data,
+      language: language,
+    );
+    return EcoUnitySdgModule.fromJson(hydrated, language: language);
   }
 
   Future<List<EcoUnityLearningActivity>> loadActivities({
@@ -165,26 +193,19 @@ class EcoUnityLearningRepository {
     int? moduleId,
     int? sdgNumber,
     EcoUnityActivityType? type,
-    bool publishedOnly = true,
+    bool publishedOnly = false,
     Map<String, dynamic>? additionalParams,
   }) async {
-    final Map<String, dynamic> params = <String, dynamic>{
-      'fields': activityFields.join(','),
-      'sort': 'orderno',
-      'language': language,
-      'module': ?moduleId,
-      'sdg_number': ?sdgNumber,
-      'activity_type': ?_activityTypeToWire(type),
-      if (publishedOnly) 'content_status': 'published',
-      ...?additionalParams,
-    };
-
-    final dynamic rawData = await _backend.getDataList(
-      activityObjectType,
-      params,
+    final List<Map<String, dynamic>> activityMaps = await _loadActivityMaps(
+      language: language,
+      moduleId: moduleId,
+      sdgNumber: sdgNumber,
+      type: type,
+      publishedOnly: publishedOnly,
+      additionalParams: additionalParams,
     );
 
-    return _asMapList(rawData)
+    return activityMaps
         .map(
           (Map<String, dynamic> item) =>
               EcoUnityLearningActivity.fromJson(item, language: language),
@@ -207,7 +228,11 @@ class EcoUnityLearningRepository {
     if (data == null) {
       return null;
     }
-    return EcoUnityLearningActivity.fromJson(data, language: language);
+    final Map<String, dynamic> hydrated = await _hydrateActivityDetails(
+      data,
+      language: language,
+    );
+    return EcoUnityLearningActivity.fromJson(hydrated, language: language);
   }
 
   Future<List<EcoUnityProgressEntry>> loadProgress({
@@ -265,6 +290,263 @@ class EcoUnityLearningRepository {
     }
     return EcoUnityProgressEntry.fromJson(data);
   }
+
+  Future<List<Map<String, dynamic>>> _loadActivityMaps({
+    required String language,
+    int? moduleId,
+    int? sdgNumber,
+    EcoUnityActivityType? type,
+    bool publishedOnly = false,
+    Map<String, dynamic>? additionalParams,
+  }) async {
+    final Map<String, dynamic> params = <String, dynamic>{
+      'fields': activityFields.join(','),
+      'sort': 'orderno',
+      'language': language,
+      'module': ?moduleId,
+      'sdg_number': ?sdgNumber,
+      'activity_type': ?_activityTypeToWire(type),
+      if (publishedOnly) 'content_status': 'published',
+      ...?additionalParams,
+    };
+
+    final dynamic rawData = await _backend.getDataList(
+      activityObjectType,
+      params,
+    );
+
+    return _asMapList(rawData);
+  }
+
+  Future<Map<String, dynamic>> _hydrateModuleActivities(
+    Map<String, dynamic> moduleData, {
+    required String language,
+  }) async {
+    final Map<String, dynamic> hydrated = Map<String, dynamic>.from(moduleData);
+    final List<int> relationIds = _relationIds(hydrated['activities']);
+    if (relationIds.isEmpty) {
+      return hydrated;
+    }
+
+    List<Map<String, dynamic>> activityMaps = <Map<String, dynamic>>[];
+    final int? sdgNumber = _readIntValue(hydrated['sdg_number']);
+    if (sdgNumber != null) {
+      activityMaps = await _loadActivityMaps(
+        language: language,
+        sdgNumber: sdgNumber,
+      );
+      activityMaps = activityMaps.where((Map<String, dynamic> activity) {
+        final int? activityId = _relationId(activity);
+        return activityId != null && relationIds.contains(activityId);
+      }).toList();
+    }
+
+    if (activityMaps.isEmpty) {
+      activityMaps = await _hydrateRelationList(
+        hydrated['activities'],
+        activityObjectType,
+      );
+    }
+
+    hydrated['activities'] = activityMaps;
+    return hydrated;
+  }
+
+  Future<Map<String, dynamic>> _hydrateActivityDetails(
+    Map<String, dynamic> activityData, {
+    required String language,
+  }) async {
+    final Map<String, dynamic> hydrated = Map<String, dynamic>.from(
+      activityData,
+    );
+
+    final List<int> questionIds = _relationIds(hydrated['questions']);
+    if (questionIds.isNotEmpty) {
+      hydrated['questions'] = await _hydrateRelationList(
+        hydrated['questions'],
+        questionObjectType,
+      );
+    }
+
+    if (_readStringValue(hydrated['activity_type']) == 'comic') {
+      hydrated['comic_scenes'] = await _hydrateComicScenes(
+        hydrated,
+        language: language,
+      );
+    }
+
+    return hydrated;
+  }
+
+  Future<List<Map<String, dynamic>>> _hydrateComicScenes(
+    Map<String, dynamic> activityData, {
+    required String language,
+  }) async {
+    final int? activityId = _relationId(activityData);
+    final List<int> relationIds = _relationIds(activityData['comic_scenes']);
+    List<Map<String, dynamic>> sceneMaps = <Map<String, dynamic>>[];
+
+    if (activityId != null) {
+      final dynamic rawScenes = await _backend
+          .getDataList(comicSceneObjectType, <String, dynamic>{
+            'fields': comicSceneFields.join(','),
+            'activity': activityId,
+            'sort': 'orderno',
+            'language': language,
+            'limit': 100,
+          });
+      sceneMaps = _asMapList(rawScenes);
+    }
+
+    if (sceneMaps.isEmpty && relationIds.isNotEmpty) {
+      sceneMaps = await _hydrateRelationList(
+        activityData['comic_scenes'],
+        comicSceneObjectType,
+      );
+    }
+
+    sceneMaps.sort((Map<String, dynamic> a, Map<String, dynamic> b) {
+      return (_readIntValue(a['orderno']) ?? 0).compareTo(
+        _readIntValue(b['orderno']) ?? 0,
+      );
+    });
+
+    final Map<int, String> sceneKeyById = <int, String>{
+      for (final Map<String, dynamic> scene in sceneMaps)
+        if (_relationId(scene) != null)
+          _relationId(scene)!: _readStringValue(scene['scene_key']),
+    };
+
+    final List<Map<String, dynamic>> hydratedScenes = <Map<String, dynamic>>[];
+    for (final Map<String, dynamic> scene in sceneMaps) {
+      final Map<String, dynamic> hydrated = Map<String, dynamic>.from(scene);
+      hydrated['backgrounds'] = await _hydrateRelationList(
+        hydrated['backgrounds'],
+        sceneBackgroundObjectType,
+        keepStubsOnFailure: true,
+      );
+      hydrated['cast'] = await _hydrateCastLayers(hydrated['cast']);
+      hydrated['props'] = await _hydrateRelationList(
+        hydrated['props'],
+        scenePropObjectType,
+        keepStubsOnFailure: true,
+      );
+      hydrated['decisions'] = await _hydrateDecisions(
+        hydrated['decisions'],
+        sceneKeyById: sceneKeyById,
+      );
+      hydratedScenes.add(hydrated);
+    }
+
+    return hydratedScenes;
+  }
+
+  Future<List<Map<String, dynamic>>> _hydrateCastLayers(dynamic rawCast) async {
+    final List<Map<String, dynamic>> castLayers = await _hydrateRelationList(
+      rawCast,
+      sceneCastObjectType,
+      keepStubsOnFailure: true,
+    );
+
+    final List<Map<String, dynamic>> hydratedCast = <Map<String, dynamic>>[];
+    for (final Map<String, dynamic> castLayer in castLayers) {
+      final Map<String, dynamic> hydrated = Map<String, dynamic>.from(
+        castLayer,
+      );
+      hydrated['dialogue_entries'] = await _hydrateDialogueEntries(
+        hydrated['dialogue_entries'],
+      );
+      hydratedCast.add(hydrated);
+    }
+    return hydratedCast;
+  }
+
+  Future<List<Map<String, dynamic>>> _hydrateDialogueEntries(
+    dynamic rawDialogueEntries,
+  ) async {
+    final List<Map<String, dynamic>> dialogueEntries =
+        await _hydrateRelationList(
+          rawDialogueEntries,
+          sceneDialogueObjectType,
+          keepStubsOnFailure: true,
+        );
+
+    final List<Map<String, dynamic>> hydratedEntries = <Map<String, dynamic>>[];
+    for (final Map<String, dynamic> dialogueEntry in dialogueEntries) {
+      final Map<String, dynamic> hydrated = Map<String, dynamic>.from(
+        dialogueEntry,
+      );
+      hydrated['speech_items'] = await _hydrateRelationList(
+        hydrated['speech_items'],
+        sceneSpeechObjectType,
+        keepStubsOnFailure: true,
+      );
+      hydratedEntries.add(hydrated);
+    }
+    return hydratedEntries;
+  }
+
+  Future<List<Map<String, dynamic>>> _hydrateDecisions(
+    dynamic rawDecisions, {
+    required Map<int, String> sceneKeyById,
+  }) async {
+    final List<Map<String, dynamic>> decisions = await _hydrateRelationList(
+      rawDecisions,
+      comicDecisionObjectType,
+      keepStubsOnFailure: true,
+    );
+
+    return decisions.map((Map<String, dynamic> decision) {
+      final Map<String, dynamic> hydrated = Map<String, dynamic>.from(decision);
+      if (_readStringValue(hydrated['target_scene_key']).isEmpty) {
+        final int? targetSceneId = _relationId(hydrated['target_scene']);
+        final String? targetSceneKey = sceneKeyById[targetSceneId];
+        if (targetSceneKey != null && targetSceneKey.isNotEmpty) {
+          hydrated['target_scene_key'] = targetSceneKey;
+        }
+      }
+      return hydrated;
+    }).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> _hydrateRelationList(
+    dynamic rawRelations,
+    String objectType, {
+    bool keepStubsOnFailure = false,
+  }) async {
+    final List<Map<String, dynamic>> stubs = _asMapList(rawRelations);
+    final List<Map<String, dynamic>> hydrated = <Map<String, dynamic>>[];
+
+    for (final Map<String, dynamic> stub in stubs) {
+      final int? objectId = _relationId(stub);
+      if (objectId == null) {
+        hydrated.add(stub);
+        continue;
+      }
+      final Map<String, dynamic>? detail = await _loadDetailMap(
+        objectType,
+        objectId,
+      );
+      if (detail != null) {
+        hydrated.add(detail);
+      } else if (keepStubsOnFailure) {
+        hydrated.add(stub);
+      }
+    }
+
+    return hydrated;
+  }
+
+  Future<Map<String, dynamic>?> _loadDetailMap(
+    String objectType,
+    int objectId,
+  ) async {
+    try {
+      return _asMap(await _backend.getDetails(objectType, objectId));
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 List<Map<String, dynamic>> _asMapList(dynamic rawData) {
@@ -295,12 +577,79 @@ Map<String, dynamic>? _asMap(dynamic rawData) {
   }
   if (rawData is Map) {
     final Map<String, dynamic> data = Map<String, dynamic>.from(rawData);
+    final String status = _readStringValue(data['status']);
+    if (status == 'error') {
+      return null;
+    }
+    if (status == 'fail' && data['data'] == null) {
+      return null;
+    }
     if (data['data'] is Map) {
       return Map<String, dynamic>.from(data['data'] as Map);
     }
     return data;
   }
   return null;
+}
+
+List<int> _relationIds(dynamic rawData) {
+  return _asMapList(rawData).map(_relationId).whereType<int>().toList();
+}
+
+int? _relationId(dynamic rawData) {
+  if (rawData is core.ApiResponse) {
+    return _relationId(rawData.data ?? rawData.rawData);
+  }
+  if (rawData is Iterable) {
+    for (final dynamic item in rawData) {
+      final int? id = _relationId(item);
+      if (id != null) {
+        return id;
+      }
+    }
+    return null;
+  }
+  if (rawData is Map) {
+    final Map<String, dynamic> data = Map<String, dynamic>.from(rawData);
+    if (data['data'] is Map) {
+      return _relationId(data['data']);
+    }
+    return _readIntValue(
+      data['id'] ?? data['objectid'] ?? data['value'] ?? data['objectId'],
+    );
+  }
+  return _readIntValue(rawData);
+}
+
+int? _readIntValue(dynamic value) {
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  if (value is String) {
+    return int.tryParse(value.trim());
+  }
+  return null;
+}
+
+String _readStringValue(dynamic value) {
+  if (value == null) {
+    return '';
+  }
+  if (value is String) {
+    return value;
+  }
+  if (value is num || value is bool) {
+    return value.toString();
+  }
+  if (value is Map) {
+    return _readStringValue(
+      value['value'] ?? value['name'] ?? value['title'] ?? value['text'],
+    );
+  }
+  return '';
 }
 
 String? _activityTypeToWire(EcoUnityActivityType? type) {
