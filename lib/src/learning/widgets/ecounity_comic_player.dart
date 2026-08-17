@@ -19,6 +19,7 @@ class EcoUnityComicPlayer extends StatefulWidget {
     this.language = 'en',
     this.onCompleted,
     this.onReadySpeech,
+    this.onSpeechCueChanged,
     this.imageBuilder,
   });
 
@@ -26,6 +27,7 @@ class EcoUnityComicPlayer extends StatefulWidget {
   final String language;
   final VoidCallback? onCompleted;
   final ValueChanged<EcoUnityComicSpeechItem>? onReadySpeech;
+  final ValueChanged<EcoUnityComicSpeechItem?>? onSpeechCueChanged;
   final EcoUnityComicImageBuilder? imageBuilder;
 
   @override
@@ -68,7 +70,7 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
     final EcoUnityComicTimelineEntry? currentEntry =
         _timelineIndex < timeline.length ? timeline[_timelineIndex] : null;
 
-    _cueReadySpeech(currentEntry);
+    _cueSpeech(currentEntry);
 
     return Column(
       children: <Widget>[
@@ -93,15 +95,15 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
     );
   }
 
-  void _cueReadySpeech(EcoUnityComicTimelineEntry? entry) {
+  void _cueSpeech(EcoUnityComicTimelineEntry? entry) {
     final EcoUnityComicSpeechItem? speech = entry?.speech;
-    if (speech == null ||
-        !speech.hasReadyAudio ||
-        widget.onReadySpeech == null) {
-      return;
-    }
+    final EcoUnityComicSpeechItem? readySpeech =
+        speech != null && speech.hasReadyAudio ? speech : null;
 
-    final String cueKey = '${speech.id ?? ''}:${speech.audioFile?.url ?? ''}';
+    final String cueKey = readySpeech == null
+        ? 'silent:${entry?.dialogue.id ?? 'end'}'
+        : 'ready:${entry?.dialogue.id ?? ''}:${readySpeech.id ?? ''}:'
+              '${readySpeech.audioFile?.url ?? ''}';
     if (cueKey == _lastSpeechCueKey) {
       return;
     }
@@ -111,7 +113,10 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
       if (!mounted) {
         return;
       }
-      widget.onReadySpeech?.call(speech);
+      widget.onSpeechCueChanged?.call(readySpeech);
+      if (readySpeech != null) {
+        widget.onReadySpeech?.call(readySpeech);
+      }
     });
   }
 

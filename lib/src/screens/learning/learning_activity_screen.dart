@@ -1,10 +1,12 @@
+import 'dart:async';
+
 import 'package:core/core.dart' as core;
+import 'package:ecounity/src/learning/ecounity_comic_speech_audio_controller.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_comic_player.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/widgets/screenscaffold.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:provider/provider.dart';
@@ -28,12 +30,25 @@ class EcoUnityLearningActivityScreen extends StatefulWidget {
 
 class _EcoUnityLearningActivityScreenState
     extends State<EcoUnityLearningActivityScreen> {
+  late final EcoUnityComicSpeechAudioController _speechAudioController;
   Future<_ActivityScreenData>? _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _speechAudioController = EcoUnityComicSpeechAudioController();
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _future ??= _loadActivityData();
+  }
+
+  @override
+  void dispose() {
+    unawaited(_speechAudioController.dispose());
+    super.dispose();
   }
 
   @override
@@ -132,10 +147,8 @@ class _EcoUnityLearningActivityScreenState
         language,
         payload: const <String, dynamic>{'activity_type': 'comic'},
       ),
-      onReadySpeech: (EcoUnityComicSpeechItem speech) {
-        if (kDebugMode) {
-          debugPrint('Ready comic speech audio: ${speech.audioFile?.url}');
-        }
+      onSpeechCueChanged: (EcoUnityComicSpeechItem? speech) {
+        unawaited(_speechAudioController.playCue(speech));
       },
     );
   }
