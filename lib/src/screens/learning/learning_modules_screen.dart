@@ -2,6 +2,7 @@ import 'package:core/core.dart' as core;
 import 'package:ecounity/l10n/app_localizations_extension.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
+import 'package:ecounity/src/learning/widgets/ecounity_media_image.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/util/router.dart';
 import 'package:ecounity/src/widgets/bottom_navigation.dart';
@@ -470,12 +471,7 @@ class _ModuleCard extends StatelessWidget {
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  _SdgNumberBadge(
-                    sdgNumber: module.sdgNumber,
-                    color: started
-                        ? EcoUnityColors.warmOrange
-                        : EcoUnityColors.deepTeal,
-                  ),
+                  _SdgModuleIcon(module: module, highlighted: started),
                   const SizedBox(width: 8),
                   Expanded(child: _ModuleStatusChip(status: status)),
                 ],
@@ -542,6 +538,55 @@ class _ModuleStatusChip extends StatelessWidget {
                 ? EcoUnityColors.warning
                 : EcoUnityColors.textSecondary,
             fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SdgModuleIcon extends StatelessWidget {
+  const _SdgModuleIcon({required this.module, required this.highlighted});
+
+  final EcoUnitySdgModule module;
+  final bool highlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color accentColor = highlighted
+        ? EcoUnityColors.warmOrange
+        : EcoUnityColors.deepTeal;
+    final Widget fallback = _SdgNumberBadge(
+      sdgNumber: module.sdgNumber,
+      color: accentColor,
+    );
+
+    if (module.iconImage == null) {
+      return fallback;
+    }
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: highlighted
+              ? EcoUnityColors.warmOrange
+              : EcoUnityColors.outlineVariant,
+        ),
+      ),
+      child: SizedBox.square(
+        dimension: 42,
+        child: Padding(
+          padding: const EdgeInsets.all(3),
+          child: EcoUnityMediaImage(
+            media: module.iconImage,
+            fit: BoxFit.contain,
+            borderRadius: BorderRadius.circular(5),
+            fallback: fallback,
+            loadedKey: ValueKey<String>(
+              'sdg-module-icon-${module.id ?? module.sdgNumber ?? module.slug}',
+            ),
           ),
         ),
       ),

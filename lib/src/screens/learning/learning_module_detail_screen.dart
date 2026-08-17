@@ -4,6 +4,7 @@ import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/learning/ecounity_learning_text_utils.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_content_review_panel.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_learning_copy.dart';
+import 'package:ecounity/src/learning/widgets/ecounity_media_image.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/util/router.dart';
 import 'package:ecounity/src/widgets/screenscaffold.dart';
@@ -172,6 +173,21 @@ class _ModuleHeader extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            if (module.coverImage != null) ...<Widget>[
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: EcoUnityMediaImage(
+                  media: module.coverImage,
+                  fit: BoxFit.cover,
+                  borderRadius: BorderRadius.circular(6),
+                  fallback: _ModuleBannerFallback(module: module),
+                  loadedKey: ValueKey<String>(
+                    'sdg-module-cover-${module.id ?? module.sdgNumber ?? module.slug}',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
             Row(
               children: <Widget>[
                 Container(
@@ -214,6 +230,35 @@ class _ModuleHeader extends StatelessWidget {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModuleBannerFallback extends StatelessWidget {
+  const _ModuleBannerFallback({required this.module});
+
+  final EcoUnitySdgModule module;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: EcoUnityColors.deepTeal,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Align(
+          alignment: Alignment.bottomLeft,
+          child: Text(
+            'SDG ${module.sdgNumber ?? '-'}',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ),
       ),
     );

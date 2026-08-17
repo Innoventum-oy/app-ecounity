@@ -11,16 +11,23 @@ import '../../l10n/app_localizations_extension.dart';
 final Map<String, Future<_LoadedImageBytes>> _imageFutureCache = {};
 
 extension ImageFromUrl on Image {
-  static Widget get(String url, {bool fillContainer = false, Key? loadedKey}) {
+  static Widget get(
+    String url, {
+    bool fillContainer = false,
+    Key? loadedKey,
+    WidgetBuilder? loadingBuilder,
+    Widget Function(BuildContext context, Object error)? errorBuilder,
+    WidgetBuilder? emptyBuilder,
+  }) {
     return FutureBuilder<_LoadedImageBytes>(
       future: _loadImage(url, fillContainer: fillContainer),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return loadingBuilder?.call(context) ??
+              const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
-          return Center(
-            child: Text('${context.l10n.error}: ${snapshot.error}'),
-          );
+          return errorBuilder?.call(context, snapshot.error!) ??
+              Center(child: Text('${context.l10n.error}: ${snapshot.error}'));
         } else if (snapshot.hasData) {
           return _FrameAwareImage(
             bytes: snapshot.data!.bytes,
@@ -28,7 +35,8 @@ extension ImageFromUrl on Image {
             loadedKey: loadedKey,
           );
         } else {
-          return Center(child: Text(context.l10n.no_image_available));
+          return emptyBuilder?.call(context) ??
+              Center(child: Text(context.l10n.no_image_available));
         }
       },
     );
