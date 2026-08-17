@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:core/core.dart' as core;
 import 'package:ecounity/l10n/app_localizations_extension.dart';
+import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/providers/ecounity_badge_provider.dart';
 import 'package:ecounity/src/providers/locale_provider.dart';
 import 'package:ecounity/src/providers/selected_pathway_notifier.dart';
@@ -81,6 +82,9 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => EcoUnityBadgeProvider(),
         ), // BadgeProvider
+        ChangeNotifierProvider(
+          create: (_) => EcoUnityLearningProvider(),
+        ), // EcoUnityLearningProvider
         ChangeNotifierProvider(create: (_) => SelectedPathwayNotifier()),
         ChangeNotifierProvider(create: (_) => fileStorage), // FileStorage
         ChangeNotifierProvider<AppImageProvider>(

@@ -22,8 +22,8 @@ List<NavigationItem> navItems = [
     navigationIndex: 1,
     label: 'modules',
     icon: const Icon(Icons.source_outlined),
-    route: '/modules',
-    view: 'modules',
+    route: '/learningmodules',
+    view: 'learningmodules',
   ),
   NavigationItem(
     navigationIndex: 2,
@@ -48,7 +48,7 @@ class AppRoutes {
   static const String challenges = '/challenges';
   static const String login = '/login';
   static const String register = '/register';
-  static const String modules = '/modules';
+  static const String modules = '/learningmodules';
   static const String submodules = '/submodules';
   static const String resources = '/resources';
 }

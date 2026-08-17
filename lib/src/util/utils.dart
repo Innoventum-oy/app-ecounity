@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:ecounity/src/util/settings.dart';
+import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/objects/pathway.dart';
 import '../objects/pathway_status_item.dart';
 import '../providers/ecounity_badge_provider.dart';
@@ -109,13 +110,27 @@ Future<void> loadAppData(BuildContext context) async {
     context,
     listen: false,
   );
+  final EcoUnityBadgeProvider badgeProvider =
+      Provider.of<EcoUnityBadgeProvider>(context, listen: false);
+  final EcoUnityLearningProvider learningProvider =
+      Provider.of<EcoUnityLearningProvider>(context, listen: false);
+  final String language = await core.Settings().getLanguage() ?? 'en';
   // Set current language to pathwayLoadParameters
   // Load all badges
 
-  Provider.of<EcoUnityBadgeProvider>(
-    context,
-    listen: false,
-  ).getItems(badgeParams, reload: true);
+  badgeProvider.getItems(badgeParams, reload: true);
+
+  try {
+    await learningProvider.loadModules(language: language, reload: true);
+  } catch (exception, stackTrace) {
+    if (kDebugMode) {
+      log(
+        'Unable to load revised EcoUnity learning modules: $exception',
+        name: 'loadAppData',
+        stackTrace: stackTrace,
+      );
+    }
+  }
 
   //  pathwayLoadParameters['language'] = Provider.of<LocaleProvider>(context, listen: false).locale?.languageCode ?? 'en';
   await webPageProvider.getItems(pathwayLoadParameters, reload: true);

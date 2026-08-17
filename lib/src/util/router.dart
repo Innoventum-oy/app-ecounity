@@ -6,10 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ecounity/l10n/app_localizations_extension.dart';
+import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/providers/selected_pathway_notifier.dart';
 import 'package:ecounity/src/screens/achievements/achievements_view.dart';
 import 'package:ecounity/src/screens/challenges/challenges_screen.dart';
 import 'package:ecounity/src/screens/challenges/dragdrop/dragdrop.dart';
+import 'package:ecounity/src/screens/learning/comic_screen.dart';
+import 'package:ecounity/src/screens/learning/learning_activity_screen.dart';
+import 'package:ecounity/src/screens/learning/learning_module_detail_screen.dart';
+import 'package:ecounity/src/screens/learning/learning_modules_screen.dart';
 import 'package:ecounity/src/screens/register/registration_form.dart';
 import 'package:ecounity/src/screens/challenges/quiz/quiz.dart';
 import 'package:ecounity/src/screens/video_list/video_list_screen.dart';
@@ -129,6 +134,59 @@ class AppRouter {
           pathways: pathways,
         );
         routeFound = true;
+        break;
+
+      case 'comic':
+        if (data is EcoUnityLearningActivity) {
+          targetWidget = EcoUnityComicScreen(
+            navIndex: navIndex,
+            activity: data,
+          );
+          routeFound = true;
+        } else if (data is int) {
+          targetWidget = EcoUnityComicScreen(
+            navIndex: navIndex,
+            activityId: data,
+          );
+          routeFound = true;
+        }
+        break;
+
+      case 'learningmodules':
+        targetWidget = EcoUnityLearningModulesScreen(navIndex: navIndex);
+        routeFound = true;
+        break;
+
+      case 'learningmodule':
+        if (data is EcoUnitySdgModule) {
+          targetWidget = EcoUnityLearningModuleDetailScreen(
+            navIndex: navIndex,
+            module: data,
+          );
+          routeFound = true;
+        } else if (data is int) {
+          targetWidget = EcoUnityLearningModuleDetailScreen(
+            navIndex: navIndex,
+            moduleId: data,
+          );
+          routeFound = true;
+        }
+        break;
+
+      case 'learningactivity':
+        if (data is EcoUnityLearningActivity) {
+          targetWidget = EcoUnityLearningActivityScreen(
+            navIndex: navIndex,
+            activity: data,
+          );
+          routeFound = true;
+        } else if (data is int) {
+          targetWidget = EcoUnityLearningActivityScreen(
+            navIndex: navIndex,
+            activityId: data,
+          );
+          routeFound = true;
+        }
         break;
 
       case 'wikiarticles':

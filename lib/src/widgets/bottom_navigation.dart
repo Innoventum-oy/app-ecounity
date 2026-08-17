@@ -25,7 +25,8 @@ Widget bottomNavigation(BuildContext context, {int currentIndex = 0}) {
         ),
       ),
     ],
-    selectedItemColor: Colors.white,
+    selectedItemColor: Theme.of(context).colorScheme.primary,
+    unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
     onTap: (index) {
       for (NavigationItem navItem in constants.navItems) {
         if (navItem.navigationIndex == index) {
