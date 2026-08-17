@@ -51,6 +51,43 @@ void main() {
       12,
     ]);
   });
+
+  test('limits featured modules to two dashboard cards', () {
+    final List<EcoUnitySdgModule> modules = <EcoUnitySdgModule>[
+      _module(
+        id: 12,
+        sdgNumber: 12,
+        activities: <Map<String, dynamic>>[
+          _activity(id: 101, orderNo: 10, type: 'mlr'),
+        ],
+      ),
+      _module(
+        id: 13,
+        sdgNumber: 13,
+        activities: <Map<String, dynamic>>[
+          _activity(id: 201, orderNo: 10, type: 'mlr', moduleId: 13),
+        ],
+      ),
+      _module(
+        id: 14,
+        sdgNumber: 14,
+        activities: <Map<String, dynamic>>[
+          _activity(id: 301, orderNo: 10, type: 'mlr', moduleId: 14),
+        ],
+      ),
+    ];
+
+    final EcoUnityLearningDashboardSummary summary =
+        EcoUnityLearningDashboardSummary.fromLearningState(
+          modules: modules,
+          progressEntries: const <EcoUnityProgressEntry>[],
+        );
+
+    expect(summary.featuredModules.map((module) => module.sdgNumber), <int?>[
+      12,
+      13,
+    ]);
+  });
 }
 
 EcoUnitySdgModule _module({
@@ -73,11 +110,12 @@ Map<String, dynamic> _activity({
   required int id,
   required int orderNo,
   required String type,
+  int moduleId = 12,
 }) {
   return <String, dynamic>{
     'id': id,
-    'module': 12,
-    'sdg_number': 12,
+    'module': moduleId,
+    'sdg_number': moduleId,
     'slug': 'activity-$id',
     'activity_type': type,
     'orderno': orderNo,

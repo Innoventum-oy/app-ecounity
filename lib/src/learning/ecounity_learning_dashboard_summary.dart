@@ -137,7 +137,7 @@ List<EcoUnitySdgModule> _featuredModules(List<EcoUnitySdgModule> modules) {
   final List<EcoUnitySdgModule> source = withActivities.isNotEmpty
       ? withActivities
       : modules;
-  return source.take(4).toList();
+  return source.take(2).toList();
 }
 
 int _earnedBadgeCount(

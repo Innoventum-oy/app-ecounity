@@ -48,31 +48,44 @@ class DashBoardState extends State<DashBoard> {
 
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 64,
+        centerTitle: false,
+        leadingWidth: 58,
         titleSpacing: 0,
         leading: Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
           child: Image.asset('assets/images/ecounity-logo.png'),
         ),
-        title: Text(context.l10n.home),
+        title: Text(
+          context.l10n.home,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: EcoUnityColors.textPrimary,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         actions: <Widget>[
-          IconButton(
+          _DashboardAppBarAction(
             tooltip: context.l10n.refresh,
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh_rounded),
             onPressed: () => _loadDashboardData(reload: true),
           ),
-          IconButton(
+          const SizedBox(width: 4),
+          _DashboardAppBarAction(
             tooltip: context.l10n.settings,
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings_rounded),
             onPressed: () {
               AppRouter.navigate(context, '/settings', 0, replaceRoute: false);
             },
           ),
-          if (user.id != null)
-            IconButton(
+          if (user.id != null) ...<Widget>[
+            const SizedBox(width: 4),
+            _DashboardAppBarAction(
               tooltip: context.l10n.logout,
-              icon: const Icon(Icons.logout),
+              icon: const Icon(Icons.logout_rounded),
               onPressed: _logout,
             ),
+          ],
+          const SizedBox(width: 12),
         ],
       ),
       body: Consumer<EcoUnityLearningProvider>(
@@ -161,6 +174,57 @@ class DashBoardState extends State<DashBoard> {
   }
 }
 
+class _DashboardAppBarAction extends StatelessWidget {
+  const _DashboardAppBarAction({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final Widget icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        label: tooltip,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(22),
+            onTap: onPressed,
+            child: SizedBox.square(
+              dimension: 44,
+              child: Center(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: EcoUnityColors.surfaceContainer,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: SizedBox.square(
+                    dimension: 38,
+                    child: IconTheme(
+                      data: const IconThemeData(
+                        color: EcoUnityColors.deepTeal,
+                        size: 19,
+                      ),
+                      child: Center(child: icon),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _DashboardBody extends StatelessWidget {
   const _DashboardBody({
     required this.provider,
@@ -198,7 +262,7 @@ class _DashboardBody extends StatelessWidget {
           onRefresh: onRefresh,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
             children: <Widget>[
               if (error != null) ...<Widget>[
                 _DashboardErrorBanner(message: error!),
@@ -260,9 +324,11 @@ class _ContinueLearningCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final EcoUnitySdgModule? module = summary.continueModule;
     final double ratio = summary.continueModuleCompletionRatio.clamp(0, 1);
+    final bool started = ratio > 0;
+    final String action = started ? 'Continue' : 'Start';
     final String title = module?.sdgNumber == null
         ? 'Start learning'
-        : 'Continue SDG ${module!.sdgNumber}';
+        : '$action SDG ${module!.sdgNumber}';
     final String subtitle =
         module?.title ?? 'Explore EcoUnity learning modules';
 
@@ -329,7 +395,11 @@ class _ContinueLearningCard extends StatelessWidget {
                   );
                 },
                 child: Text(
-                  module == null ? 'Browse modules' : 'Resume module',
+                  module == null
+                      ? 'Browse modules'
+                      : started
+                      ? 'Resume module'
+                      : 'Start module',
                 ),
               ),
             ),
@@ -444,7 +514,7 @@ class _FeaturedModulesSection extends StatelessWidget {
             crossAxisCount: columns,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: columns == 2 ? 0.88 : 1.05,
+            childAspectRatio: columns == 2 ? 1.1 : 1.28,
           ),
           itemBuilder: (BuildContext context, int index) {
             final EcoUnitySdgModule module = modules[index];
@@ -472,6 +542,7 @@ class _ModulePreviewCard extends StatelessWidget {
     final bool completed = clampedRatio >= 1;
 
     return Card(
+      margin: EdgeInsets.zero,
       color: started && !completed ? const Color(0xFFFFF8F1) : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
@@ -530,7 +601,7 @@ class _ModulePreviewCard extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                _moduleDurationLabel(module),
+                _moduleProgressLabel(module, clampedRatio),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -558,10 +629,11 @@ class _LatestChallengeCard extends StatelessWidget {
     );
 
     return Card(
+      margin: EdgeInsets.zero,
       color: const Color(0xFFFFF8F1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: EcoUnityColors.outlineVariant),
+        side: const BorderSide(color: Color(0xFFFFD7A8)),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
@@ -574,38 +646,43 @@ class _LatestChallengeCard extends StatelessWidget {
             data: activity,
           );
         },
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                'Latest challenge',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: EcoUnityColors.warning,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                activity.title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: EcoUnityColors.textPrimary,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              if (description.isNotEmpty) ...<Widget>[
-                const SizedBox(height: 6),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 132),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
                 Text(
-                  description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: EcoUnityColors.textSecondary,
+                  'Latest challenge',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: EcoUnityColors.warning,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  activity.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: EcoUnityColors.textPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                if (description.isNotEmpty) ...<Widget>[
+                  const SizedBox(height: 6),
+                  Text(
+                    description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: EcoUnityColors.textSecondary,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -694,9 +771,19 @@ class _DashboardErrorBanner extends StatelessWidget {
   }
 }
 
-String _moduleDurationLabel(EcoUnitySdgModule module) {
+String _moduleProgressLabel(EcoUnitySdgModule module, double ratio) {
   if (module.estimatedMinutes != null) {
-    return '${module.estimatedMinutes} min module';
+    final int totalMinutes = module.estimatedMinutes!;
+    if (ratio > 0 && ratio < 1) {
+      final int remainingMinutes = (totalMinutes * (1 - ratio)).ceil();
+      return remainingMinutes == 1
+          ? '1 min left'
+          : '$remainingMinutes min left';
+    }
+    if (ratio >= 1) {
+      return 'Completed';
+    }
+    return '$totalMinutes min';
   }
   final int activityCount = module.activities.length;
   if (activityCount == 1) {
