@@ -1,6 +1,7 @@
 import 'package:core/core.dart' as core;
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
+import 'package:ecounity/src/learning/ecounity_learning_text_utils.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/util/router.dart';
 import 'package:ecounity/src/widgets/screenscaffold.dart';
@@ -120,6 +121,10 @@ class _ModuleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final int activityCount = module.activities.length;
     final String activityLabel = activityCount == 1 ? 'activity' : 'activities';
+    final String introductionPreview = ecoUnityPlainText(
+      module.introduction,
+      maxLength: 180,
+    );
 
     return Card(
       child: InkWell(
@@ -159,10 +164,10 @@ class _ModuleCard extends StatelessWidget {
                   const Icon(Icons.chevron_right),
                 ],
               ),
-              if (module.introduction.isNotEmpty) ...<Widget>[
+              if (introductionPreview.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 12),
                 Text(
-                  module.introduction,
+                  introductionPreview,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium,

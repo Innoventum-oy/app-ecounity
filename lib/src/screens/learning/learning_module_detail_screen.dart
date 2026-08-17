@@ -1,6 +1,8 @@
 import 'package:core/core.dart' as core;
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
+import 'package:ecounity/src/learning/ecounity_learning_text_utils.dart';
+import 'package:ecounity/src/learning/widgets/ecounity_learning_copy.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/util/router.dart';
 import 'package:ecounity/src/widgets/screenscaffold.dart';
@@ -82,22 +84,25 @@ class _EcoUnityLearningModuleDetailScreenState
         children: <Widget>[
           _ModuleHeader(module: module),
           const SizedBox(height: 16),
-          for (final EcoUnityLearningActivity activity in module.activities)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _ActivityCard(
-                activity: activity,
-                onTap: () {
-                  AppRouter.navigate(
-                    context,
-                    'learningactivity',
-                    widget.navIndex,
-                    replaceRoute: false,
-                    data: activity,
-                  );
-                },
+          if (module.activities.isEmpty)
+            const _EmptyActivitiesMessage()
+          else
+            for (final EcoUnityLearningActivity activity in module.activities)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _ActivityCard(
+                  activity: activity,
+                  onTap: () {
+                    AppRouter.navigate(
+                      context,
+                      'learningactivity',
+                      widget.navIndex,
+                      replaceRoute: false,
+                      data: activity,
+                    );
+                  },
+                ),
               ),
-            ),
         ],
       ),
     );
@@ -160,18 +165,56 @@ class _ModuleHeader extends StatelessWidget {
             ),
             if (module.introduction.isNotEmpty) ...<Widget>[
               const SizedBox(height: 12),
-              Text(module.introduction),
+              EcoUnityLearningCopy(
+                text: module.introduction,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ],
             if (module.learningObjective.isNotEmpty) ...<Widget>[
               const SizedBox(height: 12),
-              Text(
-                module.learningObjective,
+              EcoUnityLearningCopy(
+                text: module.learningObjective,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: EcoUnityColors.deepTeal,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyActivitiesMessage extends StatelessWidget {
+  const _EmptyActivitiesMessage();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: EcoUnityColors.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: <Widget>[
+            const Icon(
+              Icons.hourglass_empty,
+              color: EcoUnityColors.textSecondary,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Activities will appear here when this module is ready.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: EcoUnityColors.textSecondary,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -224,6 +267,10 @@ IconData _activityIcon(EcoUnityActivityType type) {
 }
 
 String _activityLabel(EcoUnityLearningActivity activity) {
+  final String description = ecoUnityPlainText(
+    activity.shortDescription,
+    maxLength: 90,
+  );
   final List<String> parts = <String>[
     switch (activity.type) {
       EcoUnityActivityType.comic => 'Comic',
@@ -234,7 +281,7 @@ String _activityLabel(EcoUnityLearningActivity activity) {
       EcoUnityActivityType.unknown => 'Activity',
     },
     if (activity.estimatedMinutes != null) '${activity.estimatedMinutes} min',
-    if (activity.shortDescription.isNotEmpty) activity.shortDescription,
+    if (description.isNotEmpty) description,
   ];
   return parts.join(' · ');
 }

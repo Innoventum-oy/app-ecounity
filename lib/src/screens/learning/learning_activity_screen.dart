@@ -4,6 +4,7 @@ import 'package:core/core.dart' as core;
 import 'package:ecounity/src/learning/ecounity_comic_speech_audio_controller.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
+import 'package:ecounity/src/learning/widgets/ecounity_learning_copy.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_comic_player.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/widgets/screenscaffold.dart';
@@ -407,8 +408,8 @@ class _ReflectionActivityViewState extends State<_ReflectionActivityView> {
         ],
         if (widget.activity.reflectionPrompt.isNotEmpty) ...<Widget>[
           const SizedBox(height: 16),
-          Text(
-            widget.activity.reflectionPrompt,
+          EcoUnityLearningCopy(
+            text: widget.activity.reflectionPrompt,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
               color: EcoUnityColors.deepTeal,
               fontWeight: FontWeight.w700,
@@ -471,12 +472,15 @@ class _ActivityIntro extends StatelessWidget {
             Chip(label: Text(_activityTypeLabel(activity.type))),
             if (activity.shortDescription.isNotEmpty) ...<Widget>[
               const SizedBox(height: 8),
-              Text(activity.shortDescription),
+              EcoUnityLearningCopy(
+                text: activity.shortDescription,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ],
             if (activity.learningObjective.isNotEmpty) ...<Widget>[
               const SizedBox(height: 12),
-              Text(
-                activity.learningObjective,
+              EcoUnityLearningCopy(
+                text: activity.learningObjective,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: EcoUnityColors.deepTeal,
                   fontWeight: FontWeight.w600,
@@ -505,8 +509,8 @@ class _MessagePanel extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
-        child: Text(
-          text,
+        child: EcoUnityLearningCopy(
+          text: text,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: EcoUnityColors.textPrimary,
             fontWeight: FontWeight.w600,
