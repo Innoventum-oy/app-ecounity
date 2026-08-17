@@ -130,7 +130,7 @@
       }
     }
   },
-  "navigation_item": "{item, select, home{Головна} pathways{Шляхи} challenges{Виклики} videolist{Відео} selfReflectionHub{Центр саморефлексії} lessons{Уроки} modules{Модулі} resources{Ресурси} other{Меню:{item}}}",
+  "navigation_item": "{item, select, home{Головна} pathways{Шляхи} challenges{Виклики} videolist{Відео} selfReflectionHub{Центр саморефлексії} lessons{Уроки} modules{Навчання} resources{Ресурси} other{Меню:{item}}}",
   "next": "Далі",
   "noBadgesFound": "Відзнак не знайдено",
   "noChallengesFound": "Викликів не знайдено",
@@ -175,7 +175,7 @@
   "screenTitle_selfReflectionHub": "Центр саморефлексії",
   "screenTitle_videos": "Відео",
   "screenTitle_lessons": "Уроки",
-  "screenTitle_modules": "Модулі",
+  "screenTitle_modules": "Навчання",
   "screenTitle_resources": "Ресурси",
   "select": "Вибрати",
   "selected": "Обрано",

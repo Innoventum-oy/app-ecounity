@@ -249,7 +249,7 @@ class AppLocalizationsRo extends AppLocalizations {
       'videolist': 'Videos',
       'selfReflectionHub': 'Self-reflection Hub',
       'lessons': 'Lessons',
-      'modules': 'Modules',
+      'modules': 'Învățare',
       'resources': 'Resources',
       'other': 'Menu:$item',
     });
@@ -370,7 +370,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get screenTitle_lessons => 'Lessons';
 
   @override
-  String get screenTitle_modules => 'Modules';
+  String get screenTitle_modules => 'Învățare';
 
   @override
   String get screenTitle_resources => 'Resources';

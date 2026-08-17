@@ -130,7 +130,7 @@
       }
     }
   },
-  "navigation_item": "{item, select, home{Startseite} pathways{Lernpfade} challenges{Herausforderungen} videolist{Videos} selfReflectionHub{Selbstreflexionszentrum} lessons{Unterrichtseinheiten} other{Menü:{item}}}",
+  "navigation_item": "{item, select, home{Startseite} pathways{Lernpfade} challenges{Herausforderungen} videolist{Videos} selfReflectionHub{Selbstreflexionszentrum} lessons{Unterrichtseinheiten} modules{Lernen} resources{Ressourcen} other{Menü:{item}}}",
   "next": "Weiter",
   "noBadgesFound": "Keine Abzeichen gefunden",
   "noChallengesFound": "Keine Herausforderungen gefunden",
@@ -175,7 +175,7 @@
   "screenTitle_selfReflectionHub": "Selbstreflexionszentrum",
   "screenTitle_videos": "Videoübersicht",
   "screenTitle_lessons": "Unterricht",
-  "screenTitle_modules": "Module",
+  "screenTitle_modules": "Lernen",
   "screenTitle_resources": "Ressourcen",
   "select": "Auswählen",
   "selected": "Ausgewählt",

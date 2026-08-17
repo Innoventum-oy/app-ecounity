@@ -250,6 +250,8 @@ class AppLocalizationsPt extends AppLocalizations {
       'videolist': 'Vídeos',
       'selfReflectionHub': 'Centro de Auto-reflexão',
       'lessons': 'Lições',
+      'modules': 'Aprender',
+      'resources': 'Recursos',
       'other': 'Menu:$item',
     });
     return '$_temp0';
@@ -370,7 +372,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get screenTitle_lessons => 'Lições';
 
   @override
-  String get screenTitle_modules => 'Módulos';
+  String get screenTitle_modules => 'Aprender';
 
   @override
   String get screenTitle_resources => 'Recursos';

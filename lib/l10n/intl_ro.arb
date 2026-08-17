@@ -130,7 +130,7 @@
       }
     }
   },
-  "navigation_item": "{item, select, home{Home} pathways{Pathways} challenges{Challenges} videolist{Videos} selfReflectionHub{Self-reflection Hub} lessons{Lessons} modules{Modules} resources{Resources} other{Menu:{item}}}",
+  "navigation_item": "{item, select, home{Home} pathways{Pathways} challenges{Challenges} videolist{Videos} selfReflectionHub{Self-reflection Hub} lessons{Lessons} modules{Învățare} resources{Resources} other{Menu:{item}}}",
   "next": "Next",
   "noBadgesFound": "No badges found",
   "noChallengesFound": "No challenges were found",
@@ -175,7 +175,7 @@
   "screenTitle_selfReflectionHub": "Self-reflection Hub",
   "screenTitle_videos": "Videos",
   "screenTitle_lessons": "Lessons",
-  "screenTitle_modules": "Modules",
+  "screenTitle_modules": "Învățare",
   "screenTitle_resources": "Resources",
   "select": "Select",
   "selected": "Selected",

@@ -130,7 +130,7 @@
       }
     }
   },
-  "navigation_item": "{item, select, home{Strona główna} pathways{Ścieżki} challenges{Wyzwania} videolist{Filmy} selfReflectionHub{Centrum auto-refleksji} lessons{Lekcje} modules{Moduły} resources{Zasoby} other{Menu:{item}}}",
+  "navigation_item": "{item, select, home{Strona główna} pathways{Ścieżki} challenges{Wyzwania} videolist{Filmy} selfReflectionHub{Centrum auto-refleksji} lessons{Lekcje} modules{Nauka} resources{Zasoby} other{Menu:{item}}}",
   "next": "Dalej",
   "noBadgesFound": "Nie znaleziono odznak",
   "noChallengesFound": "Nie znaleziono wyzwań",
@@ -175,7 +175,7 @@
   "screenTitle_selfReflectionHub": "Centrum auto-refleksji",
   "screenTitle_videos": "Filmy",
   "screenTitle_lessons": "Lekcje",
-  "screenTitle_modules": "Moduły",
+  "screenTitle_modules": "Nauka",
   "screenTitle_resources": "Zasoby",
   "select": "Wybierz",
   "selected": "Wybrano",
