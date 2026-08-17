@@ -5,18 +5,18 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "empowerherproject",
+			"name": "Ecounity App",
 			"request": "launch",
 			"type": "dart"
 		},
 		{
-			"name": "empowerherproject (profile mode)",
+			"name": "Ecounity App (profile mode)",
 			"request": "launch",
 			"type": "dart",
 			"flutterMode": "profile"
 		},
 		{
-			"name": "empowerherproject (release mode)",
+			"name": "Ecounity App (release mode)",
 			"request": "launch",
 			"type": "dart",
 			"flutterMode": "release"
