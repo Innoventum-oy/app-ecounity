@@ -173,6 +173,101 @@ void main() {
       );
     });
 
+    test('parses enriched comic relation media URLs without extra details', () {
+      final EcoUnityComicScene scene = EcoUnityComicScene.fromJson(
+        <String, dynamic>{
+          'id': 301,
+          'scene_key': 'start',
+          'orderno': 1,
+          'title': <String, dynamic>{'en': 'Start'},
+          'backgrounds': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 401,
+              'title': 'The Innovation Fair background',
+              'background_alt_text': 'Bright school hall',
+              'viewports': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'objectid': 9,
+                  'name': 'Landscape background',
+                  'background_image_url':
+                      'https://cdn.example.com/background-landscape.png',
+                  'canvas_width': 1792,
+                  'canvas_height': 1024,
+                },
+                <String, dynamic>{
+                  'objectid': 8,
+                  'name': 'Portrait background',
+                  'background_image_url':
+                      'https://cdn.example.com/background-portrait.png',
+                  'canvas_width': 1024,
+                  'canvas_height': 1365,
+                },
+              ],
+            },
+          ],
+          'props': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 601,
+              'orderno': 1,
+              'prop': <String, dynamic>{
+                'objectid': 12,
+                'name': 'Prototype table',
+                'image_url': 'https://cdn.example.com/prop-table.png',
+              },
+            },
+          ],
+          'cast': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 701,
+              'orderno': 2,
+              'character': <String, dynamic>{'objectid': 3, 'name': 'Sofia'},
+              'pose_layer': <String, dynamic>{
+                'objectid': 31,
+                'name': 'sofia-neutral-standing',
+                'generated_image_url':
+                    'https://cdn.example.com/sofia-neutral.png',
+              },
+              'portrait_layout_json':
+                  '{&quot;x&quot;:0.63,&quot;y&quot;:0.57,'
+                  '&quot;scale&quot;:1.15,&quot;flip_x&quot;:true}',
+            },
+          ],
+          'decisions': <Map<String, dynamic>>[],
+        },
+      );
+
+      expect(
+        scene
+            .viewportFor(EcoUnityComicViewportKind.landscape)
+            ?.backgroundImage
+            ?.url,
+        'https://cdn.example.com/background-landscape.png',
+      );
+      expect(
+        scene
+            .viewportFor(EcoUnityComicViewportKind.portrait)
+            ?.backgroundImage
+            ?.url,
+        'https://cdn.example.com/background-portrait.png',
+      );
+
+      final List<EcoUnityComicDrawableLayer> layers = scene.drawableLayersFor(
+        EcoUnityComicViewportKind.portrait,
+      );
+
+      expect(
+        layers.map((EcoUnityComicDrawableLayer layer) => layer.media?.url),
+        containsAll(<String>[
+          'https://cdn.example.com/prop-table.png',
+          'https://cdn.example.com/sofia-neutral.png',
+        ]),
+      );
+      expect(
+        scene.cast.single.layoutFor(EcoUnityComicViewportKind.portrait).flipX,
+        isTrue,
+      );
+    });
+
     test('builds dialogue timeline with ready audio and text fallback', () {
       final EcoUnityComicScene startScene = EcoUnityComic.fromJson(
         _comicActivityFixture(),

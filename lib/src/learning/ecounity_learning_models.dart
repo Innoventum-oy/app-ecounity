@@ -704,6 +704,13 @@ class EcoUnityComicBackground {
     String language = 'en',
   }) {
     final Map<String, dynamic> data = _unwrapData(response);
+    final List<EcoUnityComicViewport> viewports =
+        _readMapList(data['viewports'])
+            .map(
+              (item) =>
+                  EcoUnityComicViewport.fromJson(item, language: language),
+            )
+            .toList();
     return EcoUnityComicBackground(
       id: _readAnyInt(data, const ['id', 'objectid']),
       category: _readString(data['category'], fallback: 'general'),
@@ -716,11 +723,11 @@ class EcoUnityComicBackground {
       contentStatus: _contentStatusFromWire(
         _readString(data['content_status']),
       ),
-      viewports: _readMapList(data['viewports'])
-          .map(
-            (item) => EcoUnityComicViewport.fromJson(item, language: language),
-          )
-          .toList(),
+      viewports: _backgroundViewportsWithFallbackMedia(
+        data,
+        viewports,
+        language: language,
+      ),
       rawData: data,
     );
   }
@@ -765,14 +772,19 @@ class EcoUnityComicViewport {
     final Map<String, dynamic> data = _unwrapData(response);
     return EcoUnityComicViewport(
       id: _readAnyInt(data, const ['id', 'objectid']),
-      kind: _viewportKindFromWire(_readString(data['viewport'])),
-      title: _readString(data['title']),
-      backgroundImage: EcoUnityMedia.fromJson(
-        data['background_image'],
+      kind: _viewportKindFromWire(
+        _readString(data['viewport'] ?? data['kind'] ?? data['name']),
+      ),
+      title: _readString(data['title'] ?? data['name']),
+      backgroundImage: _readMediaFromFields(
+        data,
+        objectKeys: const ['background_image', 'image'],
+        urlKeys: const ['background_image_url', 'image_url', 'imageurl', 'url'],
+        idKeys: const ['background_image_id', 'image_id', 'imageid', 'fileid'],
         language: language,
       ),
-      canvasWidth: _readInt(data['canvas_width']) ?? 1024,
-      canvasHeight: _readInt(data['canvas_height']) ?? 1365,
+      canvasWidth: _readInt(data['canvas_width'] ?? data['width']) ?? 1024,
+      canvasHeight: _readInt(data['canvas_height'] ?? data['height']) ?? 1365,
       generationStatus: _speechGenerationStatusFromWire(
         _readString(data['generation_status']),
       ),
@@ -984,8 +996,11 @@ class EcoUnityComicDecision {
         'consequence_summary',
         language,
       ),
-      choiceImage: EcoUnityMedia.fromJson(
-        data['choice_image'],
+      choiceImage: _readMediaFromFields(
+        data,
+        objectKeys: const ['choice_image', 'image'],
+        urlKeys: const ['choice_image_url', 'image_url', 'imageurl', 'url'],
+        idKeys: const ['choice_image_id', 'image_id', 'imageid', 'fileid'],
         language: language,
       ),
       portraitLayout: EcoUnityComicLayout.fromJson(
@@ -1307,8 +1322,11 @@ class EcoUnityComicPoseLayer {
     return EcoUnityComicPoseLayer(
       id: _readAnyInt(data, const ['id', 'objectid']),
       slug: _readString(data['slug']),
-      generatedImage: EcoUnityMedia.fromJson(
-        data['generated_image'] ?? data['image'],
+      generatedImage: _readMediaFromFields(
+        data,
+        objectKeys: const ['generated_image', 'image'],
+        urlKeys: const ['generated_image_url', 'image_url', 'imageurl', 'url'],
+        idKeys: const ['generated_image_id', 'image_id', 'imageid', 'fileid'],
         language: language,
       ),
       altText: _readLocalizedString(data, 'alt_text', language),
@@ -1349,7 +1367,13 @@ class EcoUnityComicProp {
       slug: _readString(data['slug']),
       name: _readLocalizedString(data, 'name', language),
       category: _readString(data['category'], fallback: 'general'),
-      image: EcoUnityMedia.fromJson(data['image'], language: language),
+      image: _readMediaFromFields(
+        data,
+        objectKeys: const ['image'],
+        urlKeys: const ['image_url', 'imageurl', 'url'],
+        idKeys: const ['image_id', 'imageid', 'fileid'],
+        language: language,
+      ),
       altText: _readLocalizedString(data, 'alt_text', language),
       rawData: data,
     );
@@ -1538,6 +1562,169 @@ class EcoUnityMedia {
       rawData: data,
     );
   }
+}
+
+EcoUnityMedia? _readMediaFromFields(
+  Map<String, dynamic> data, {
+  required List<String> objectKeys,
+  required List<String> urlKeys,
+  required List<String> idKeys,
+  String language = 'en',
+}) {
+  for (final String key in objectKeys) {
+    final EcoUnityMedia? media = EcoUnityMedia.fromJson(
+      data[key],
+      language: language,
+    );
+    if (media != null) {
+      return media;
+    }
+  }
+
+  final String? url = _readFirstNonEmptyString(data, urlKeys);
+  final int? id = _readAnyInt(data, idKeys);
+  if (url == null && id == null) {
+    return null;
+  }
+
+  return EcoUnityMedia(
+    id: id,
+    url: url,
+    title: _readLocalizedString(data, 'title', language).isNotEmpty
+        ? _readLocalizedString(data, 'title', language)
+        : _readString(data['name'] ?? data['filename']),
+    altText: _readLocalizedString(data, 'alt_text', language).isNotEmpty
+        ? _readLocalizedString(data, 'alt_text', language)
+        : _readLocalizedString(data, 'description', language),
+    rawData: data,
+  );
+}
+
+List<EcoUnityComicViewport> _backgroundViewportsWithFallbackMedia(
+  Map<String, dynamic> data,
+  List<EcoUnityComicViewport> viewports, {
+  required String language,
+}) {
+  if (viewports.any(
+    (EcoUnityComicViewport viewport) => viewport.backgroundImage != null,
+  )) {
+    return viewports;
+  }
+
+  final EcoUnityMedia? portraitMedia = _readMediaFromFields(
+    data,
+    objectKeys: const ['portrait_background_image'],
+    urlKeys: const ['portrait_background_image_url'],
+    idKeys: const ['portrait_background_image_id'],
+    language: language,
+  );
+  final EcoUnityMedia? landscapeMedia = _readMediaFromFields(
+    data,
+    objectKeys: const ['landscape_background_image'],
+    urlKeys: const ['landscape_background_image_url'],
+    idKeys: const ['landscape_background_image_id'],
+    language: language,
+  );
+
+  final List<EcoUnityComicViewport> fallbackViewports = <EcoUnityComicViewport>[
+    if (portraitMedia != null)
+      _viewportWithMedia(
+        _matchingViewport(viewports, EcoUnityComicViewportKind.portrait),
+        data,
+        EcoUnityComicViewportKind.portrait,
+        portraitMedia,
+        language: language,
+      ),
+    if (landscapeMedia != null)
+      _viewportWithMedia(
+        _matchingViewport(viewports, EcoUnityComicViewportKind.landscape),
+        data,
+        EcoUnityComicViewportKind.landscape,
+        landscapeMedia,
+        language: language,
+      ),
+  ];
+  if (fallbackViewports.isNotEmpty) {
+    return fallbackViewports;
+  }
+
+  final EcoUnityMedia? sharedMedia = _readMediaFromFields(
+    data,
+    objectKeys: const ['background_image', 'image'],
+    urlKeys: const ['background_image_url', 'image_url', 'imageurl', 'url'],
+    idKeys: const ['background_image_id', 'image_id', 'imageid', 'fileid'],
+    language: language,
+  );
+  if (sharedMedia == null) {
+    return viewports;
+  }
+  if (viewports.isNotEmpty) {
+    return viewports
+        .map(
+          (EcoUnityComicViewport viewport) => _viewportWithMedia(
+            viewport,
+            data,
+            viewport.kind,
+            sharedMedia,
+            language: language,
+          ),
+        )
+        .toList();
+  }
+  return <EcoUnityComicViewport>[
+    _viewportWithMedia(
+      null,
+      data,
+      EcoUnityComicViewportKind.portrait,
+      sharedMedia,
+      language: language,
+    ),
+  ];
+}
+
+EcoUnityComicViewport? _matchingViewport(
+  List<EcoUnityComicViewport> viewports,
+  EcoUnityComicViewportKind kind,
+) {
+  for (final EcoUnityComicViewport viewport in viewports) {
+    if (viewport.kind == kind) {
+      return viewport;
+    }
+  }
+  return null;
+}
+
+EcoUnityComicViewport _viewportWithMedia(
+  EcoUnityComicViewport? base,
+  Map<String, dynamic> data,
+  EcoUnityComicViewportKind kind,
+  EcoUnityMedia media, {
+  required String language,
+}) {
+  final String title = base?.title.isNotEmpty ?? false
+      ? base!.title
+      : _readLocalizedString(data, 'title', language);
+  return EcoUnityComicViewport(
+    id: base?.id,
+    kind: kind,
+    title: title,
+    backgroundImage: media,
+    canvasWidth:
+        base?.canvasWidth ??
+        _readInt(data['canvas_width'] ?? data['width']) ??
+        1024,
+    canvasHeight:
+        base?.canvasHeight ??
+        _readInt(data['canvas_height'] ?? data['height']) ??
+        1365,
+    generationStatus:
+        base?.generationStatus ??
+        _speechGenerationStatusFromWire(_readString(data['generation_status'])),
+    contentStatus:
+        base?.contentStatus ??
+        _contentStatusFromWire(_readString(data['content_status'])),
+    rawData: base?.rawData ?? data,
+  );
 }
 
 int _compareDrawableLayers(
@@ -1899,10 +2086,11 @@ EcoUnityProgressStatus _progressStatusFromWire(String value) {
 }
 
 EcoUnityComicViewportKind _viewportKindFromWire(String value) {
-  return switch (value) {
-    'landscape' => EcoUnityComicViewportKind.landscape,
-    _ => EcoUnityComicViewportKind.portrait,
-  };
+  final String normalized = value.trim().toLowerCase();
+  if (normalized.contains('landscape')) {
+    return EcoUnityComicViewportKind.landscape;
+  }
+  return EcoUnityComicViewportKind.portrait;
 }
 
 EcoUnitySpeechGenerationStatus _speechGenerationStatusFromWire(String value) {
