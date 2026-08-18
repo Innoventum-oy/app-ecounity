@@ -134,9 +134,13 @@ class _EcoUnityLearningActivityScreenState
       ),
     };
 
-    return SizedBox(
-      height: MediaQuery.sizeOf(context).height * 0.78,
-      child: content,
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double height = activity.isComic && constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : MediaQuery.sizeOf(context).height * 0.78;
+        return SizedBox(width: double.infinity, height: height, child: content);
+      },
     );
   }
 

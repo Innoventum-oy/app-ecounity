@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
@@ -41,6 +42,8 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
   String? _sceneKey;
   int _timelineIndex = 0;
   String? _lastSpeechCueKey;
+  bool _isTimelinePlaying = false;
+  final List<Timer> _timelineTimers = <Timer>[];
 
   @override
   void initState() {
@@ -52,6 +55,7 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
   void didUpdateWidget(covariant EcoUnityComicPlayer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.language != widget.language) {
+      _stopTimelinePlayback(updateState: false, stopAudio: true);
       _sceneKey = widget.comic.startScene?.sceneKey;
       _timelineIndex = 0;
       _lastSpeechCueKey = null;
@@ -63,6 +67,7 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
         _sceneKey,
       );
       if (currentScene == null) {
+        _stopTimelinePlayback(updateState: false, stopAudio: true);
         _sceneKey = widget.comic.startScene?.sceneKey;
         _timelineIndex = 0;
         _lastSpeechCueKey = null;
@@ -75,6 +80,13 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
         _timelineIndex = timelineLength;
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _cancelTimelineTimers();
+    widget.onSpeechCueChanged?.call(null);
+    super.dispose();
   }
 
   @override
@@ -100,6 +112,7 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
             scene: scene,
             language: widget.language,
             currentEntry: currentEntry,
+            isTimelinePlaying: _isTimelinePlaying,
             imageBuilder: widget.imageBuilder,
           ),
         ),
@@ -109,12 +122,14 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
           timelineIndex: _timelineIndex,
           currentEntry: currentEntry,
           onContinue: () => _continue(scene, timeline),
+          onPlaybackToggle: () => _toggleTimelinePlayback(scene, timeline),
           onDecisionSelected: _selectDecision,
           canSelectDecision: (EcoUnityComicDecision decision) {
             return widget.comic.sceneForDecision(decision) != null;
           },
           onCompleted: widget.onCompleted,
           loadingAdditionalScenes: widget.loadingAdditionalScenes,
+          isTimelinePlaying: _isTimelinePlaying,
         ),
       ],
     );
@@ -149,6 +164,7 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
     EcoUnityComicScene scene,
     List<EcoUnityComicTimelineEntry> timeline,
   ) {
+    _stopTimelinePlayback(updateState: false, stopAudio: true);
     if (_timelineIndex < timeline.length - 1) {
       setState(() {
         _timelineIndex += 1;
@@ -169,6 +185,7 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
   }
 
   void _selectDecision(EcoUnityComicDecision decision) {
+    _stopTimelinePlayback(updateState: false, stopAudio: true);
     final EcoUnityComicScene? targetScene = widget.comic.sceneForDecision(
       decision,
     );
@@ -182,6 +199,100 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
       _lastSpeechCueKey = null;
     });
   }
+
+  void _toggleTimelinePlayback(
+    EcoUnityComicScene scene,
+    List<EcoUnityComicTimelineEntry> timeline,
+  ) {
+    if (_isTimelinePlaying) {
+      _stopTimelinePlayback(stopAudio: true);
+      return;
+    }
+    _startTimelinePlayback(scene, timeline);
+  }
+
+  void _startTimelinePlayback(
+    EcoUnityComicScene scene,
+    List<EcoUnityComicTimelineEntry> timeline,
+  ) {
+    if (timeline.isEmpty) {
+      return;
+    }
+
+    _cancelTimelineTimers();
+    final int firstStartMs = math.max(0, timeline.first.startMs);
+    final int totalDurationMs = timeline.fold<int>(0, (
+      int currentMax,
+      EcoUnityComicTimelineEntry entry,
+    ) {
+      final int startMs = math.max(0, entry.startMs);
+      return math.max(currentMax, startMs + _playbackDurationMs(entry));
+    });
+
+    setState(() {
+      _isTimelinePlaying = true;
+      _timelineIndex = 0;
+      _lastSpeechCueKey = null;
+    });
+
+    for (int index = 1; index < timeline.length; index += 1) {
+      final EcoUnityComicTimelineEntry entry = timeline[index];
+      final int delayMs = math.max(0, entry.startMs - firstStartMs);
+      _timelineTimers.add(
+        Timer(Duration(milliseconds: delayMs), () {
+          if (!mounted ||
+              _sceneKey != scene.sceneKey ||
+              widget.comic.sceneByKey(scene.sceneKey) == null) {
+            return;
+          }
+          setState(() {
+            _timelineIndex = index;
+          });
+        }),
+      );
+    }
+
+    _timelineTimers.add(
+      Timer(
+        Duration(milliseconds: math.max(0, totalDurationMs - firstStartMs)),
+        () {
+          if (!mounted ||
+              _sceneKey != scene.sceneKey ||
+              widget.comic.sceneByKey(scene.sceneKey) == null) {
+            return;
+          }
+          setState(() {
+            _isTimelinePlaying = false;
+            _timelineIndex = timeline.length;
+          });
+        },
+      ),
+    );
+  }
+
+  void _stopTimelinePlayback({
+    bool updateState = true,
+    required bool stopAudio,
+  }) {
+    _cancelTimelineTimers();
+    if (stopAudio) {
+      widget.onSpeechCueChanged?.call(null);
+    }
+    if (!mounted || !updateState) {
+      _isTimelinePlaying = false;
+      return;
+    }
+    setState(() {
+      _isTimelinePlaying = false;
+    });
+  }
+
+  void _cancelTimelineTimers() {
+    for (final Timer timer in _timelineTimers) {
+      timer.cancel();
+    }
+    _timelineTimers.clear();
+  }
 }
 
 class _ComicSceneCanvas extends StatelessWidget {
@@ -189,12 +300,14 @@ class _ComicSceneCanvas extends StatelessWidget {
     required this.scene,
     required this.language,
     required this.currentEntry,
+    required this.isTimelinePlaying,
     required this.imageBuilder,
   });
 
   final EcoUnityComicScene scene;
   final String language;
   final EcoUnityComicTimelineEntry? currentEntry;
+  final bool isTimelinePlaying;
   final EcoUnityComicImageBuilder? imageBuilder;
 
   @override
@@ -244,12 +357,12 @@ class _ComicSceneCanvas extends StatelessWidget {
                                   constraints: constraints,
                                   imageBuilder: imageBuilder,
                                 ),
-                              if (currentEntry != null)
-                                _DialogueBubble(
-                                  entry: currentEntry!,
-                                  viewportKind: viewportKind,
-                                  constraints: constraints,
-                                ),
+                              _AnimatedDialogueBubble(
+                                entry: currentEntry,
+                                viewportKind: viewportKind,
+                                constraints: constraints,
+                                dimmed: isTimelinePlaying,
+                              ),
                             ],
                           );
                         },
@@ -278,47 +391,103 @@ class _PositionedComicLayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final EcoUnityComicLayout layout = layer.layout;
-    final double baseWidthFactor =
-        layer.kind == EcoUnityComicLayerKind.character ? 0.34 : 0.22;
+    final double baseWidthFactor = switch (layer.kind) {
+      EcoUnityComicLayerKind.character => 0.28,
+      EcoUnityComicLayerKind.prop => 0.24,
+      EcoUnityComicLayerKind.decision => 0.32,
+    };
     final double width = (constraints.maxWidth * baseWidthFactor * layout.scale)
-        .clamp(32, constraints.maxWidth * 0.78)
+        .clamp(24, constraints.maxWidth * 1.2)
         .toDouble();
-    final double maxLeft = math.max(0, constraints.maxWidth - width);
-    final double maxTop = math.max(0, constraints.maxHeight - width * 0.3);
-    final double left = (constraints.maxWidth * layout.x - width / 2)
-        .clamp(0, maxLeft)
-        .toDouble();
-    final double top = (constraints.maxHeight * layout.y - width / 2)
-        .clamp(0, maxTop)
-        .toDouble();
+    final double left = constraints.maxWidth * layout.x;
+    final double top = constraints.maxHeight * layout.y;
 
     return Positioned(
       left: left,
       top: top,
       width: width,
-      child: Transform.rotate(
-        angle: layout.rotation * math.pi / 180,
-        child: Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.diagonal3Values(
-            layout.flipX ? -1.0 : 1.0,
-            1.0,
-            1.0,
+      child: FractionalTranslation(
+        translation: const Offset(-0.5, -0.5),
+        child: SizedBox(
+          key: _comicLayerKey(layer),
+          width: width,
+          child: Transform.rotate(
+            angle: layout.rotation * math.pi / 180,
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.diagonal3Values(
+                layout.flipX ? -1.0 : 1.0,
+                1.0,
+                1.0,
+              ),
+              child: _ComicImage(
+                media:
+                    layer.media ??
+                    EcoUnityMedia(
+                      id: layer.id,
+                      url: layer.imageUrl,
+                      title: layer.label,
+                      altText: layer.altText,
+                      rawData: const <String, dynamic>{},
+                    ),
+                altText: layer.altText,
+                fit: BoxFit.contain,
+                imageBuilder: imageBuilder,
+              ),
+            ),
           ),
-          child: _ComicImage(
-            media:
-                layer.media ??
-                EcoUnityMedia(
-                  id: layer.id,
-                  url: layer.imageUrl,
-                  title: layer.label,
-                  altText: layer.altText,
-                  rawData: const <String, dynamic>{},
+        ),
+      ),
+    );
+  }
+}
+
+class _AnimatedDialogueBubble extends StatelessWidget {
+  const _AnimatedDialogueBubble({
+    required this.entry,
+    required this.viewportKind,
+    required this.constraints,
+    required this.dimmed,
+  });
+
+  final EcoUnityComicTimelineEntry? entry;
+  final EcoUnityComicViewportKind viewportKind;
+  final BoxConstraints constraints;
+  final bool dimmed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: IgnorePointer(
+        ignoring: entry == null,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 260),
+          reverseDuration: const Duration(milliseconds: 180),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.98, end: 1).animate(animation),
+                child: child,
+              ),
+            );
+          },
+          child: entry == null
+              ? const SizedBox.shrink(key: ValueKey<String>('dialogue-empty'))
+              : Stack(
+                  key: ValueKey<String>('dialogue-${entry!.dialogue.id}'),
+                  fit: StackFit.expand,
+                  children: <Widget>[
+                    _DialogueBubble(
+                      entry: entry!,
+                      viewportKind: viewportKind,
+                      constraints: constraints,
+                      dimmed: dimmed,
+                    ),
+                  ],
                 ),
-            altText: layer.altText,
-            fit: BoxFit.contain,
-            imageBuilder: imageBuilder,
-          ),
         ),
       ),
     );
@@ -330,11 +499,13 @@ class _DialogueBubble extends StatelessWidget {
     required this.entry,
     required this.viewportKind,
     required this.constraints,
+    required this.dimmed,
   });
 
   final EcoUnityComicTimelineEntry entry;
   final EcoUnityComicViewportKind viewportKind;
   final BoxConstraints constraints;
+  final bool dimmed;
 
   @override
   Widget build(BuildContext context) {
@@ -353,46 +524,50 @@ class _DialogueBubble extends StatelessWidget {
       left: left,
       top: top,
       width: maxWidth,
-      child: Material(
-        color: Colors.white,
-        elevation: 3,
-        borderRadius: BorderRadius.circular(8),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: EcoUnityColors.deepTeal),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                if ((entry.castLayer.character?.name ?? '').isNotEmpty)
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 180),
+        opacity: dimmed ? 0.96 : 1,
+        child: Material(
+          color: Colors.white,
+          elevation: dimmed ? 6 : 3,
+          borderRadius: BorderRadius.circular(8),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: EcoUnityColors.deepTeal),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  if ((entry.castLayer.character?.name ?? '').isNotEmpty)
+                    Text(
+                      entry.castLayer.character!.name,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: EcoUnityColors.deepTeal,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   Text(
-                    entry.castLayer.character!.name,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: EcoUnityColors.deepTeal,
-                      fontWeight: FontWeight.w700,
+                    entry.dialogue.dialogue,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: EcoUnityColors.textPrimary,
+                      height: 1.25,
                     ),
                   ),
-                Text(
-                  entry.dialogue.dialogue,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: EcoUnityColors.textPrimary,
-                    height: 1.25,
-                  ),
-                ),
-                if (entry.hasReadyAudio)
-                  const Align(
-                    alignment: AlignmentDirectional.centerEnd,
-                    child: Icon(
-                      Icons.volume_up,
-                      color: EcoUnityColors.turquoise,
-                      size: 18,
+                  if (entry.hasReadyAudio)
+                    const Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: Icon(
+                        Icons.volume_up,
+                        color: EcoUnityColors.turquoise,
+                        size: 18,
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -408,10 +583,12 @@ class _ComicControls extends StatelessWidget {
     required this.timelineIndex,
     required this.currentEntry,
     required this.onContinue,
+    required this.onPlaybackToggle,
     required this.onDecisionSelected,
     required this.canSelectDecision,
     required this.onCompleted,
     required this.loadingAdditionalScenes,
+    required this.isTimelinePlaying,
   });
 
   final EcoUnityComicScene scene;
@@ -419,10 +596,12 @@ class _ComicControls extends StatelessWidget {
   final int timelineIndex;
   final EcoUnityComicTimelineEntry? currentEntry;
   final VoidCallback onContinue;
+  final VoidCallback onPlaybackToggle;
   final ValueChanged<EcoUnityComicDecision> onDecisionSelected;
   final bool Function(EcoUnityComicDecision decision) canSelectDecision;
   final VoidCallback? onCompleted;
   final bool loadingAdditionalScenes;
+  final bool isTimelinePlaying;
 
   @override
   Widget build(BuildContext context) {
@@ -470,6 +649,16 @@ class _ComicControls extends StatelessWidget {
                 color: EcoUnityColors.textSecondary,
               ),
             ),
+            const SizedBox(width: 8),
+            _TimelinePlaybackButton(
+              enabled: timeline.isNotEmpty,
+              isPlaying: isTimelinePlaying,
+              onPressed: onPlaybackToggle,
+            ),
+            _DialogueTranscriptButton(
+              enabled: timeline.isNotEmpty,
+              onPressed: () => _showDialogueTranscript(context),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -483,13 +672,25 @@ class _ComicControls extends StatelessWidget {
 
   Widget _buildSceneEndControls(BuildContext context) {
     if (scene.decisions.isEmpty) {
-      return SizedBox(
-        width: double.infinity,
-        child: FilledButton.icon(
-          onPressed: onCompleted,
-          icon: const Icon(Icons.check),
-          label: const Text('Complete'),
-        ),
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          _ComicUtilityControls(
+            timeline: timeline,
+            isTimelinePlaying: isTimelinePlaying,
+            onPlaybackToggle: onPlaybackToggle,
+            onTranscriptPressed: () => _showDialogueTranscript(context),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onCompleted,
+              icon: const Icon(Icons.check),
+              label: const Text('Complete'),
+            ),
+          ),
+        ],
       );
     }
 
@@ -497,6 +698,16 @@ class _ComicControls extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: _ComicUtilityControls(
+            timeline: timeline,
+            isTimelinePlaying: isTimelinePlaying,
+            onPlaybackToggle: onPlaybackToggle,
+            onTranscriptPressed: () => _showDialogueTranscript(context),
+          ),
+        ),
+        const SizedBox(height: 8),
         for (final EcoUnityComicDecision decision in scene.decisions)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -531,6 +742,130 @@ class _ComicControls extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+
+  void _showDialogueTranscript(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(scene.title.isNotEmpty ? scene.title : 'Dialogue'),
+          content: SizedBox(
+            width: math.min(MediaQuery.sizeOf(context).width - 64, 520),
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: timeline.length,
+              separatorBuilder: (BuildContext context, int index) {
+                return const Divider(height: 20);
+              },
+              itemBuilder: (BuildContext context, int index) {
+                final EcoUnityComicTimelineEntry entry = timeline[index];
+                final String speaker =
+                    entry.castLayer.character?.name ?? 'Character';
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      speaker,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: EcoUnityColors.deepTeal,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      entry.dialogue.dialogue,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(height: 1.35),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ComicUtilityControls extends StatelessWidget {
+  const _ComicUtilityControls({
+    required this.timeline,
+    required this.isTimelinePlaying,
+    required this.onPlaybackToggle,
+    required this.onTranscriptPressed,
+  });
+
+  final List<EcoUnityComicTimelineEntry> timeline;
+  final bool isTimelinePlaying;
+  final VoidCallback onPlaybackToggle;
+  final VoidCallback onTranscriptPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        _TimelinePlaybackButton(
+          enabled: timeline.isNotEmpty,
+          isPlaying: isTimelinePlaying,
+          onPressed: onPlaybackToggle,
+        ),
+        _DialogueTranscriptButton(
+          enabled: timeline.isNotEmpty,
+          onPressed: onTranscriptPressed,
+        ),
+      ],
+    );
+  }
+}
+
+class _TimelinePlaybackButton extends StatelessWidget {
+  const _TimelinePlaybackButton({
+    required this.enabled,
+    required this.isPlaying,
+    required this.onPressed,
+  });
+
+  final bool enabled;
+  final bool isPlaying;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton.filledTonal(
+      tooltip: isPlaying ? 'Stop' : 'Play',
+      onPressed: enabled ? onPressed : null,
+      icon: Icon(isPlaying ? Icons.stop : Icons.play_arrow),
+    );
+  }
+}
+
+class _DialogueTranscriptButton extends StatelessWidget {
+  const _DialogueTranscriptButton({
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'View dialogue',
+      onPressed: enabled ? onPressed : null,
+      icon: const Icon(Icons.chat_bubble_outline),
     );
   }
 }
@@ -593,6 +928,19 @@ class _ComicImagePlaceholder extends StatelessWidget {
       ),
     );
   }
+}
+
+Key _comicLayerKey(EcoUnityComicDrawableLayer layer) {
+  final String id = layer.id?.toString() ?? layer.label;
+  return ValueKey<String>('comic-layer-${layer.kind.name}-$id');
+}
+
+int _playbackDurationMs(EcoUnityComicTimelineEntry entry) {
+  if (entry.durationMs > 0) {
+    return entry.durationMs;
+  }
+  final int textLength = entry.dialogue.dialogue.trim().length;
+  return math.max(1400, math.min(5000, textLength * 55));
 }
 
 double _canvasAspectRatio(

@@ -98,17 +98,25 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
       rawData: activity.rawData,
     );
 
-    return SizedBox(
-      height: MediaQuery.sizeOf(context).height * 0.78,
-      child: EcoUnityComicPlayer(
-        comic: comic,
-        language: data.language,
-        loadingAdditionalScenes: data.loadingAdditionalScenes,
-        onCompleted: () => _markCompleted(activity, data.language),
-        onSpeechCueChanged: (EcoUnityComicSpeechItem? speech) {
-          unawaited(_speechAudioController.playCue(speech));
-        },
-      ),
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double height = constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : MediaQuery.sizeOf(context).height * 0.82;
+        return SizedBox(
+          width: double.infinity,
+          height: height,
+          child: EcoUnityComicPlayer(
+            comic: comic,
+            language: data.language,
+            loadingAdditionalScenes: data.loadingAdditionalScenes,
+            onCompleted: () => _markCompleted(activity, data.language),
+            onSpeechCueChanged: (EcoUnityComicSpeechItem? speech) {
+              unawaited(_speechAudioController.playCue(speech));
+            },
+          ),
+        );
+      },
     );
   }
 

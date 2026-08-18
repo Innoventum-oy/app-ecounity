@@ -64,6 +64,126 @@ void main() {
 
     expect(completed, isTrue);
   });
+
+  testWidgets('plays timeline cues from the playback button', (
+    WidgetTester tester,
+  ) async {
+    final EcoUnityComic comic = EcoUnityComic.fromJson(_comicFixture());
+    final List<EcoUnityComicSpeechItem> readySpeechItems =
+        <EcoUnityComicSpeechItem>[];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 375,
+            height: 720,
+            child: EcoUnityComicPlayer(
+              comic: comic,
+              imageBuilder: _testImageBuilder,
+              onReadySpeech: readySpeechItems.add,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('First line'), findsOneWidget);
+    expect(find.byTooltip('Play'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Play'));
+    await tester.pump();
+
+    expect(find.byTooltip('Stop'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Second line'), findsOneWidget);
+    expect(readySpeechItems.single.audioFile?.url, endsWith('second.mp3'));
+
+    await tester.pump(const Duration(milliseconds: 1000));
+    await tester.pump(const Duration(milliseconds: 220));
+
+    expect(find.byTooltip('Play'), findsOneWidget);
+    expect(find.text('Pick reuse'), findsOneWidget);
+  });
+
+  testWidgets('shows full scene dialogue in a transcript dialog', (
+    WidgetTester tester,
+  ) async {
+    final EcoUnityComic comic = EcoUnityComic.fromJson(_comicFixture());
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 375,
+            height: 720,
+            child: EcoUnityComicPlayer(
+              comic: comic,
+              imageBuilder: _testImageBuilder,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip('View dialogue'));
+    await tester.pumpAndSettle();
+
+    final Finder dialog = find.byType(AlertDialog);
+    expect(dialog, findsOneWidget);
+    expect(
+      find.descendant(of: dialog, matching: find.text('Start')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: dialog, matching: find.text('First line')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: dialog, matching: find.text('Second line')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
+
+    expect(dialog, findsNothing);
+  });
+
+  testWidgets('uses backend editor layer scale proportions', (
+    WidgetTester tester,
+  ) async {
+    final EcoUnityComic comic = EcoUnityComic.fromJson(
+      _comicFixtureWithScaledTable(),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 375,
+            height: 720,
+            child: EcoUnityComicPlayer(
+              comic: comic,
+              imageBuilder: _testImageBuilder,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final Size propSize = tester.getSize(
+      find.byKey(const ValueKey<String>('comic-layer-prop-501')),
+    );
+    final Size characterSize = tester.getSize(
+      find.byKey(const ValueKey<String>('comic-layer-character-601')),
+    );
+
+    expect(propSize.width, greaterThan(characterSize.width * 1.4));
+  });
 }
 
 Widget _testImageBuilder(
@@ -234,4 +354,30 @@ Map<String, dynamic> _comicFixture() {
       },
     ],
   };
+}
+
+Map<String, dynamic> _comicFixtureWithScaledTable() {
+  final Map<String, dynamic> data = _comicFixture();
+  final List<Map<String, dynamic>> scenes =
+      data['comic_scenes'] as List<Map<String, dynamic>>;
+  final Map<String, dynamic> scene = scenes.first;
+  final List<Map<String, dynamic>> props =
+      scene['props'] as List<Map<String, dynamic>>;
+  final List<Map<String, dynamic>> cast =
+      scene['cast'] as List<Map<String, dynamic>>;
+
+  props.first['portrait_layout_json'] = <String, dynamic>{
+    'x': 0.2,
+    'y': 0.8,
+    'scale': 2,
+  };
+  cast.first['portrait_layout_json'] = <String, dynamic>{
+    'x': 0.48,
+    'y': 0.7,
+    'scale': 1.15,
+    'bubble_x': 0.5,
+    'bubble_y': 0.12,
+  };
+
+  return data;
 }

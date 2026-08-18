@@ -286,6 +286,24 @@ void main() {
       expect(timeline.last.hasReadyAudio, isTrue);
     });
 
+    test('parses flattened comic speech audio URLs', () {
+      final EcoUnityComicSpeechItem speech =
+          EcoUnityComicSpeechItem.fromJson(<String, dynamic>{
+            'id': 901,
+            'language': 'en',
+            'audio_file_url': 'https://cdn.example.com/audio/ready-line.mp3',
+            'start_ms': 700,
+            'duration_ms': 1300,
+            'generation_status': 'ready',
+          });
+
+      expect(
+        speech.audioFile?.url,
+        'https://cdn.example.com/audio/ready-line.mp3',
+      );
+      expect(speech.hasReadyAudio, isTrue);
+    });
+
     test('clamps layout values and tolerates invalid layout JSON', () {
       final EcoUnityComicLayout layout = EcoUnityComicLayout.fromJson(
         '{"x":1.5,"y":-0.25,"scale":5,"bubble_x":1.25,'

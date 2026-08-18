@@ -1183,11 +1183,25 @@ class EcoUnityComicSpeechItem {
 
   factory EcoUnityComicSpeechItem.fromJson(Map<String, dynamic> response) {
     final Map<String, dynamic> data = _unwrapData(response);
+    final String language = _readString(data['language'], fallback: 'en');
     return EcoUnityComicSpeechItem(
       id: _readAnyInt(data, const ['id', 'objectid']),
       dialogueEntryId: _readRelationId(data['dialogue_entry']),
-      language: _readString(data['language'], fallback: 'en'),
-      audioFile: EcoUnityMedia.fromJson(data['audio_file']),
+      language: language,
+      audioFile: _readMediaFromFields(
+        data,
+        objectKeys: const ['audio_file', 'audio'],
+        urlKeys: const [
+          'audio_file_url',
+          'audio_url',
+          'file_url',
+          'fileurl',
+          'download_url',
+          'url',
+        ],
+        idKeys: const ['audio_file_id', 'audio_id', 'file_id', 'fileid'],
+        language: language,
+      ),
       dialogueText: _readString(data['dialogue_text']),
       voice: _readString(data['voice']),
       speechModel: _readString(data['speech_model']),
@@ -1587,6 +1601,8 @@ class EcoUnityMedia {
       'generated_image_url',
       'background_image_url',
       'choice_image_url',
+      'audio_file_url',
+      'audio_url',
     ]);
 
     if (url == null &&
