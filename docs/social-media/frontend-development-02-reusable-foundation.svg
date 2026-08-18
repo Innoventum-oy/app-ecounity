@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F5FBF8"/>
+      <stop offset="1" stop-color="#EEF8F5"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#0D404E" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <text x="58" y="50" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#0D404E">Reusable app foundation</text>
+  <text x="1060" y="44" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="900" fill="#0D404E">EcoUnity</text>
+  <rect x="58" y="86" width="80" height="36" rx="8" fill="#D9F7EA"/>
+  <text x="70" y="108" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="800" fill="#006B62">POST 2</text>
+  <text x="58" y="176" font-family="Inter, Arial, sans-serif" font-size="52" font-weight="900" fill="#102F36">
+    <tspan x="58" dy="0">Building faster</tspan>
+    <tspan x="58" dy="54">by reusing the</tspan>
+    <tspan x="58" dy="54">right foundations</tspan>
+  </text>
+  <text x="62" y="380" font-family="Inter, Arial, sans-serif" font-size="25" font-weight="800" fill="#28545D">
+    <tspan x="62" dy="0">Earlier Erasmus+ mobile learning</tspan>
+    <tspan x="62" dy="30">experience becomes a practical base</tspan>
+    <tspan x="62" dy="30">for a dedicated EcoUnity app.</tspan>
+  </text>
+  <rect x="585" y="88" width="560" height="506" rx="16" fill="#FFFFFF" stroke="#B7DAD4" filter="url(#shadow)"/>
+  <text x="625" y="132" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="900" fill="#102F36">Native app foundation</text>
+  <rect x="625" y="170" width="210" height="66" rx="12" fill="#E9F5F1"/>
+  <rect x="895" y="170" width="210" height="66" rx="12" fill="#E9F5F1"/>
+  <rect x="625" y="258" width="210" height="66" rx="12" fill="#E9F5F1"/>
+  <rect x="895" y="258" width="210" height="66" rx="12" fill="#E9F5F1"/>
+  <rect x="625" y="346" width="210" height="66" rx="12" fill="#E9F5F1"/>
+  <rect x="895" y="346" width="210" height="66" rx="12" fill="#E9F5F1"/>
+  <text x="646" y="200" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="850" fill="#0D404E">Multilingual UI</text>
+  <text x="646" y="221" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600" fill="#58717A">Seven locale stress tests</text>
+  <text x="916" y="200" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="850" fill="#0D404E">API content sync</text>
+  <text x="916" y="221" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600" fill="#58717A">Backend-updated modules</text>
+  <text x="646" y="288" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="850" fill="#0D404E">Offline cache path</text>
+  <text x="646" y="309" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600" fill="#58717A">Classroom-friendly delivery</text>
+  <text x="916" y="288" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="850" fill="#0D404E">Learning progress</text>
+  <text x="916" y="309" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600" fill="#58717A">Badges and completion</text>
+  <text x="646" y="376" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="850" fill="#0D404E">Review controls</text>
+  <text x="646" y="397" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600" fill="#58717A">Partner-only quality checks</text>
+  <text x="916" y="376" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="850" fill="#0D404E">Accessible controls</text>
+  <text x="916" y="397" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600" fill="#58717A">Readable, tappable, clear</text>
+  <rect x="651" y="472" width="430" height="58" rx="12" fill="#0D404E"/>
+  <text x="681" y="506" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="850" fill="#FFFFFF">EcoUnity-specific learner experience</text>
+  <path d="M730 236V258" stroke="#08CDD1" stroke-width="4" stroke-linecap="round"/>
+  <path d="M1000 236V258" stroke="#08CDD1" stroke-width="4" stroke-linecap="round"/>
+  <path d="M730 324V346" stroke="#08CDD1" stroke-width="4" stroke-linecap="round"/>
+  <path d="M1000 324V346" stroke="#08CDD1" stroke-width="4" stroke-linecap="round"/>
+</svg>

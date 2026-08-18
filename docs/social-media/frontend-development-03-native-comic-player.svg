@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F5FBF8"/>
+      <stop offset="1" stop-color="#EEF8F5"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#0D404E" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <text x="58" y="50" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#0D404E">Native comic player</text>
+  <text x="1060" y="44" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="900" fill="#0D404E">EcoUnity</text>
+  <rect x="58" y="86" width="80" height="36" rx="8" fill="#D9F7EA"/>
+  <text x="70" y="108" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="800" fill="#006B62">POST 4</text>
+  <text x="58" y="176" font-family="Inter, Arial, sans-serif" font-size="52" font-weight="900" fill="#102F36">
+    <tspan x="58" dy="0">Stories become</tspan>
+    <tspan x="58" dy="54">native app</tspan>
+    <tspan x="58" dy="54">interactions</tspan>
+  </text>
+  <text x="62" y="380" font-family="Inter, Arial, sans-serif" font-size="25" font-weight="800" fill="#28545D">
+    <tspan x="62" dy="0">Backend scene data becomes layers,</tspan>
+    <tspan x="62" dy="30">speech bubbles, audio timing and</tspan>
+    <tspan x="62" dy="30">learner decisions in the mobile app.</tspan>
+  </text>
+  <rect x="560" y="70" width="590" height="540" rx="16" fill="#111821" filter="url(#shadow)"/>
+  <rect x="592" y="102" width="356" height="300" rx="12" fill="#F9D58F"/>
+  <rect x="612" y="122" width="316" height="260" rx="8" fill="#EAF7F5"/>
+  <rect x="612" y="122" width="316" height="110" rx="8" fill="#9FDBEF"/>
+  <rect x="612" y="222" width="316" height="160" rx="8" fill="#F1C67C"/>
+  <circle cx="712" cy="277" r="36" fill="#4FD30F"/>
+  <rect x="692" y="300" width="40" height="74" rx="18" fill="#0D404E"/>
+  <circle cx="822" cy="266" r="34" fill="#EF9635"/>
+  <rect x="804" y="289" width="36" height="80" rx="16" fill="#1B6D78"/>
+  <rect x="760" y="126" width="170" height="72" rx="10" fill="#101820"/>
+  <text x="778" y="154" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="800" fill="#08CDD1">Leo:</text>
+  <text x="778" y="177" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="850" fill="#FFFFFF">This is going to</text>
+  <text x="778" y="198" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="850" fill="#FFFFFF">be great!</text>
+  <rect x="972" y="102" width="134" height="300" rx="12" fill="#1B222D" stroke="#526071"/>
+  <text x="992" y="132" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="850" fill="#FFFFFF">Scene data</text>
+  <rect x="992" y="158" width="92" height="28" rx="8" fill="#203341"/>
+  <text x="1008" y="177" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="800" fill="#91F2F0">background</text>
+  <rect x="992" y="198" width="92" height="28" rx="8" fill="#203341"/>
+  <text x="1013" y="217" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="800" fill="#91F2F0">layers</text>
+  <rect x="992" y="238" width="92" height="28" rx="8" fill="#203341"/>
+  <text x="1010" y="257" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="800" fill="#91F2F0">dialogue</text>
+  <rect x="992" y="278" width="92" height="28" rx="8" fill="#203341"/>
+  <text x="1018" y="297" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="800" fill="#91F2F0">audio</text>
+  <rect x="992" y="318" width="92" height="28" rx="8" fill="#203341"/>
+  <text x="1006" y="337" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="800" fill="#91F2F0">decisions</text>
+  <rect x="592" y="430" width="514" height="104" rx="12" fill="#1B222D" stroke="#526071"/>
+  <text x="618" y="464" font-family="Inter, Arial, sans-serif" font-size="21" font-weight="900" fill="#FFFFFF">Speech timeline</text>
+  <rect x="618" y="484" width="460" height="28" rx="5" fill="#111821" stroke="#526071"/>
+  <rect x="632" y="484" width="108" height="28" fill="#0E8FA1"/>
+  <rect x="780" y="484" width="118" height="28" fill="#B43B96"/>
+  <text x="669" y="503" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">0.0s</text>
+  <text x="815" y="503" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">choice</text>
+  <rect x="618" y="548" width="200" height="38" rx="8" fill="#0D404E" stroke="#08CDD1"/>
+  <text x="652" y="572" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="900" fill="#91F2F0">Play timeline</text>
+  <rect x="830" y="548" width="190" height="38" rx="8" fill="#08CDD1"/>
+  <text x="866" y="572" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="900" fill="#0D404E">View dialogue</text>
+</svg>
+
