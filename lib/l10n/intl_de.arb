@@ -130,7 +130,7 @@
       }
     }
   },
-  "navigation_item": "{item, select, home{Startseite} pathways{Lernpfade} challenges{Herausforderungen} videolist{Videos} selfReflectionHub{Selbstreflexionszentrum} lessons{Unterrichtseinheiten} modules{Lernen} resources{Ressourcen} other{Menü:{item}}}",
+  "navigation_item": "{item, select, home{Startseite} pathways{Lernpfade} challenges{Herausforderungen} videolist{Videos} selfReflectionHub{Selbstreflexionszentrum} lessons{Unterrichtseinheiten} modules{Lernen} resources{Ressourcen} progress{Fortschritt} other{Menü:{item}}}",
   "next": "Weiter",
   "noBadgesFound": "Keine Abzeichen gefunden",
   "noChallengesFound": "Keine Herausforderungen gefunden",

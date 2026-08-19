@@ -18,6 +18,7 @@ extension ImageFromUrl on Image {
     WidgetBuilder? loadingBuilder,
     Widget Function(BuildContext context, Object error)? errorBuilder,
     WidgetBuilder? emptyBuilder,
+    VoidCallback? onReady,
   }) {
     return FutureBuilder<_LoadedImageBytes>(
       future: _loadImage(url, fillContainer: fillContainer),
@@ -26,17 +27,24 @@ extension ImageFromUrl on Image {
           return loadingBuilder?.call(context) ??
               const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
-          return errorBuilder?.call(context, snapshot.error!) ??
-              Center(child: Text('${context.l10n.error}: ${snapshot.error}'));
+          return _withImageReady(
+            errorBuilder?.call(context, snapshot.error!) ??
+                Center(child: Text('${context.l10n.error}: ${snapshot.error}')),
+            onReady,
+          );
         } else if (snapshot.hasData) {
           return _FrameAwareImage(
             bytes: snapshot.data!.bytes,
             fillContainer: fillContainer,
             loadedKey: loadedKey,
+            onReady: onReady,
           );
         } else {
-          return emptyBuilder?.call(context) ??
-              Center(child: Text(context.l10n.no_image_available));
+          return _withImageReady(
+            emptyBuilder?.call(context) ??
+                Center(child: Text(context.l10n.no_image_available)),
+            onReady,
+          );
         }
       },
     );
@@ -126,32 +134,122 @@ class _LoadedImageBytes {
   const _LoadedImageBytes(this.bytes);
 }
 
-class _FrameAwareImage extends StatelessWidget {
+class _FrameAwareImage extends StatefulWidget {
   final Uint8List bytes;
   final bool fillContainer;
   final Key? loadedKey;
+  final VoidCallback? onReady;
 
   const _FrameAwareImage({
     required this.bytes,
     required this.fillContainer,
     required this.loadedKey,
+    required this.onReady,
   });
+
+  @override
+  State<_FrameAwareImage> createState() => _FrameAwareImageState();
+}
+
+class _FrameAwareImageState extends State<_FrameAwareImage> {
+  bool _readyNotified = false;
+
+  @override
+  void didUpdateWidget(covariant _FrameAwareImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.bytes, widget.bytes) ||
+        oldWidget.onReady != widget.onReady) {
+      _readyNotified = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Image.memory(
-      bytes,
-      fit: fillContainer ? BoxFit.cover : BoxFit.contain,
-      width: fillContainer ? double.infinity : null,
-      frameBuilder: loadedKey == null
+      widget.bytes,
+      fit: widget.fillContainer ? BoxFit.cover : BoxFit.contain,
+      width: widget.fillContainer ? double.infinity : null,
+      frameBuilder: widget.loadedKey == null && widget.onReady == null
           ? null
           : (context, child, frame, wasSynchronouslyLoaded) {
               final bool imageIsReady = wasSynchronouslyLoaded || frame != null;
               if (!imageIsReady) {
                 return const Center(child: CircularProgressIndicator());
               }
+              _notifyReady();
+              final Key? loadedKey = widget.loadedKey;
+              if (loadedKey == null) {
+                return child;
+              }
               return KeyedSubtree(key: loadedKey, child: child);
             },
     );
+  }
+
+  void _notifyReady() {
+    if (_readyNotified) {
+      return;
+    }
+    _readyNotified = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      widget.onReady?.call();
+    });
+  }
+}
+
+Widget _withImageReady(Widget child, VoidCallback? onReady) {
+  if (onReady == null) {
+    return child;
+  }
+  return _ImageReadyCallback(onReady: onReady, child: child);
+}
+
+class _ImageReadyCallback extends StatefulWidget {
+  const _ImageReadyCallback({required this.onReady, required this.child});
+
+  final VoidCallback onReady;
+  final Widget child;
+
+  @override
+  State<_ImageReadyCallback> createState() => _ImageReadyCallbackState();
+}
+
+class _ImageReadyCallbackState extends State<_ImageReadyCallback> {
+  bool _readyNotified = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _notifyReady();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ImageReadyCallback oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.onReady != widget.onReady) {
+      _readyNotified = false;
+      _notifyReady();
+    }
+  }
+
+  void _notifyReady() {
+    if (_readyNotified) {
+      return;
+    }
+    _readyNotified = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      widget.onReady();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }

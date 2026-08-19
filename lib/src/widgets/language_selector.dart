@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
+import 'package:ecounity/src/analytics/ecounity_analytics_service.dart';
 import 'package:flutter/material.dart';
 import 'package:ecounity/l10n/app_localizations_extension.dart';
 import 'package:provider/provider.dart';
@@ -26,11 +29,23 @@ class LanguageSelector extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () async {
+                final String previousLanguage = currentLocale.languageCode;
+                final EcoUnityAnalyticsService? analytics = _analyticsOf(
+                  context,
+                );
                 Provider.of<LocaleProvider>(
                   context,
                   listen: false,
                 ).setLocale(locale);
                 await Settings().setLanguage(locale.languageCode);
+                if (analytics != null) {
+                  unawaited(
+                    analytics.trackLanguageChanged(
+                      previousLanguage: previousLanguage,
+                      newLanguage: locale.languageCode,
+                    ),
+                  );
+                }
                 if (context.mounted) {
                   loadAppData(context);
                   Navigator.of(context).pop();
@@ -69,5 +84,13 @@ class LanguageSelector extends StatelessWidget {
       default:
         return '🌐';
     }
+  }
+}
+
+EcoUnityAnalyticsService? _analyticsOf(BuildContext context) {
+  try {
+    return Provider.of<EcoUnityAnalyticsService>(context, listen: false);
+  } catch (_) {
+    return null;
   }
 }

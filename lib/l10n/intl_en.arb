@@ -130,7 +130,7 @@
       }
     }
   },
-  "navigation_item": "{item, select, home{Home} pathways{Pathways} challenges{Challenges} videolist{Videos} selfReflectionHub{Self-reflection Hub} lessons{Lessons} modules{Learn} resources{Resources} other{Menu:{item}}}",
+  "navigation_item": "{item, select, home{Home} pathways{Pathways} challenges{Challenges} videolist{Videos} selfReflectionHub{Self-reflection Hub} lessons{Lessons} modules{Learn} resources{Resources} progress{Progress} other{Menu:{item}}}",
   "next": "Next",
   "noBadgesFound": "No badges found",
   "noChallengesFound": "No challenges were found",

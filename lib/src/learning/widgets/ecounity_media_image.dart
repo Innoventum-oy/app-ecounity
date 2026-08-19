@@ -16,6 +16,7 @@ class EcoUnityMediaImage extends StatelessWidget {
     this.fit = BoxFit.cover,
     this.borderRadius = BorderRadius.zero,
     this.loadedKey,
+    this.onReady,
   });
 
   final EcoUnityMedia? media;
@@ -23,6 +24,7 @@ class EcoUnityMediaImage extends StatelessWidget {
   final BoxFit fit;
   final BorderRadius borderRadius;
   final Key? loadedKey;
+  final VoidCallback? onReady;
 
   @override
   Widget build(BuildContext context) {
@@ -37,12 +39,14 @@ class EcoUnityMediaImage extends StatelessWidget {
               fit: fit,
               fallback: fallback,
               loadedKey: loadedKey,
+              onReady: onReady,
             )
           : _MediaIdImage(
               id: value?.id,
               fit: fit,
               fallback: fallback,
               loadedKey: loadedKey,
+              onReady: onReady,
             ),
     );
   }
@@ -54,18 +58,20 @@ class _MediaIdImage extends StatelessWidget {
     required this.fit,
     required this.fallback,
     required this.loadedKey,
+    required this.onReady,
   });
 
   final int? id;
   final BoxFit fit;
   final Widget fallback;
   final Key? loadedKey;
+  final VoidCallback? onReady;
 
   @override
   Widget build(BuildContext context) {
     final int? value = id;
     if (value == null) {
-      return fallback;
+      return _withMediaImageReady(fallback, onReady);
     }
 
     return FutureBuilder<core.ImageObject?>(
@@ -77,13 +83,14 @@ class _MediaIdImage extends StatelessWidget {
             }
             final String? url = snapshot.data?.imageUrl?.trim();
             if (url == null || url.isEmpty) {
-              return fallback;
+              return _withMediaImageReady(fallback, onReady);
             }
             return _MediaUrlImage(
               url: url,
               fit: fit,
               fallback: fallback,
               loadedKey: loadedKey,
+              onReady: onReady,
             );
           },
     );
@@ -100,12 +107,14 @@ class _MediaUrlImage extends StatelessWidget {
     required this.fit,
     required this.fallback,
     required this.loadedKey,
+    required this.onReady,
   });
 
   final String url;
   final BoxFit fit;
   final Widget fallback;
   final Key? loadedKey;
+  final VoidCallback? onReady;
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +125,63 @@ class _MediaUrlImage extends StatelessWidget {
       loadingBuilder: (_) => const _ImagePlaceholder(),
       errorBuilder: (context, error) => fallback,
       emptyBuilder: (_) => fallback,
+      onReady: onReady,
     );
+  }
+}
+
+Widget _withMediaImageReady(Widget child, VoidCallback? onReady) {
+  if (onReady == null) {
+    return child;
+  }
+  return _MediaImageReadyCallback(onReady: onReady, child: child);
+}
+
+class _MediaImageReadyCallback extends StatefulWidget {
+  const _MediaImageReadyCallback({required this.onReady, required this.child});
+
+  final VoidCallback onReady;
+  final Widget child;
+
+  @override
+  State<_MediaImageReadyCallback> createState() =>
+      _MediaImageReadyCallbackState();
+}
+
+class _MediaImageReadyCallbackState extends State<_MediaImageReadyCallback> {
+  bool _readyNotified = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _notifyReady();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MediaImageReadyCallback oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.onReady != widget.onReady) {
+      _readyNotified = false;
+      _notifyReady();
+    }
+  }
+
+  void _notifyReady() {
+    if (_readyNotified) {
+      return;
+    }
+    _readyNotified = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      widget.onReady();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }
 

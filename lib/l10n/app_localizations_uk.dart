@@ -251,6 +251,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'lessons': 'Уроки',
       'modules': 'Навчання',
       'resources': 'Ресурси',
+      'progress': 'Прогрес',
       'other': 'Меню:$item',
     });
     return '$_temp0';

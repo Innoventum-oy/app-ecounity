@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:core/core.dart' as core;
+import 'package:ecounity/src/analytics/ecounity_analytics_service.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/learning/ecounity_learning_text_utils.dart';
@@ -31,6 +34,7 @@ class EcoUnityLearningModuleDetailScreen extends StatefulWidget {
 class _EcoUnityLearningModuleDetailScreenState
     extends State<EcoUnityLearningModuleDetailScreen> {
   Future<EcoUnitySdgModule?>? _future;
+  final Set<String> _trackedModuleOpenKeys = <String>{};
 
   @override
   void didChangeDependencies() {
@@ -124,8 +128,29 @@ class _EcoUnityLearningModuleDetailScreenState
     final EcoUnityLearningProvider provider =
         Provider.of<EcoUnityLearningProvider>(context, listen: false);
     final String language = await core.Settings().getLanguage() ?? 'en';
-    return await provider.loadModule(moduleId, language: language) ??
+    final EcoUnitySdgModule? module =
+        await provider.loadModule(moduleId, language: language) ??
         widget.module;
+    if (module != null) {
+      _trackModuleOpened(module, language);
+    }
+    return module;
+  }
+
+  void _trackModuleOpened(EcoUnitySdgModule module, String language) {
+    final int? moduleId = module.id;
+    if (moduleId == null) {
+      return;
+    }
+    final String key = '$moduleId:$language';
+    if (!_trackedModuleOpenKeys.add(key)) {
+      return;
+    }
+    final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+    if (analytics == null) {
+      return;
+    }
+    unawaited(analytics.trackModuleOpened(module, language: language));
   }
 
   Future<void> _updateModuleContentStatus(
@@ -342,6 +367,14 @@ IconData _activityIcon(EcoUnityActivityType type) {
     EcoUnityActivityType.challenge => Icons.flag,
     EcoUnityActivityType.unknown => Icons.help_outline,
   };
+}
+
+EcoUnityAnalyticsService? _analyticsOf(BuildContext context) {
+  try {
+    return Provider.of<EcoUnityAnalyticsService>(context, listen: false);
+  } catch (_) {
+    return null;
+  }
 }
 
 String _activityLabel(EcoUnityLearningActivity activity) {

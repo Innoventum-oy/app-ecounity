@@ -130,7 +130,7 @@
       }
     }
   },
-  "navigation_item": "{item, select, home{Koti} pathways{Polut} challenges{Haasteet} videolist{Videot} selfReflectionHub{Itsearviointikeskus} lessons{Oppitunnit} modules{Opi} resources{Resurssit} other{Valikko:{item}}}",
+  "navigation_item": "{item, select, home{Koti} pathways{Polut} challenges{Haasteet} videolist{Videot} selfReflectionHub{Itsearviointikeskus} lessons{Oppitunnit} modules{Opi} resources{Resurssit} progress{Edistyminen} other{Valikko:{item}}}",
   "next": "Seuraava",
   "noBadgesFound": "Ansiomerkkejä ei löytynyt",
   "noChallengesFound": "Haasteita ei löytynyt",

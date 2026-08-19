@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:ecounity/src/util/settings.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
-import 'package:ecounity/src/objects/pathway.dart';
+import 'package:ecounity/src/objects/pathway_status.dart';
 import '../objects/pathway_status_item.dart';
 import '../providers/ecounity_badge_provider.dart';
 
@@ -106,40 +106,41 @@ Future<String> getAppVersionDate() async {
 }
 
 Future<void> loadAppData(BuildContext context) async {
-  core.WebPageProvider webPageProvider = Provider.of<core.WebPageProvider>(
-    context,
-    listen: false,
-  );
   final EcoUnityBadgeProvider badgeProvider =
       Provider.of<EcoUnityBadgeProvider>(context, listen: false);
   final EcoUnityLearningProvider learningProvider =
       Provider.of<EcoUnityLearningProvider>(context, listen: false);
   final String language = await core.Settings().getLanguage() ?? 'en';
-  // Set current language to pathwayLoadParameters
-  // Load all badges
 
-  badgeProvider.getItems(badgeParams, reload: true);
-
-  try {
-    await learningProvider.loadModules(language: language, reload: true);
-  } catch (exception, stackTrace) {
-    if (kDebugMode) {
-      log(
-        'Unable to load revised EcoUnity learning modules: $exception',
-        name: 'loadAppData',
-        stackTrace: stackTrace,
-      );
+  Future<void> loadBadges() async {
+    try {
+      await badgeProvider.getItems(badgeParams, reload: true);
+    } catch (exception, stackTrace) {
+      if (kDebugMode) {
+        log(
+          'Unable to load EcoUnity badges: $exception',
+          name: 'loadAppData',
+          stackTrace: stackTrace,
+        );
+      }
     }
   }
 
-  //  pathwayLoadParameters['language'] = Provider.of<LocaleProvider>(context, listen: false).locale?.languageCode ?? 'en';
-  await webPageProvider.getItems(pathwayLoadParameters, reload: true);
-  List<core.WebPage> dragdropPages = webPageProvider.list!
-      .where((element) => element.type == PathwayType.dragdrop)
-      .toList();
-  if (kDebugMode) {
-    log('Identified ${dragdropPages.length} dragdrop pages');
+  Future<void> loadLearningModules() async {
+    try {
+      await learningProvider.loadModules(language: language, reload: true);
+    } catch (exception, stackTrace) {
+      if (kDebugMode) {
+        log(
+          'Unable to load revised EcoUnity learning modules: $exception',
+          name: 'loadAppData',
+          stackTrace: stackTrace,
+        );
+      }
+    }
   }
+
+  await Future.wait(<Future<void>>[loadBadges(), loadLearningModules()]);
 }
 
 class NavigationService {

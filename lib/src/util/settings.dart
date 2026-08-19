@@ -27,10 +27,10 @@ List<NavigationItem> navItems = [
   ),
   NavigationItem(
     navigationIndex: 2,
-    label: 'resources',
-    icon: const Icon(Icons.perm_media_outlined),
-    route: '/resources',
-    view: 'resources',
+    label: 'progress',
+    icon: const Icon(Icons.emoji_events_outlined),
+    route: '/progress',
+    view: 'progress',
   ),
 ];
 
@@ -50,6 +50,7 @@ class AppRoutes {
   static const String register = '/register';
   static const String modules = '/learningmodules';
   static const String submodules = '/submodules';
+  static const String progress = '/progress';
   static const String resources = '/resources';
 }
 

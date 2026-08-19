@@ -49,6 +49,7 @@ dependencies:
   provider: ^6.0.0  # for state management
   shared_preferences: ^2.5.5  # for storing data locally
   url_launcher: ^6.3.1  # for launching urls
+  web: ^1.1.1 # for browser-native comic audio playback on Flutter web
   another_flushbar: ^2.2.4 # for showing flushbars
   carousel_slider: ^5.0.0  # for image carousel with flexible aspect ratios
   # The following adds the Cupertino Icons font to your application.

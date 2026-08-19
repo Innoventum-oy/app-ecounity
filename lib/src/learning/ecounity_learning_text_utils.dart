@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:html/dom.dart' as html_dom;
 import 'package:html/parser.dart' as html_parser;
 
@@ -42,6 +45,69 @@ String ecoUnityPlainText(String value, {int? maxLength}) {
     endIndex = targetLength;
   }
   return '${normalized.substring(0, endIndex).trimRight()}...';
+}
+
+String ecoUnityReplaceMediaImageTokens(
+  String content,
+  List<EcoUnityMedia> images,
+) {
+  String contentWithImages = content;
+
+  for (int index = 0; index < images.length; index += 1) {
+    final String token = '%image.${index + 1}%';
+    final EcoUnityMedia image = images[index];
+    final String? imageUrl = image.url?.trim();
+    if (imageUrl == null || imageUrl.isEmpty) {
+      contentWithImages = contentWithImages.replaceAll(token, '');
+      continue;
+    }
+
+    final String escapedUrl = htmlEscape.convert(imageUrl);
+    final String escapedAlt = htmlEscape.convert(
+      image.altText.isNotEmpty ? image.altText : image.title,
+    );
+    contentWithImages = contentWithImages.replaceAll(
+      token,
+      '<img src="$escapedUrl" alt="$escapedAlt" style="max-width: 100%; height: auto; width: auto;" />',
+    );
+  }
+
+  return _removeImageTokens(contentWithImages);
+}
+
+String _removeImageTokens(String content) {
+  final StringBuffer buffer = StringBuffer();
+  int index = 0;
+
+  while (index < content.length) {
+    final int tokenStart = content.indexOf('%image.', index);
+    if (tokenStart == -1) {
+      buffer.write(content.substring(index));
+      break;
+    }
+
+    final int digitStart = tokenStart + '%image.'.length;
+    int cursor = digitStart;
+    while (cursor < content.length &&
+        _isAsciiDigit(content.codeUnitAt(cursor))) {
+      cursor += 1;
+    }
+
+    final bool validToken =
+        cursor > digitStart &&
+        cursor < content.length &&
+        content.codeUnitAt(cursor) == 0x25;
+    if (!validToken) {
+      buffer.write(content.substring(index, tokenStart + 1));
+      index = tokenStart + 1;
+      continue;
+    }
+
+    buffer.write(content.substring(index, tokenStart));
+    index = cursor + 1;
+  }
+
+  return buffer.toString();
 }
 
 String _extractHtmlText(String html) {
@@ -145,6 +211,10 @@ bool _isWhitespace(int rune) {
 bool _isAsciiLetter(int codeUnit) {
   return (codeUnit >= 0x41 && codeUnit <= 0x5A) ||
       (codeUnit >= 0x61 && codeUnit <= 0x7A);
+}
+
+bool _isAsciiDigit(int codeUnit) {
+  return codeUnit >= 0x30 && codeUnit <= 0x39;
 }
 
 const Set<String> _ignoredTextTags = <String>{'noscript', 'script', 'style'};

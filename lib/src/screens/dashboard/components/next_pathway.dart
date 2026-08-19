@@ -299,8 +299,11 @@ class NextPathwayState extends State<NextPathway> {
                           (item) => item.view == 'modules',
                         )
                       : navItems.firstWhereOrNull(
-                          (item) => item.view == 'resources',
-                        );
+                              (item) => item.view == 'resources',
+                            ) ??
+                            navItems.firstWhereOrNull(
+                              (item) => item.view == 'modules',
+                            );
 
                   return InkWell(
                     key: const ValueKey('screenshot-next-suggestion-card'),
@@ -308,7 +311,7 @@ class NextPathwayState extends State<NextPathway> {
                       AppRouter.navigate(
                         context,
                         selectedItem.type.name,
-                        navItem!.navigationIndex,
+                        navItem?.navigationIndex ?? 1,
                         replaceRoute: false,
                         data: selectedItem,
                       );

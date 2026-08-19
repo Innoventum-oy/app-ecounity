@@ -64,8 +64,22 @@ class EcoUnityLearningProvider with ChangeNotifier {
     int activityId, {
     String language = 'en',
     int? comicSceneLimit,
+    bool reload = false,
   }) {
     return _repository.loadActivity(
+      activityId,
+      language: language,
+      comicSceneLimit: comicSceneLimit,
+      reload: reload,
+    );
+  }
+
+  EcoUnityLearningActivity? cachedActivity(
+    int activityId, {
+    String language = 'en',
+    int? comicSceneLimit,
+  }) {
+    return _repository.cachedActivity(
       activityId,
       language: language,
       comicSceneLimit: comicSceneLimit,

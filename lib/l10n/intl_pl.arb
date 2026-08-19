@@ -130,7 +130,7 @@
       }
     }
   },
-  "navigation_item": "{item, select, home{Strona główna} pathways{Ścieżki} challenges{Wyzwania} videolist{Filmy} selfReflectionHub{Centrum auto-refleksji} lessons{Lekcje} modules{Nauka} resources{Zasoby} other{Menu:{item}}}",
+  "navigation_item": "{item, select, home{Strona główna} pathways{Ścieżki} challenges{Wyzwania} videolist{Filmy} selfReflectionHub{Centrum auto-refleksji} lessons{Lekcje} modules{Nauka} resources{Zasoby} progress{Postęp} other{Menu:{item}}}",
   "next": "Dalej",
   "noBadgesFound": "Nie znaleziono odznak",
   "noChallengesFound": "Nie znaleziono wyzwań",

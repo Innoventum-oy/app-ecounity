@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:core/core.dart' as core;
+import 'package:ecounity/src/analytics/ecounity_analytics_service.dart';
 import 'package:ecounity/src/learning/ecounity_comic_speech_audio_controller.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
@@ -28,6 +29,10 @@ class EcoUnityComicScreen extends StatefulWidget {
 class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
   late final EcoUnityComicSpeechAudioController _speechAudioController;
   Future<_ComicScreenData>? _future;
+  _ComicScreenData? _latestData;
+  final Set<String> _trackedActivityStartKeys = <String>{};
+  final Set<String> _trackedModuleCompletionKeys = <String>{};
+  final Map<String, DateTime> _activityStartedAtByKey = <String, DateTime>{};
 
   @override
   void initState() {
@@ -52,6 +57,7 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.activity != widget.activity ||
         oldWidget.activityId != widget.activityId) {
+      _latestData = null;
       _future = _loadComicData();
     }
   }
@@ -60,9 +66,11 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
   Widget build(BuildContext context) {
     return FutureBuilder<_ComicScreenData>(
       future: _future,
+      initialData: _latestData,
       builder:
           (BuildContext context, AsyncSnapshot<_ComicScreenData> snapshot) {
-            final EcoUnityLearningActivity? activity = snapshot.data?.activity;
+            final _ComicScreenData? data = snapshot.data ?? _latestData;
+            final EcoUnityLearningActivity? activity = data?.activity;
             final String title = activity?.title ?? 'Comic';
 
             return ScreenScaffold(
@@ -79,14 +87,14 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
     BuildContext context,
     AsyncSnapshot<_ComicScreenData> snapshot,
   ) {
-    if (snapshot.connectionState != ConnectionState.done) {
+    final _ComicScreenData? data = snapshot.data ?? _latestData;
+    if (snapshot.connectionState != ConnectionState.done && data == null) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (snapshot.hasError) {
+    if (snapshot.hasError && data == null) {
       return Center(child: Text('Unable to load comic: ${snapshot.error}'));
     }
 
-    final _ComicScreenData? data = snapshot.data;
     final EcoUnityLearningActivity? activity = data?.activity;
     if (data == null || activity == null || activity.comicScenes.isEmpty) {
       return const Center(child: Text('No comic scenes available'));
@@ -111,6 +119,19 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
             language: data.language,
             loadingAdditionalScenes: data.loadingAdditionalScenes,
             onCompleted: () => _markCompleted(activity, data.language),
+            onSceneViewed: (EcoUnityComicScene scene) {
+              _trackComicSceneViewed(activity, data.language, scene);
+            },
+            onDecisionSelected:
+                (EcoUnityComicScene scene, EcoUnityComicDecision decision) {
+                  _trackComicDecisionSelected(
+                    activity,
+                    data.language,
+                    scene,
+                    decision,
+                  );
+                },
+            onPrepareSpeech: _speechAudioController.prepareCues,
             onSpeechCueChanged: (EcoUnityComicSpeechItem? speech) {
               unawaited(_speechAudioController.playCue(speech));
             },
@@ -128,6 +149,18 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
     final int? activityId = widget.activityId ?? widget.activity?.id;
 
     if (activityId != null) {
+      final EcoUnityLearningActivity? cachedFullActivity = learningProvider
+          .cachedActivity(activityId, language: language);
+      if (cachedFullActivity != null && cachedFullActivity.isComic) {
+        return _rememberData(
+          _ComicScreenData(
+            activity: cachedFullActivity,
+            language: language,
+            loadingAdditionalScenes: false,
+          ),
+        );
+      }
+
       activity =
           await learningProvider.loadActivity(
             activityId,
@@ -136,19 +169,28 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
           ) ??
           widget.activity;
       if (activity != null && activity.isComic) {
-        _loadRemainingComicScenes(activityId, language, activity);
-        return _ComicScreenData(
-          activity: activity,
-          language: language,
-          loadingAdditionalScenes: true,
+        final bool loadingAdditionalScenes = _needsAdditionalComicScenes(
+          activity,
+        );
+        if (loadingAdditionalScenes) {
+          _loadRemainingComicScenes(activityId, language, activity);
+        }
+        return _rememberData(
+          _ComicScreenData(
+            activity: activity,
+            language: language,
+            loadingAdditionalScenes: loadingAdditionalScenes,
+          ),
         );
       }
     }
 
-    return _ComicScreenData(
-      activity: activity,
-      language: language,
-      loadingAdditionalScenes: false,
+    return _rememberData(
+      _ComicScreenData(
+        activity: activity,
+        language: language,
+        loadingAdditionalScenes: false,
+      ),
     );
   }
 
@@ -167,30 +209,39 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
         if (!mounted || fullActivity == null) {
           return;
         }
+        final _ComicScreenData data = _ComicScreenData(
+          activity: fullActivity,
+          language: language,
+          loadingAdditionalScenes: false,
+        );
         setState(() {
-          _future = Future<_ComicScreenData>.value(
-            _ComicScreenData(
-              activity: fullActivity,
-              language: language,
-              loadingAdditionalScenes: false,
-            ),
-          );
+          _latestData = data;
+          _future = Future<_ComicScreenData>.value(data);
         });
       } catch (_) {
         if (!mounted) {
           return;
         }
+        final _ComicScreenData data = _ComicScreenData(
+          activity: initialActivity,
+          language: language,
+          loadingAdditionalScenes: false,
+        );
         setState(() {
-          _future = Future<_ComicScreenData>.value(
-            _ComicScreenData(
-              activity: initialActivity,
-              language: language,
-              loadingAdditionalScenes: false,
-            ),
-          );
+          _latestData = data;
+          _future = Future<_ComicScreenData>.value(data);
         });
       }
     }());
+  }
+
+  _ComicScreenData _rememberData(_ComicScreenData data) {
+    _latestData = data;
+    final EcoUnityLearningActivity? activity = data.activity;
+    if (activity != null) {
+      _trackActivityStarted(activity, data.language);
+    }
+    return data;
   }
 
   Future<void> _markCompleted(
@@ -203,16 +254,156 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
       return;
     }
 
-    await Provider.of<EcoUnityLearningProvider>(
-      context,
-      listen: false,
-    ).markActivityCompleted(
+    final EcoUnityLearningProvider provider =
+        Provider.of<EcoUnityLearningProvider>(context, listen: false);
+
+    await provider.markActivityCompleted(
       moduleId: moduleId,
       activityId: activityId,
       language: language,
       payload: <String, dynamic>{'activity_type': 'comic'},
     );
+    if (!mounted) {
+      return;
+    }
+    final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+    if (analytics != null) {
+      final int? durationSeconds = _activityDurationSeconds(activity, language);
+      unawaited(
+        analytics.trackActivityCompleted(
+          activity,
+          language: language,
+          eventData: durationSeconds == null
+              ? const <String, Object?>{}
+              : <String, Object?>{'duration_seconds': durationSeconds},
+        ),
+      );
+    }
+    _trackModuleCompletedIfReady(provider, moduleId, language);
   }
+
+  void _trackActivityStarted(
+    EcoUnityLearningActivity activity,
+    String language,
+  ) {
+    final int? activityId = activity.id;
+    if (activityId == null) {
+      return;
+    }
+    final String key = _activityAnalyticsKey(activity, language);
+    if (!_trackedActivityStartKeys.add(key)) {
+      return;
+    }
+    _activityStartedAtByKey[key] = DateTime.now().toUtc();
+    final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+    if (analytics == null) {
+      return;
+    }
+    unawaited(analytics.trackActivityStarted(activity, language: language));
+  }
+
+  void _trackComicSceneViewed(
+    EcoUnityLearningActivity activity,
+    String language,
+    EcoUnityComicScene scene,
+  ) {
+    final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+    if (analytics == null) {
+      return;
+    }
+    unawaited(
+      analytics.trackComicSceneViewed(activity, scene, language: language),
+    );
+  }
+
+  void _trackComicDecisionSelected(
+    EcoUnityLearningActivity activity,
+    String language,
+    EcoUnityComicScene scene,
+    EcoUnityComicDecision decision,
+  ) {
+    final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+    if (analytics == null) {
+      return;
+    }
+    unawaited(
+      analytics.trackComicDecisionSelected(
+        activity,
+        scene,
+        decision,
+        language: language,
+      ),
+    );
+  }
+
+  void _trackModuleCompletedIfReady(
+    EcoUnityLearningProvider provider,
+    int moduleId,
+    String language,
+  ) {
+    final EcoUnitySdgModule? module = provider.moduleById(moduleId);
+    if (module == null ||
+        module.completionRatio(provider.progressEntries) < 1) {
+      return;
+    }
+    final String key = '$moduleId:$language';
+    if (!_trackedModuleCompletionKeys.add(key)) {
+      return;
+    }
+    final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+    if (analytics == null) {
+      return;
+    }
+    unawaited(analytics.trackModuleCompleted(module, language: language));
+  }
+
+  int? _activityDurationSeconds(
+    EcoUnityLearningActivity activity,
+    String language,
+  ) {
+    final DateTime? startedAt =
+        _activityStartedAtByKey[_activityAnalyticsKey(activity, language)];
+    if (startedAt == null) {
+      return null;
+    }
+    return DateTime.now()
+        .toUtc()
+        .difference(startedAt)
+        .inSeconds
+        .clamp(0, 86400)
+        .toInt();
+  }
+}
+
+EcoUnityAnalyticsService? _analyticsOf(BuildContext context) {
+  try {
+    return Provider.of<EcoUnityAnalyticsService>(context, listen: false);
+  } catch (_) {
+    return null;
+  }
+}
+
+String _activityAnalyticsKey(
+  EcoUnityLearningActivity activity,
+  String language,
+) {
+  return '${activity.id ?? activity.slug}:$language';
+}
+
+bool _needsAdditionalComicScenes(EcoUnityLearningActivity activity) {
+  final EcoUnityComic comic = EcoUnityComic(
+    activity: activity,
+    scenes: activity.comicScenes,
+    rawData: activity.rawData,
+  );
+  for (final EcoUnityComicScene scene in activity.comicScenes) {
+    for (final EcoUnityComicDecision decision in scene.decisions) {
+      if (comic.sceneForDecision(decision) == null) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 class _ComicScreenData {

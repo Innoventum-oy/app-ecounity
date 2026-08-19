@@ -251,6 +251,7 @@ class AppLocalizationsFi extends AppLocalizations {
       'lessons': 'Oppitunnit',
       'modules': 'Opi',
       'resources': 'Resurssit',
+      'progress': 'Edistyminen',
       'other': 'Valikko:$item',
     });
     return '$_temp0';

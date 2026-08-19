@@ -122,7 +122,7 @@ class AchievementsViewState extends State<AchievementsView> {
     }
 
     return ScreenScaffold(
-      title: context.l10n.achievements,
+      title: context.l10n.current_progress,
       navigationIndex: widget.navIndex,
       child: Padding(padding: const EdgeInsets.all(20.0), child: allBadges()),
     );

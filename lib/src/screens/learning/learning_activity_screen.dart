@@ -1,16 +1,18 @@
 import 'dart:async';
 
 import 'package:core/core.dart' as core;
+import 'package:ecounity/src/analytics/ecounity_analytics_service.dart';
 import 'package:ecounity/src/learning/ecounity_comic_speech_audio_controller.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
+import 'package:ecounity/src/learning/ecounity_learning_text_utils.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_content_review_panel.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_learning_copy.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_comic_player.dart';
+import 'package:ecounity/src/learning/widgets/ecounity_media_image.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/widgets/screenscaffold.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:provider/provider.dart';
 
 class EcoUnityLearningActivityScreen extends StatefulWidget {
@@ -34,6 +36,11 @@ class _EcoUnityLearningActivityScreenState
     extends State<EcoUnityLearningActivityScreen> {
   late final EcoUnityComicSpeechAudioController _speechAudioController;
   Future<_ActivityScreenData>? _future;
+  _ActivityScreenData? _latestData;
+  final Set<String> _trackedActivityStartKeys = <String>{};
+  final Set<String> _trackedModuleCompletionKeys = <String>{};
+  final Set<String> _shownCompletionDialogKeys = <String>{};
+  final Map<String, DateTime> _activityStartedAtByKey = <String, DateTime>{};
 
   @override
   void initState() {
@@ -58,6 +65,7 @@ class _EcoUnityLearningActivityScreenState
     super.didUpdateWidget(oldWidget);
     if (oldWidget.activity != widget.activity ||
         oldWidget.activityId != widget.activityId) {
+      _latestData = null;
       _future = _loadActivityData();
     }
   }
@@ -66,9 +74,11 @@ class _EcoUnityLearningActivityScreenState
   Widget build(BuildContext context) {
     return FutureBuilder<_ActivityScreenData>(
       future: _future,
+      initialData: _latestData,
       builder:
           (BuildContext context, AsyncSnapshot<_ActivityScreenData> snapshot) {
-            final EcoUnityLearningActivity? activity = snapshot.data?.activity;
+            final _ActivityScreenData? data = snapshot.data ?? _latestData;
+            final EcoUnityLearningActivity? activity = data?.activity;
             return ScreenScaffold(
               title: activity?.title ?? 'Activity',
               navigationIndex: widget.navIndex,
@@ -83,14 +93,14 @@ class _EcoUnityLearningActivityScreenState
     BuildContext context,
     AsyncSnapshot<_ActivityScreenData> snapshot,
   ) {
-    if (snapshot.connectionState != ConnectionState.done) {
+    final _ActivityScreenData? data = snapshot.data ?? _latestData;
+    if (snapshot.connectionState != ConnectionState.done && data == null) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (snapshot.hasError) {
+    if (snapshot.hasError && data == null) {
       return Center(child: Text('Unable to load activity: ${snapshot.error}'));
     }
 
-    final _ActivityScreenData? data = snapshot.data;
     final EcoUnityLearningActivity? activity = data?.activity;
     if (data == null || activity == null) {
       return const Center(child: Text('Activity not found'));
@@ -105,6 +115,8 @@ class _EcoUnityLearningActivityScreenState
       EcoUnityActivityType.quiz => _QuizActivityView(
         activity: activity,
         reviewPanel: _reviewPanel(activity, data.language),
+        onQuizSubmitted: (EcoUnityQuizResult result, int attemptNumber) =>
+            _trackQuizCompleted(activity, data.language, result, attemptNumber),
         onCompleted: (Map<String, dynamic> payload) {
           return _markCompleted(activity, data.language, payload: payload);
         },
@@ -177,6 +189,19 @@ class _EcoUnityLearningActivityScreenState
               language,
               payload: const <String, dynamic>{'activity_type': 'comic'},
             ),
+            onSceneViewed: (EcoUnityComicScene scene) {
+              _trackComicSceneViewed(activity, language, scene);
+            },
+            onDecisionSelected:
+                (EcoUnityComicScene scene, EcoUnityComicDecision decision) {
+                  _trackComicDecisionSelected(
+                    activity,
+                    language,
+                    scene,
+                    decision,
+                  );
+                },
+            onPrepareSpeech: _speechAudioController.prepareCues,
             onSpeechCueChanged: (EcoUnityComicSpeechItem? speech) {
               unawaited(_speechAudioController.playCue(speech));
             },
@@ -216,14 +241,14 @@ class _EcoUnityLearningActivityScreenState
         );
 
     if (mounted && updatedActivity != null) {
+      final _ActivityScreenData data = _ActivityScreenData(
+        activity: updatedActivity,
+        language: language,
+        loadingAdditionalScenes: false,
+      );
       setState(() {
-        _future = Future<_ActivityScreenData>.value(
-          _ActivityScreenData(
-            activity: updatedActivity,
-            language: language,
-            loadingAdditionalScenes: false,
-          ),
-        );
+        _latestData = data;
+        _future = Future<_ActivityScreenData>.value(data);
       });
     }
   }
@@ -236,6 +261,18 @@ class _EcoUnityLearningActivityScreenState
 
     EcoUnityLearningActivity? activity = widget.activity;
     if (activityId != null) {
+      final EcoUnityLearningActivity? cachedFullActivity = provider
+          .cachedActivity(activityId, language: language);
+      if (cachedFullActivity != null && cachedFullActivity.isComic) {
+        return _rememberData(
+          _ActivityScreenData(
+            activity: cachedFullActivity,
+            language: language,
+            loadingAdditionalScenes: false,
+          ),
+        );
+      }
+
       activity =
           await provider.loadActivity(
             activityId,
@@ -244,19 +281,28 @@ class _EcoUnityLearningActivityScreenState
           ) ??
           widget.activity;
       if (activity != null && activity.isComic) {
-        _loadRemainingComicScenes(activityId, language, activity);
-        return _ActivityScreenData(
-          activity: activity,
-          language: language,
-          loadingAdditionalScenes: true,
+        final bool loadingAdditionalScenes = _needsAdditionalComicScenes(
+          activity,
+        );
+        if (loadingAdditionalScenes) {
+          _loadRemainingComicScenes(activityId, language, activity);
+        }
+        return _rememberData(
+          _ActivityScreenData(
+            activity: activity,
+            language: language,
+            loadingAdditionalScenes: loadingAdditionalScenes,
+          ),
         );
       }
     }
 
-    return _ActivityScreenData(
-      activity: activity,
-      language: language,
-      loadingAdditionalScenes: false,
+    return _rememberData(
+      _ActivityScreenData(
+        activity: activity,
+        language: language,
+        loadingAdditionalScenes: false,
+      ),
     );
   }
 
@@ -275,30 +321,39 @@ class _EcoUnityLearningActivityScreenState
         if (!mounted || fullActivity == null) {
           return;
         }
+        final _ActivityScreenData data = _ActivityScreenData(
+          activity: fullActivity,
+          language: language,
+          loadingAdditionalScenes: false,
+        );
         setState(() {
-          _future = Future<_ActivityScreenData>.value(
-            _ActivityScreenData(
-              activity: fullActivity,
-              language: language,
-              loadingAdditionalScenes: false,
-            ),
-          );
+          _latestData = data;
+          _future = Future<_ActivityScreenData>.value(data);
         });
       } catch (_) {
         if (!mounted) {
           return;
         }
+        final _ActivityScreenData data = _ActivityScreenData(
+          activity: initialActivity,
+          language: language,
+          loadingAdditionalScenes: false,
+        );
         setState(() {
-          _future = Future<_ActivityScreenData>.value(
-            _ActivityScreenData(
-              activity: initialActivity,
-              language: language,
-              loadingAdditionalScenes: false,
-            ),
-          );
+          _latestData = data;
+          _future = Future<_ActivityScreenData>.value(data);
         });
       }
     }());
+  }
+
+  _ActivityScreenData _rememberData(_ActivityScreenData data) {
+    _latestData = data;
+    final EcoUnityLearningActivity? activity = data.activity;
+    if (activity != null) {
+      _trackActivityStarted(activity, data.language);
+    }
+    return data;
   }
 
   Future<void> _markCompleted(
@@ -312,10 +367,10 @@ class _EcoUnityLearningActivityScreenState
       return;
     }
 
-    await Provider.of<EcoUnityLearningProvider>(
-      context,
-      listen: false,
-    ).markActivityCompleted(
+    final EcoUnityLearningProvider provider =
+        Provider.of<EcoUnityLearningProvider>(context, listen: false);
+
+    await provider.markActivityCompleted(
       moduleId: moduleId,
       activityId: activityId,
       language: language,
@@ -324,10 +379,238 @@ class _EcoUnityLearningActivityScreenState
         ...payload,
       },
     );
+
+    if (!mounted) {
+      return;
+    }
+    final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+    if (analytics != null) {
+      unawaited(
+        analytics.trackActivityCompleted(
+          activity,
+          language: language,
+          eventData: _completionAnalyticsData(
+            activity,
+            language,
+            payload: payload,
+          ),
+        ),
+      );
+    }
+    _trackModuleCompletedIfReady(provider, moduleId, language);
+    await _showCompletionDialogIfNeeded(activity, language);
+  }
+
+  Future<void> _showCompletionDialogIfNeeded(
+    EcoUnityLearningActivity activity,
+    String language,
+  ) async {
+    final String completionText = activity.completionText.trim();
+    if (completionText.isEmpty) {
+      return;
+    }
+    final String key = _activityAnalyticsKey(activity, language);
+    if (!_shownCompletionDialogKeys.add(key) || !mounted) {
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Activity completed'),
+          content: EcoUnityLearningCopy(text: completionText),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Continue'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _trackActivityStarted(
+    EcoUnityLearningActivity activity,
+    String language,
+  ) {
+    final int? activityId = activity.id;
+    if (activityId == null) {
+      return;
+    }
+    final String key = _activityAnalyticsKey(activity, language);
+    if (!_trackedActivityStartKeys.add(key)) {
+      return;
+    }
+    _activityStartedAtByKey[key] = DateTime.now().toUtc();
+    final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+    if (analytics == null) {
+      return;
+    }
+    unawaited(analytics.trackActivityStarted(activity, language: language));
+  }
+
+  Future<void> _trackQuizCompleted(
+    EcoUnityLearningActivity activity,
+    String language,
+    EcoUnityQuizResult result,
+    int attemptNumber,
+  ) {
+    final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+    if (analytics == null) {
+      return Future<void>.value();
+    }
+    return analytics.trackQuizCompleted(
+      activity,
+      result,
+      attemptNumber: attemptNumber,
+      language: language,
+    );
+  }
+
+  void _trackComicSceneViewed(
+    EcoUnityLearningActivity activity,
+    String language,
+    EcoUnityComicScene scene,
+  ) {
+    final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+    if (analytics == null) {
+      return;
+    }
+    unawaited(
+      analytics.trackComicSceneViewed(activity, scene, language: language),
+    );
+  }
+
+  void _trackComicDecisionSelected(
+    EcoUnityLearningActivity activity,
+    String language,
+    EcoUnityComicScene scene,
+    EcoUnityComicDecision decision,
+  ) {
+    final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+    if (analytics == null) {
+      return;
+    }
+    unawaited(
+      analytics.trackComicDecisionSelected(
+        activity,
+        scene,
+        decision,
+        language: language,
+      ),
+    );
+  }
+
+  void _trackModuleCompletedIfReady(
+    EcoUnityLearningProvider provider,
+    int moduleId,
+    String language,
+  ) {
+    final EcoUnitySdgModule? module = provider.moduleById(moduleId);
+    if (module == null ||
+        module.completionRatio(provider.progressEntries) < 1) {
+      return;
+    }
+    final String key = '$moduleId:$language';
+    if (!_trackedModuleCompletionKeys.add(key)) {
+      return;
+    }
+    final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+    if (analytics == null) {
+      return;
+    }
+    unawaited(analytics.trackModuleCompleted(module, language: language));
+  }
+
+  Map<String, Object?> _completionAnalyticsData(
+    EcoUnityLearningActivity activity,
+    String language, {
+    required Map<String, dynamic> payload,
+  }) {
+    final Map<String, Object?> eventData = <String, Object?>{};
+    final int? durationSeconds = _activityDurationSeconds(activity, language);
+    if (durationSeconds != null) {
+      eventData['duration_seconds'] = durationSeconds;
+    }
+
+    if (payload['score'] != null) {
+      eventData['score'] = payload['score'];
+    }
+    if (payload['max_score'] != null) {
+      eventData['max_score'] = payload['max_score'];
+    } else if (payload['possible_score'] != null) {
+      eventData['max_score'] = payload['possible_score'];
+    }
+    if (payload['correct_count'] != null) {
+      eventData['correct_count'] = payload['correct_count'];
+    } else if (payload['correct_questions'] != null) {
+      eventData['correct_count'] = payload['correct_questions'];
+    }
+    if (payload['question_count'] != null) {
+      eventData['question_count'] = payload['question_count'];
+    }
+    if (payload['passed'] != null) {
+      eventData['passed'] = payload['passed'];
+    }
+    if (payload['attempt_number'] != null) {
+      eventData['attempt_number'] = payload['attempt_number'];
+    }
+
+    return eventData;
+  }
+
+  int? _activityDurationSeconds(
+    EcoUnityLearningActivity activity,
+    String language,
+  ) {
+    final DateTime? startedAt =
+        _activityStartedAtByKey[_activityAnalyticsKey(activity, language)];
+    if (startedAt == null) {
+      return null;
+    }
+    return DateTime.now()
+        .toUtc()
+        .difference(startedAt)
+        .inSeconds
+        .clamp(0, 86400)
+        .toInt();
   }
 }
 
-class _ReadableActivityView extends StatelessWidget {
+EcoUnityAnalyticsService? _analyticsOf(BuildContext context) {
+  try {
+    return Provider.of<EcoUnityAnalyticsService>(context, listen: false);
+  } catch (_) {
+    return null;
+  }
+}
+
+String _activityAnalyticsKey(
+  EcoUnityLearningActivity activity,
+  String language,
+) {
+  return '${activity.id ?? activity.slug}:$language';
+}
+
+bool _needsAdditionalComicScenes(EcoUnityLearningActivity activity) {
+  final EcoUnityComic comic = EcoUnityComic(
+    activity: activity,
+    scenes: activity.comicScenes,
+    rawData: activity.rawData,
+  );
+  for (final EcoUnityComicScene scene in activity.comicScenes) {
+    for (final EcoUnityComicDecision decision in scene.decisions) {
+      if (comic.sceneForDecision(decision) == null) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+class _ReadableActivityView extends StatefulWidget {
   const _ReadableActivityView({
     required this.activity,
     required this.reviewPanel,
@@ -339,28 +622,73 @@ class _ReadableActivityView extends StatelessWidget {
   final Future<void> Function() onCompleted;
 
   @override
+  State<_ReadableActivityView> createState() => _ReadableActivityViewState();
+}
+
+class _ReadableActivityViewState extends State<_ReadableActivityView> {
+  bool _completed = false;
+  bool _submitting = false;
+
+  @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
-        _ActivityIntro(activity: activity),
-        reviewPanel,
-        if (activity.body.isNotEmpty) ...<Widget>[
+        _ActivityHeroImage(activity: widget.activity),
+        if (widget.activity.heroImage != null) const SizedBox(height: 16),
+        _ActivityIntro(activity: widget.activity),
+        widget.reviewPanel,
+        if (widget.activity.body.isNotEmpty) ...<Widget>[
           const SizedBox(height: 16),
-          HtmlWidget(activity.body),
+          EcoUnityLearningCopy(
+            text: ecoUnityReplaceMediaImageTokens(
+              widget.activity.body,
+              widget.activity.mediaImages,
+            ),
+          ),
         ],
-        if (activity.keyMessage.isNotEmpty) ...<Widget>[
+        if (widget.activity.keyMessage.isNotEmpty) ...<Widget>[
           const SizedBox(height: 16),
-          _MessagePanel(text: activity.keyMessage),
+          _MessagePanel(text: widget.activity.keyMessage),
+        ],
+        if (widget.activity.reflectionPrompt.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 16),
+          _ReflectionPromptPanel(prompt: widget.activity.reflectionPrompt),
         ],
         const SizedBox(height: 20),
         FilledButton.icon(
-          onPressed: onCompleted,
-          icon: const Icon(Icons.check),
-          label: const Text('Mark complete'),
+          onPressed: _completed || _submitting ? null : _complete,
+          icon: _submitting
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(_completed ? Icons.check_circle : Icons.check),
+          label: Text(_completed ? 'Completed' : 'Mark complete'),
         ),
       ],
     );
+  }
+
+  Future<void> _complete() async {
+    setState(() {
+      _submitting = true;
+    });
+    try {
+      await widget.onCompleted();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _completed = true;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+        });
+      }
+    }
   }
 }
 
@@ -368,11 +696,14 @@ class _QuizActivityView extends StatefulWidget {
   const _QuizActivityView({
     required this.activity,
     required this.reviewPanel,
+    required this.onQuizSubmitted,
     required this.onCompleted,
   });
 
   final EcoUnityLearningActivity activity;
   final Widget reviewPanel;
+  final Future<void> Function(EcoUnityQuizResult result, int attemptNumber)
+  onQuizSubmitted;
   final Future<void> Function(Map<String, dynamic> payload) onCompleted;
 
   @override
@@ -382,12 +713,15 @@ class _QuizActivityView extends StatefulWidget {
 class _QuizActivityViewState extends State<_QuizActivityView> {
   final Map<int, Set<String>> _selectedAnswers = <int, Set<String>>{};
   EcoUnityQuizResult? _result;
+  int _attemptNumber = 0;
 
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
+        _ActivityHeroImage(activity: widget.activity),
+        if (widget.activity.heroImage != null) const SizedBox(height: 16),
         _ActivityIntro(activity: widget.activity),
         widget.reviewPanel,
         const SizedBox(height: 16),
@@ -423,9 +757,12 @@ class _QuizActivityViewState extends State<_QuizActivityView> {
     final EcoUnityQuizResult result = widget.activity.evaluateQuizAnswers(
       _selectedAnswers,
     );
+    _attemptNumber += 1;
     setState(() {
       _result = result;
     });
+
+    await widget.onQuizSubmitted(result, _attemptNumber);
 
     if (result.passed) {
       await widget.onCompleted(<String, dynamic>{
@@ -433,6 +770,8 @@ class _QuizActivityViewState extends State<_QuizActivityView> {
         'possible_score': result.possibleScore,
         'correct_questions': result.correctQuestionCount,
         'question_count': result.questionCount,
+        'passed': result.passed,
+        'attempt_number': _attemptNumber,
       });
     }
   }
@@ -531,6 +870,7 @@ class _ReflectionActivityView extends StatefulWidget {
 class _ReflectionActivityViewState extends State<_ReflectionActivityView> {
   final TextEditingController _controller = TextEditingController();
   bool _submitted = false;
+  bool _submitting = false;
 
   @override
   void dispose() {
@@ -543,41 +883,44 @@ class _ReflectionActivityViewState extends State<_ReflectionActivityView> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
+        _ActivityHeroImage(activity: widget.activity),
+        if (widget.activity.heroImage != null) const SizedBox(height: 16),
         _ActivityIntro(activity: widget.activity),
         widget.reviewPanel,
         if (widget.activity.body.isNotEmpty) ...<Widget>[
           const SizedBox(height: 16),
-          HtmlWidget(widget.activity.body),
+          EcoUnityLearningCopy(
+            text: ecoUnityReplaceMediaImageTokens(
+              widget.activity.body,
+              widget.activity.mediaImages,
+            ),
+          ),
         ],
         if (widget.activity.reflectionPrompt.isNotEmpty) ...<Widget>[
           const SizedBox(height: 16),
-          EcoUnityLearningCopy(
-            text: widget.activity.reflectionPrompt,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: EcoUnityColors.deepTeal,
-              fontWeight: FontWeight.w700,
+          _ReflectionPromptPanel(
+            prompt: widget.activity.reflectionPrompt,
+            input: TextField(
+              controller: _controller,
+              minLines: 3,
+              maxLines: 5,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                filled: true,
+                hintText: 'Write your response',
+              ),
             ),
           ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _controller,
-            minLines: 3,
-            maxLines: 5,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              filled: true,
-            ),
-          ),
-        ],
-        if (_submitted &&
-            widget.activity.completionText.isNotEmpty) ...<Widget>[
-          const SizedBox(height: 16),
-          _MessagePanel(text: widget.activity.completionText),
         ],
         const SizedBox(height: 20),
         FilledButton.icon(
-          onPressed: _submitted ? null : _submit,
-          icon: Icon(_submitted ? Icons.check_circle : Icons.check),
+          onPressed: _submitted || _submitting ? null : _submit,
+          icon: _submitting
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(_submitted ? Icons.check_circle : Icons.check),
           label: Text(_submitted ? 'Completed' : widget.submitLabel),
         ),
       ],
@@ -585,12 +928,61 @@ class _ReflectionActivityViewState extends State<_ReflectionActivityView> {
   }
 
   Future<void> _submit() async {
-    await widget.onCompleted(<String, dynamic>{
-      'reflection': _controller.text.trim(),
-    });
     setState(() {
-      _submitted = true;
+      _submitting = true;
     });
+    try {
+      await widget.onCompleted(<String, dynamic>{
+        'reflection': _controller.text.trim(),
+      });
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _submitted = true;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+        });
+      }
+    }
+  }
+}
+
+class _ActivityHeroImage extends StatelessWidget {
+  const _ActivityHeroImage({required this.activity});
+
+  final EcoUnityLearningActivity activity;
+
+  @override
+  Widget build(BuildContext context) {
+    final EcoUnityMedia? media = activity.heroImage;
+    if (media == null) {
+      return const SizedBox.shrink();
+    }
+
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: EcoUnityMediaImage(
+        media: media,
+        fit: BoxFit.cover,
+        borderRadius: BorderRadius.circular(8),
+        fallback: DecoratedBox(
+          decoration: const BoxDecoration(
+            color: EcoUnityColors.surfaceContainer,
+          ),
+          child: Center(
+            child: Icon(
+              Icons.image_outlined,
+              color: EcoUnityColors.deepTeal.withValues(alpha: 0.72),
+              size: 36,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -630,6 +1022,58 @@ class _ActivityIntro extends StatelessWidget {
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReflectionPromptPanel extends StatelessWidget {
+  const _ReflectionPromptPanel({required this.prompt, this.input});
+
+  final String prompt;
+  final Widget? input;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAFBFB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: EcoUnityColors.turquoise),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.lightbulb_outline,
+                  color: EcoUnityColors.deepTeal,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Think about it',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: EcoUnityColors.deepTeal,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            EcoUnityLearningCopy(
+              text: prompt,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: EcoUnityColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (input != null) ...<Widget>[const SizedBox(height: 12), input!],
           ],
         ),
       ),

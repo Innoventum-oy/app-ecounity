@@ -130,7 +130,7 @@
       }
     }
   },
-  "navigation_item": "{item, select, home{Головна} pathways{Шляхи} challenges{Виклики} videolist{Відео} selfReflectionHub{Центр саморефлексії} lessons{Уроки} modules{Навчання} resources{Ресурси} other{Меню:{item}}}",
+  "navigation_item": "{item, select, home{Головна} pathways{Шляхи} challenges{Виклики} videolist{Відео} selfReflectionHub{Центр саморефлексії} lessons{Уроки} modules{Навчання} resources{Ресурси} progress{Прогрес} other{Меню:{item}}}",
   "next": "Далі",
   "noBadgesFound": "Відзнак не знайдено",
   "noChallengesFound": "Викликів не знайдено",

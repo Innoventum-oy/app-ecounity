@@ -79,6 +79,42 @@ void main() {
 
       expect(module.completionRatio(progressEntries), closeTo(1 / 3, 0.001));
     });
+
+    test('parses direct activity hero and media image URLs', () {
+      final EcoUnityLearningActivity activity =
+          EcoUnityLearningActivity.fromJson(<String, dynamic>{
+            'id': 17,
+            'module': 2,
+            'sdg_number': 5,
+            'slug': 'sdg-5-mlr-1-what-is-gender-equality',
+            'activity_type': 'mlr',
+            'flow_stage': 'learn',
+            'orderno': 20,
+            'title': 'What is Gender Equality?',
+            'body': '<p>%image.1%</p>',
+            'completion_text': 'In the next activity, you&#039;ll explore.',
+            'hero_image': <String, dynamic>{'objectid': 2208, 'name': 2208},
+            'hero_image_url': 'https://cdn.example.com/activity/hero-sdg-5.png',
+            'media_images': <Map<String, dynamic>>[
+              <String, dynamic>{'objectid': 2209, 'name': 2209},
+            ],
+            'media_image_urls': <String>[
+              'https://cdn.example.com/activity/media-sdg-5.png',
+            ],
+          });
+
+      expect(activity.heroImage?.id, 2208);
+      expect(
+        activity.heroImage?.url,
+        'https://cdn.example.com/activity/hero-sdg-5.png',
+      );
+      expect(activity.mediaImages.single.id, 2209);
+      expect(
+        activity.mediaImages.single.url,
+        'https://cdn.example.com/activity/media-sdg-5.png',
+      );
+      expect(activity.completionText, "In the next activity, you'll explore.");
+    });
   });
 
   group('EcoUnityComic', () {
@@ -119,6 +155,118 @@ void main() {
       expect(layers.first.label, 'Recycling bin');
       expect(layers.first.effectiveZIndex, 5);
       expect(layers.last.effectiveZIndex, 30);
+    });
+
+    test('parses backend editor camelCase layouts and z-index values', () {
+      final EcoUnityComicScene scene = EcoUnityComicScene.fromJson(
+        <String, dynamic>{
+          'id': 301,
+          'scene_key': 'start',
+          'title': <String, dynamic>{'en': 'Start'},
+          'props': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 601,
+              'orderNo': 1,
+              'zIndex': 20,
+              'prop_image_url': 'https://cdn.example.com/table.png',
+              'prop': <String, dynamic>{'name': 'Table'},
+              'portraitLayout': <String, dynamic>{
+                'x': 0.25,
+                'y': 0.75,
+                'scale': 2,
+                'zIndex': 6,
+              },
+              'landscapeLayout': <String, dynamic>{
+                'x': 0.5,
+                'y': 0.65,
+                'scale': 1.4,
+                'zIndex': 40,
+              },
+            },
+          ],
+          'cast': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 701,
+              'orderNo': 2,
+              'zIndex': 10,
+              'pose_layer_image_url': 'https://cdn.example.com/sofia.png',
+              'character': <String, dynamic>{'name': 'Sofia'},
+              'pose_layer': <String, dynamic>{'name': 'sofia-neutral'},
+              'portraitLayout': <String, dynamic>{
+                'x': 0.65,
+                'y': 0.6,
+                'scale': 1.15,
+                'bubbleX': 0.7,
+                'bubbleY': 0.25,
+                'flipX': true,
+                'zIndex': 30,
+              },
+              'landscapeLayout': <String, dynamic>{
+                'x': 0.6,
+                'y': 0.55,
+                'scale': 1.05,
+                'zIndex': 5,
+              },
+            },
+          ],
+          'decisions': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 801,
+              'orderNo': 1,
+              'zIndex': 80,
+              'label': <String, dynamic>{'en': 'Choose'},
+              'target_scene_key': 'next',
+              'choice_image_url': 'https://cdn.example.com/choice.png',
+              'portraitLayout': <String, dynamic>{
+                'x': 0.5,
+                'y': 0.9,
+                'scale': 0.8,
+                'zIndex': 70,
+              },
+            },
+          ],
+        },
+      );
+
+      final EcoUnityComicLayout portraitCastLayout = scene.cast.single
+          .layoutFor(EcoUnityComicViewportKind.portrait);
+      expect(portraitCastLayout.x, 0.65);
+      expect(portraitCastLayout.scale, 1.15);
+      expect(portraitCastLayout.bubbleX, 0.7);
+      expect(portraitCastLayout.bubbleY, 0.25);
+      expect(portraitCastLayout.flipX, isTrue);
+      expect(portraitCastLayout.zIndex, 30);
+
+      final List<EcoUnityComicDrawableLayer> portraitLayers = scene
+          .drawableLayersFor(EcoUnityComicViewportKind.portrait);
+      expect(
+        portraitLayers.map((EcoUnityComicDrawableLayer layer) => layer.label),
+        <String>['Table', 'Sofia'],
+      );
+      expect(
+        portraitLayers.map(
+          (EcoUnityComicDrawableLayer layer) => layer.effectiveZIndex,
+        ),
+        <int>[6, 30],
+      );
+
+      final List<EcoUnityComicDrawableLayer> landscapeLayers = scene
+          .drawableLayersFor(EcoUnityComicViewportKind.landscape);
+      expect(
+        landscapeLayers.map((EcoUnityComicDrawableLayer layer) => layer.label),
+        <String>['Sofia', 'Table'],
+      );
+      expect(
+        landscapeLayers.map(
+          (EcoUnityComicDrawableLayer layer) => layer.effectiveZIndex,
+        ),
+        <int>[5, 40],
+      );
+
+      final EcoUnityComicDrawableLayer decisionLayer = scene
+          .decisionLayersFor(EcoUnityComicViewportKind.portrait)
+          .single;
+      expect(decisionLayer.effectiveZIndex, 70);
     });
 
     test('keeps drawable layers when comic media only has backend IDs', () {
@@ -290,18 +438,113 @@ void main() {
       final EcoUnityComicSpeechItem speech =
           EcoUnityComicSpeechItem.fromJson(<String, dynamic>{
             'id': 901,
-            'language': 'en',
-            'audio_file_url': 'https://cdn.example.com/audio/ready-line.mp3',
-            'start_ms': 700,
-            'duration_ms': 1300,
-            'generation_status': 'ready',
+            'language': 'EN',
+            'audioUrl': 'https://cdn.example.com/audio/ready-line.mp3',
+            'startMs': 700,
+            'durationMs': 1300,
+            'orderNo': 20,
+            'status': 'update-recommended',
           });
 
+      expect(speech.language, 'en');
       expect(
         speech.audioFile?.url,
         'https://cdn.example.com/audio/ready-line.mp3',
       );
+      expect(speech.startMs, 700);
+      expect(speech.durationMs, 1300);
+      expect(speech.orderNo, 20);
       expect(speech.hasReadyAudio, isTrue);
+    });
+
+    test('parses comic speech timeline seconds and suffixed values', () {
+      final EcoUnityComicSpeechItem speech =
+          EcoUnityComicSpeechItem.fromJson(<String, dynamic>{
+            'id': 904,
+            'language': 'en',
+            'audio_url': 'https://cdn.example.com/audio/seconds.mp3',
+            'startSeconds': 2.4,
+            'duration_seconds': '1.25',
+            'generation_status': 'ready',
+          });
+      final EcoUnityComicSpeechItem suffixed =
+          EcoUnityComicSpeechItem.fromJson(<String, dynamic>{
+            'id': 905,
+            'language': 'en',
+            'audio_url': 'https://cdn.example.com/audio/suffixed.mp3',
+            'start_ms': '750ms',
+            'durationMs': '2.4s',
+            'generation_status': 'ready',
+          });
+
+      expect(speech.startMs, 2400);
+      expect(speech.durationMs, 1250);
+      expect(suffixed.startMs, 750);
+      expect(suffixed.durationMs, 2400);
+    });
+
+    test('parses CMS file opener URLs for comic speech audio', () {
+      final EcoUnityComicSpeechItem speech = EcoUnityComicSpeechItem.fromJson(
+        <String, dynamic>{
+          'id': 902,
+          'language': 'en',
+          'audio_file': <String, dynamic>{
+            'id': 1195,
+            'fileopenerurl': 'https://cdn.example.com/openfile/tokenized',
+          },
+          'generation_status': 'ready',
+        },
+      );
+
+      expect(speech.audioFile?.id, 1195);
+      expect(
+        speech.audioFile?.url,
+        'https://cdn.example.com/openfile/tokenized',
+      );
+      expect(speech.hasReadyAudio, isTrue);
+    });
+
+    test('uses top-level audio URLs when audio file is a relation stub', () {
+      final EcoUnityComicSpeechItem speech = EcoUnityComicSpeechItem.fromJson(
+        <String, dynamic>{
+          'id': 903,
+          'language': 'en',
+          'audio_file': <String, dynamic>{'objectid': 1195},
+          'audio_url': 'https://cdn.example.com/openfile/relation-stub-audio',
+          'generation_status': 'ready',
+        },
+      );
+
+      expect(speech.audioFile?.id, 1195);
+      expect(
+        speech.audioFile?.url,
+        'https://cdn.example.com/openfile/relation-stub-audio',
+      );
+      expect(speech.hasReadyAudio, isTrue);
+    });
+
+    test('decodes HTML entities in learner-facing strings', () {
+      final EcoUnityComicDecision decision = EcoUnityComicDecision.fromJson(
+        <String, dynamic>{
+          'id': 1001,
+          'label': <String, dynamic>{'en': 'Don&#039;t miss Sofia&#x27;s idea'},
+          'target_scene_key': 'next',
+        },
+      );
+
+      expect(decision.label, "Don't miss Sofia's idea");
+    });
+
+    test('infers landscape canvas dimensions from viewport relation names', () {
+      final EcoUnityComicViewport viewport =
+          EcoUnityComicViewport.fromJson(<String, dynamic>{
+            'objectid': 9,
+            'name': 'Landscape background',
+            'background_image_url': 'https://cdn.example.com/landscape.png',
+          });
+
+      expect(viewport.kind, EcoUnityComicViewportKind.landscape);
+      expect(viewport.canvasWidth, greaterThan(viewport.canvasHeight));
     });
 
     test('clamps layout values and tolerates invalid layout JSON', () {

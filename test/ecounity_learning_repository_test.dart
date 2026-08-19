@@ -342,6 +342,78 @@ void main() {
       expect(backend.maxActiveDetailRequests, greaterThan(1));
     });
 
+    test('reuses cached hydrated comic activity on repeat loads', () async {
+      final Map<String, dynamic> comicActivity =
+          _activityResponse(id: 36, orderNo: 10, type: 'comic')
+            ..['comic_scenes'] = <Map<String, dynamic>>[
+              <String, dynamic>{'objectid': 2},
+              <String, dynamic>{'objectid': 3},
+            ];
+      final _FakeLearningBackend backend = _FakeLearningBackend()
+        ..detailResponses['${EcoUnityLearningRepository.activityObjectType}:36'] =
+            comicActivity
+        ..listResponses[EcoUnityLearningRepository.comicSceneObjectType] =
+            <dynamic>[
+              _sceneResponse(id: 2, sceneKey: 'start', orderNo: 10),
+              _sceneResponse(id: 3, sceneKey: 'next', orderNo: 20),
+            ];
+
+      final EcoUnityLearningRepository repository = EcoUnityLearningRepository(
+        backend: backend,
+      );
+
+      final EcoUnityLearningActivity? firstActivity = await repository
+          .loadActivity(36);
+
+      backend.detailRequestKeys.clear();
+      backend.listRequests.clear();
+
+      final EcoUnityLearningActivity? secondActivity = await repository
+          .loadActivity(36);
+      final EcoUnityLearningActivity? limitedActivity = await repository
+          .loadActivity(36, comicSceneLimit: 1);
+
+      expect(firstActivity?.comicScenes, hasLength(2));
+      expect(secondActivity?.comicScenes, hasLength(2));
+      expect(limitedActivity?.comicScenes, hasLength(2));
+      expect(backend.detailRequestKeys, isEmpty);
+      expect(backend.listRequests, isEmpty);
+    });
+
+    test('coalesces duplicate in-flight comic activity loads', () async {
+      final Map<String, dynamic> comicActivity = _activityResponse(
+        id: 36,
+        orderNo: 10,
+        type: 'comic',
+      );
+      final _FakeLearningBackend backend = _FakeLearningBackend()
+        ..detailDelay = const Duration(milliseconds: 20)
+        ..detailResponses['${EcoUnityLearningRepository.activityObjectType}:36'] =
+            comicActivity
+        ..listResponses[EcoUnityLearningRepository.comicSceneObjectType] =
+            <dynamic>[];
+
+      final EcoUnityLearningRepository repository = EcoUnityLearningRepository(
+        backend: backend,
+      );
+
+      await Future.wait(<Future<EcoUnityLearningActivity?>>[
+        repository.loadActivity(36),
+        repository.loadActivity(36),
+        repository.loadActivity(36),
+      ]);
+
+      expect(
+        backend.detailRequestKeys
+            .where(
+              (String key) =>
+                  key == '${EcoUnityLearningRepository.activityObjectType}:36',
+            )
+            .length,
+        1,
+      );
+    });
+
     test('saves progress with backend field names and JSON payload', () async {
       final _FakeLearningBackend backend = _FakeLearningBackend();
       final EcoUnityLearningRepository repository = EcoUnityLearningRepository(

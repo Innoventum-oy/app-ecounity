@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:core/core.dart' as core;
 import 'package:ecounity/l10n/app_localizations_extension.dart';
+import 'package:ecounity/src/analytics/ecounity_analytics_service.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/providers/ecounity_badge_provider.dart';
 import 'package:ecounity/src/providers/locale_provider.dart';
@@ -85,6 +87,9 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => EcoUnityLearningProvider(),
         ), // EcoUnityLearningProvider
+        Provider<EcoUnityAnalyticsService>(
+          create: (_) => EcoUnityAnalyticsService(),
+        ),
         ChangeNotifierProvider(create: (_) => SelectedPathwayNotifier()),
         ChangeNotifierProvider(create: (_) => fileStorage), // FileStorage
         ChangeNotifierProvider<AppImageProvider>(
@@ -110,6 +115,17 @@ class EcounityState extends State<Ecounity> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     // Listen to ApiClient isProcessingNotifier
     core.ApiClient().isProcessingNotifier.addListener(_handleProcessing);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_screenshotMode || !mounted) {
+        return;
+      }
+      unawaited(
+        Provider.of<EcoUnityAnalyticsService>(
+          context,
+          listen: false,
+        ).startSession(language: Localizations.localeOf(context).languageCode),
+      );
+    });
   }
 
   @override
@@ -137,6 +153,29 @@ class EcounityState extends State<Ecounity> with WidgetsBindingObserver {
     // Remove the listener when the widget is disposed
     core.ApiClient().isProcessingNotifier.removeListener(_handleProcessing);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (_screenshotMode || !mounted) {
+      return;
+    }
+    final EcoUnityAnalyticsService analytics =
+        Provider.of<EcoUnityAnalyticsService>(context, listen: false);
+    final String language = Localizations.localeOf(context).languageCode;
+    switch (state) {
+      case AppLifecycleState.resumed:
+        unawaited(analytics.startSession(language: language));
+        break;
+      case AppLifecycleState.inactive:
+        break;
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        unawaited(analytics.endSession(language: language));
+        break;
+    }
   }
 
   @override

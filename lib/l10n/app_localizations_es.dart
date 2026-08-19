@@ -251,6 +251,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'lessons': 'Lessons',
       'modules': 'Aprender',
       'resources': 'Resources',
+      'progress': 'Progreso',
       'other': 'Menu:$item',
     });
     return '$_temp0';

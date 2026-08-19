@@ -523,7 +523,7 @@ abstract class AppLocalizations {
   /// Menu navigation items map
   ///
   /// In en, this message translates to:
-  /// **'{item, select, home{Home} pathways{Pathways} challenges{Challenges} videolist{Videos} selfReflectionHub{Self-reflection Hub} lessons{Lessons} modules{Learn} resources{Resources} other{Menu:{item}}}'**
+  /// **'{item, select, home{Home} pathways{Pathways} challenges{Challenges} videolist{Videos} selfReflectionHub{Self-reflection Hub} lessons{Lessons} modules{Learn} resources{Resources} progress{Progress} other{Menu:{item}}}'**
   String navigation_item(String item);
 
   /// No description provided for @next.

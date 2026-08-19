@@ -241,6 +241,11 @@ class AppRouter {
         routeFound = true;
         break;
 
+      case 'progress':
+        targetWidget = AchievementsView(navIndex: navIndex);
+        routeFound = true;
+        break;
+
       case 'badge':
         targetWidget = BadgeView(navIndex: navIndex, data as EcoUnityBadge);
         routeFound = true;

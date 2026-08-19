@@ -2,3 +2,11 @@ apikeys:
   primary: API_KEY_HERE
   development: API_KEY_HERE
   production:  API_KEY_HERE
+analytics:
+  ingestionToken:
+    primary: ANALYTICS_INGESTION_TOKEN_HERE
+    development: DEVELOPMENT_TOKEN_REPLACE_ME
+    production: ANALYTICS_INGESTION_TOKEN_HERE
+  pilotKey:
+  pilotParticipantCode:
+  country:

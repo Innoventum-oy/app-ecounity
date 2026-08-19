@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:another_flushbar/flushbar.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:ecounity/src/analytics/ecounity_analytics_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
@@ -159,10 +161,27 @@ class LoginState extends State<Login> {
           label: Text(context.l10n.server),
           initialSelection: serverName,
           onSelected: (String? newValue) async {
-            serverName = newValue!;
+            if (newValue == null || newValue == serverName) {
+              return;
+            }
+            final String language = Localizations.localeOf(
+              context,
+            ).languageCode;
+            final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+            if (analytics != null) {
+              await analytics.endSession(language: language);
+            }
+            serverName = newValue;
             await core.ApiClient().setServer(serverName);
-            if (mounted) {
-              appDataVersion = await updateAppVersionDate(context) ?? '';
+            if (analytics != null) {
+              await analytics.handleServerChanged(language: language);
+            }
+            if (!mounted) {
+              return;
+            }
+            appDataVersion = await updateAppVersionDate(context) ?? '';
+            if (!mounted) {
+              return;
             }
             setState(() {});
           },
@@ -740,8 +759,21 @@ class _WelcomeLanguageOption extends StatelessWidget {
   }
 
   Future<void> _selectLocale(BuildContext context, Locale locale) async {
+    final String previousLanguage =
+        (Provider.of<LocaleProvider>(context, listen: false).locale ??
+                Localizations.localeOf(context))
+            .languageCode;
+    final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
     Provider.of<LocaleProvider>(context, listen: false).setLocale(locale);
     await core.Settings().setLanguage(locale.languageCode);
+    if (analytics != null) {
+      unawaited(
+        analytics.trackLanguageChanged(
+          previousLanguage: previousLanguage,
+          newLanguage: locale.languageCode,
+        ),
+      );
+    }
     if (context.mounted) {
       await loadAppData(context);
     }
@@ -767,4 +799,12 @@ bool _isPhoneNumberInput(String value) {
     }
   }
   return true;
+}
+
+EcoUnityAnalyticsService? _analyticsOf(BuildContext context) {
+  try {
+    return Provider.of<EcoUnityAnalyticsService>(context, listen: false);
+  } catch (_) {
+    return null;
+  }
 }

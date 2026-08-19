@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 enum EcoUnityContentStatus {
   draft,
@@ -274,11 +275,14 @@ class EcoUnityLearningActivity {
       contentStatus: _contentStatusFromWire(
         _readString(data['content_status']),
       ),
-      heroImage: EcoUnityMedia.fromJson(data['hero_image'], language: language),
-      mediaImages: _readMapList(data['media_images'])
-          .map((item) => EcoUnityMedia.fromJson(item, language: language))
-          .whereType<EcoUnityMedia>()
-          .toList(),
+      heroImage: _readMediaFromFields(
+        data,
+        objectKeys: const ['hero_image', 'heroImage'],
+        urlKeys: const ['hero_image_url', 'heroImageUrl'],
+        idKeys: const ['hero_image_id', 'heroImageId'],
+        language: language,
+      ),
+      mediaImages: _readActivityMediaImages(data, language: language),
       files: _readMapList(data['files'])
           .map((item) => EcoUnityMedia.fromJson(item, language: language))
           .whereType<EcoUnityMedia>()
@@ -567,8 +571,9 @@ class EcoUnityComicScene {
     final Map<String, dynamic> data = _unwrapData(response);
     return EcoUnityComicScene(
       id: _readAnyInt(data, const ['id', 'objectid']),
-      sceneKey: _readString(data['scene_key']),
-      orderNo: _readInt(data['orderno']) ?? 0,
+      sceneKey: _readString(data['scene_key'] ?? data['sceneKey']),
+      orderNo:
+          _readInt(data['orderno'] ?? data['orderNo'] ?? data['order_no']) ?? 0,
       title: _readLocalizedString(data, 'title', language),
       narration: _readLocalizedString(data, 'narration', language),
       altText: _readLocalizedString(data, 'alt_text', language),
@@ -663,7 +668,7 @@ class EcoUnityComicScene {
             castLayer: castLayer,
             dialogue: dialogue,
             speech: speech,
-            startMs: speech?.startMs ?? dialogue.orderNo * 1000,
+            startMs: speech?.startMs ?? _fallbackDialogueStartMs(dialogue),
             durationMs: speech?.durationMs ?? 0,
           ),
         );
@@ -770,21 +775,43 @@ class EcoUnityComicViewport {
     String language = 'en',
   }) {
     final Map<String, dynamic> data = _unwrapData(response);
+    final EcoUnityComicViewportKind kind = _viewportKindFromWire(
+      _readString(data['viewport'] ?? data['kind'] ?? data['name']),
+    );
     return EcoUnityComicViewport(
       id: _readAnyInt(data, const ['id', 'objectid']),
-      kind: _viewportKindFromWire(
-        _readString(data['viewport'] ?? data['kind'] ?? data['name']),
-      ),
+      kind: kind,
       title: _readString(data['title'] ?? data['name']),
       backgroundImage: _readMediaFromFields(
         data,
         objectKeys: const ['background_image', 'image'],
-        urlKeys: const ['background_image_url', 'image_url', 'imageurl', 'url'],
-        idKeys: const ['background_image_id', 'image_id', 'imageid', 'fileid'],
+        urlKeys: const [
+          'background_image_url',
+          'backgroundImageUrl',
+          'image_url',
+          'imageUrl',
+          'imageurl',
+          'url',
+        ],
+        idKeys: const [
+          'background_image_id',
+          'backgroundImageId',
+          'image_id',
+          'imageid',
+          'fileid',
+        ],
         language: language,
       ),
-      canvasWidth: _readInt(data['canvas_width'] ?? data['width']) ?? 1024,
-      canvasHeight: _readInt(data['canvas_height'] ?? data['height']) ?? 1365,
+      canvasWidth:
+          _readInt(
+            data['canvas_width'] ?? data['canvasWidth'] ?? data['width'],
+          ) ??
+          _defaultCanvasWidth(kind),
+      canvasHeight:
+          _readInt(
+            data['canvas_height'] ?? data['canvasHeight'] ?? data['height'],
+          ) ??
+          _defaultCanvasHeight(kind),
       generationStatus: _speechGenerationStatusFromWire(
         _readString(data['generation_status']),
       ),
@@ -842,9 +869,13 @@ class EcoUnityComicCastLayer {
           objectKeys: const ['pose_layer_image', 'generated_image', 'image'],
           urlKeys: const [
             'pose_layer_image_url',
+            'poseLayerImageUrl',
             'pose_image_url',
+            'poseImageUrl',
             'generated_image_url',
+            'generatedImageUrl',
             'image_url',
+            'imageUrl',
             'imageurl',
             'url',
           ],
@@ -860,13 +891,22 @@ class EcoUnityComicCastLayer {
         ),
         language: language,
       ),
-      orderNo: _readInt(data['orderno']) ?? 0,
-      zIndex: _readInt(data['z_index']) ?? 10,
+      orderNo:
+          _readInt(data['orderno'] ?? data['orderNo'] ?? data['order_no']) ?? 0,
+      zIndex: _readInt(data['z_index'] ?? data['zIndex']) ?? 10,
       portraitLayout: EcoUnityComicLayout.fromJson(
-        data['portrait_layout_json'],
+        _readFirstPresentValue(data, const [
+          'portrait_layout_json',
+          'portraitLayout',
+          'portrait_layout',
+        ]),
       ),
       landscapeLayout: EcoUnityComicLayout.fromJson(
-        data['landscape_layout_json'],
+        _readFirstPresentValue(data, const [
+          'landscape_layout_json',
+          'landscapeLayout',
+          'landscape_layout',
+        ]),
       ),
       altText: _readLocalizedString(data, 'alt_text', language),
       contentStatus: _contentStatusFromWire(
@@ -944,8 +984,11 @@ class EcoUnityComicPropLayer {
           objectKeys: const ['prop_image', 'image'],
           urlKeys: const [
             'prop_image_url',
+            'propImageUrl',
             'prop_layer_image_url',
+            'propLayerImageUrl',
             'image_url',
+            'imageUrl',
             'imageurl',
             'url',
           ],
@@ -960,13 +1003,22 @@ class EcoUnityComicPropLayer {
         ),
         language: language,
       ),
-      orderNo: _readInt(data['orderno']) ?? 0,
-      zIndex: _readInt(data['z_index']) ?? 20,
+      orderNo:
+          _readInt(data['orderno'] ?? data['orderNo'] ?? data['order_no']) ?? 0,
+      zIndex: _readInt(data['z_index'] ?? data['zIndex']) ?? 20,
       portraitLayout: EcoUnityComicLayout.fromJson(
-        data['portrait_layout_json'],
+        _readFirstPresentValue(data, const [
+          'portrait_layout_json',
+          'portraitLayout',
+          'portrait_layout',
+        ]),
       ),
       landscapeLayout: EcoUnityComicLayout.fromJson(
-        data['landscape_layout_json'],
+        _readFirstPresentValue(data, const [
+          'landscape_layout_json',
+          'landscapeLayout',
+          'landscape_layout',
+        ]),
       ),
       altText: _readLocalizedString(data, 'alt_text', language),
       rawData: data,
@@ -1031,11 +1083,21 @@ class EcoUnityComicDecision {
     final Map<String, dynamic> data = _unwrapData(response);
     return EcoUnityComicDecision(
       id: _readAnyInt(data, const ['id', 'objectid']),
-      orderNo: _readInt(data['orderno']) ?? 0,
+      orderNo:
+          _readInt(data['orderno'] ?? data['orderNo'] ?? data['order_no']) ?? 0,
       label: _readLocalizedString(data, 'label', language),
-      targetSceneKey: _readString(data['target_scene_key']).isNotEmpty
-          ? _readString(data['target_scene_key'])
-          : _readString(_firstMap(data['target_scene'])?['scene_key']),
+      targetSceneKey:
+          _readString(
+            data['target_scene_key'] ?? data['targetSceneKey'],
+          ).isNotEmpty
+          ? _readString(data['target_scene_key'] ?? data['targetSceneKey'])
+          : _readString(
+              _readFirstPresentValue(
+                _firstMap(data['target_scene'] ?? data['targetScene']) ??
+                    const <String, dynamic>{},
+                const ['scene_key', 'sceneKey'],
+              ),
+            ),
       consequenceSummary: _readLocalizedString(
         data,
         'consequence_summary',
@@ -1044,17 +1106,32 @@ class EcoUnityComicDecision {
       choiceImage: _readMediaFromFields(
         data,
         objectKeys: const ['choice_image', 'image'],
-        urlKeys: const ['choice_image_url', 'image_url', 'imageurl', 'url'],
+        urlKeys: const [
+          'choice_image_url',
+          'choiceImageUrl',
+          'image_url',
+          'imageUrl',
+          'imageurl',
+          'url',
+        ],
         idKeys: const ['choice_image_id', 'image_id', 'imageid', 'fileid'],
         language: language,
       ),
       portraitLayout: EcoUnityComicLayout.fromJson(
-        data['portrait_layout_json'],
+        _readFirstPresentValue(data, const [
+          'portrait_layout_json',
+          'portraitLayout',
+          'portrait_layout',
+        ]),
       ),
       landscapeLayout: EcoUnityComicLayout.fromJson(
-        data['landscape_layout_json'],
+        _readFirstPresentValue(data, const [
+          'landscape_layout_json',
+          'landscapeLayout',
+          'landscape_layout',
+        ]),
       ),
-      zIndex: _readInt(data['z_index']) ?? 80,
+      zIndex: _readInt(data['z_index'] ?? data['zIndex']) ?? 80,
       altText: _readLocalizedString(data, 'alt_text', language),
       contentStatus: _contentStatusFromWire(
         _readString(data['content_status']),
@@ -1128,14 +1205,15 @@ class EcoUnityComicDialogueEntry {
   }
 
   EcoUnityComicSpeechItem? speechForLanguage(String language) {
+    final String normalizedLanguage = language.trim().toLowerCase();
     for (final EcoUnityComicSpeechItem speech in speechItems) {
-      if (speech.language == language &&
-          speech.generationStatus == EcoUnitySpeechGenerationStatus.ready) {
+      if (speech.language.trim().toLowerCase() == normalizedLanguage &&
+          speech.hasReadyAudio) {
         return speech;
       }
     }
     for (final EcoUnityComicSpeechItem speech in speechItems) {
-      if (speech.language == language) {
+      if (speech.language.trim().toLowerCase() == normalizedLanguage) {
         return speech;
       }
     }
@@ -1177,16 +1255,23 @@ class EcoUnityComicSpeechItem {
   final Map<String, dynamic> rawData;
 
   bool get hasReadyAudio =>
-      generationStatus == EcoUnitySpeechGenerationStatus.ready &&
+      (generationStatus == EcoUnitySpeechGenerationStatus.ready ||
+          generationStatus ==
+              EcoUnitySpeechGenerationStatus.updateRecommended) &&
       audioFile?.url != null &&
       audioFile!.url!.isNotEmpty;
 
   factory EcoUnityComicSpeechItem.fromJson(Map<String, dynamic> response) {
     final Map<String, dynamic> data = _unwrapData(response);
-    final String language = _readString(data['language'], fallback: 'en');
+    final String language = _readString(
+      data['language'],
+      fallback: 'en',
+    ).trim().toLowerCase();
     return EcoUnityComicSpeechItem(
       id: _readAnyInt(data, const ['id', 'objectid']),
-      dialogueEntryId: _readRelationId(data['dialogue_entry']),
+      dialogueEntryId:
+          _readRelationId(data['dialogue_entry']) ??
+          _readInt(data['dialogueId'] ?? data['dialogue_id']),
       language: language,
       audioFile: _readMediaFromFields(
         data,
@@ -1194,6 +1279,10 @@ class EcoUnityComicSpeechItem {
         urlKeys: const [
           'audio_file_url',
           'audio_url',
+          'audioFileUrl',
+          'audioUrl',
+          'fileopenerurl',
+          'fileOpenerUrl',
           'file_url',
           'fileurl',
           'download_url',
@@ -1202,16 +1291,56 @@ class EcoUnityComicSpeechItem {
         idKeys: const ['audio_file_id', 'audio_id', 'file_id', 'fileid'],
         language: language,
       ),
-      dialogueText: _readString(data['dialogue_text']),
+      dialogueText: _readString(data['dialogue_text'] ?? data['dialogue']),
       voice: _readString(data['voice']),
-      speechModel: _readString(data['speech_model']),
-      responseFormat: _readString(data['response_format'], fallback: 'mp3'),
+      speechModel: _readString(data['speech_model'] ?? data['speechModel']),
+      responseFormat: _readString(
+        data['response_format'] ?? data['responseFormat'],
+        fallback: 'mp3',
+      ),
       speed: _readDouble(data['speed']) ?? 1,
-      startMs: _readInt(data['start_ms']) ?? 0,
-      durationMs: _readInt(data['duration_ms']) ?? 0,
-      orderNo: _readInt(data['orderno']) ?? 0,
+      startMs:
+          _readTimelineMilliseconds(
+            data,
+            millisecondKeys: const [
+              'start_ms',
+              'startMs',
+              'start_milliseconds',
+              'startMilliseconds',
+            ],
+            secondKeys: const [
+              'start_seconds',
+              'startSeconds',
+              'start_s',
+              'startS',
+            ],
+          ) ??
+          0,
+      durationMs:
+          _readTimelineMilliseconds(
+            data,
+            millisecondKeys: const [
+              'duration_ms',
+              'durationMs',
+              'duration_milliseconds',
+              'durationMilliseconds',
+            ],
+            secondKeys: const [
+              'duration_seconds',
+              'durationSeconds',
+              'duration_s',
+              'durationS',
+            ],
+          ) ??
+          0,
+      orderNo:
+          _readInt(data['orderno'] ?? data['orderNo'] ?? data['order_no']) ?? 0,
       generationStatus: _speechGenerationStatusFromWire(
-        _readString(data['generation_status']),
+        _readString(
+          data['generation_status'] ??
+              data['generationStatus'] ??
+              data['status'],
+        ),
       ),
       rawData: data,
     );
@@ -1234,6 +1363,11 @@ class EcoUnityComicTimelineEntry {
   final int durationMs;
 
   bool get hasReadyAudio => speech?.hasReadyAudio ?? false;
+}
+
+int _fallbackDialogueStartMs(EcoUnityComicDialogueEntry dialogue) {
+  final int orderIndex = dialogue.orderNo <= 0 ? 0 : dialogue.orderNo - 1;
+  return orderIndex * 1000;
 }
 
 class EcoUnityComicLayout {
@@ -1281,13 +1415,16 @@ class EcoUnityComicLayout {
       scale: (_readDouble(data['scale']) ?? defaults.scale)
           .clamp(0, 4)
           .toDouble(),
-      bubbleX: (_readDouble(data['bubble_x']) ?? x).clamp(0, 1).toDouble(),
-      bubbleY: (_readDouble(data['bubble_y']) ?? defaults.bubbleY)
+      bubbleX: (_readDouble(data['bubble_x'] ?? data['bubbleX']) ?? x)
           .clamp(0, 1)
           .toDouble(),
+      bubbleY:
+          (_readDouble(data['bubble_y'] ?? data['bubbleY']) ?? defaults.bubbleY)
+              .clamp(0, 1)
+              .toDouble(),
       rotation: _readDouble(data['rotation']) ?? defaults.rotation,
-      flipX: _readBool(data['flip_x']),
-      zIndex: _readInt(data['z_index']),
+      flipX: _readBool(data['flip_x'] ?? data['flipX']),
+      zIndex: _readInt(data['z_index'] ?? data['zIndex']),
       rawData: data,
     );
   }
@@ -1603,6 +1740,10 @@ class EcoUnityMedia {
       'choice_image_url',
       'audio_file_url',
       'audio_url',
+      'audioFileUrl',
+      'audioUrl',
+      'fileopenerurl',
+      'fileOpenerUrl',
     ]);
 
     if (url == null &&
@@ -1625,6 +1766,48 @@ class EcoUnityMedia {
   }
 }
 
+List<EcoUnityMedia> _readActivityMediaImages(
+  Map<String, dynamic> data, {
+  required String language,
+}) {
+  final List<Map<String, dynamic>> relations = _readMapList(
+    data['media_images'] ?? data['mediaImages'],
+  );
+  final List<String> urls = _readUrlList(
+    data['media_image_urls'] ?? data['mediaImageUrls'],
+  );
+  final int itemCount = math.max(relations.length, urls.length);
+  final List<EcoUnityMedia> images = <EcoUnityMedia>[];
+
+  for (int index = 0; index < itemCount; index += 1) {
+    final EcoUnityMedia? relationMedia = index < relations.length
+        ? EcoUnityMedia.fromJson(relations[index], language: language)
+        : null;
+    final String? directUrl = index < urls.length ? urls[index] : null;
+
+    if (directUrl != null && directUrl.trim().isNotEmpty) {
+      images.add(_mediaWithUrl(relationMedia, directUrl.trim()));
+    } else if (relationMedia != null) {
+      images.add(relationMedia);
+    }
+  }
+
+  return images;
+}
+
+EcoUnityMedia _mediaWithUrl(EcoUnityMedia? relationMedia, String url) {
+  return EcoUnityMedia(
+    id: relationMedia?.id,
+    url: url,
+    title: relationMedia?.title ?? '',
+    altText: relationMedia?.altText ?? '',
+    rawData: <String, dynamic>{
+      if (relationMedia != null) ...relationMedia.rawData,
+      'url': url,
+    },
+  );
+}
+
 EcoUnityMedia? _readMediaFromFields(
   Map<String, dynamic> data, {
   required List<String> objectKeys,
@@ -1632,18 +1815,23 @@ EcoUnityMedia? _readMediaFromFields(
   required List<String> idKeys,
   String language = 'en',
 }) {
+  EcoUnityMedia? relationMedia;
   for (final String key in objectKeys) {
     final EcoUnityMedia? media = EcoUnityMedia.fromJson(
       data[key],
       language: language,
     );
-    if (media != null) {
+    if (media != null && (media.url?.isNotEmpty ?? false)) {
       return media;
     }
+    relationMedia ??= media;
   }
 
   final String? url = _readFirstNonEmptyString(data, urlKeys);
-  final int? id = _readAnyInt(data, idKeys);
+  final int? id = _readAnyInt(data, idKeys) ?? relationMedia?.id;
+  if (url == null && relationMedia != null) {
+    return relationMedia;
+  }
   if (url == null && id == null) {
     return null;
   }
@@ -1653,10 +1841,11 @@ EcoUnityMedia? _readMediaFromFields(
     url: url,
     title: _readLocalizedString(data, 'title', language).isNotEmpty
         ? _readLocalizedString(data, 'title', language)
-        : _readString(data['name'] ?? data['filename']),
+        : relationMedia?.title ?? _readString(data['name'] ?? data['filename']),
     altText: _readLocalizedString(data, 'alt_text', language).isNotEmpty
         ? _readLocalizedString(data, 'alt_text', language)
-        : _readLocalizedString(data, 'description', language),
+        : relationMedia?.altText ??
+              _readLocalizedString(data, 'description', language),
     rawData: data,
   );
 }
@@ -1814,11 +2003,11 @@ EcoUnityComicViewport _viewportWithMedia(
     canvasWidth:
         base?.canvasWidth ??
         _readInt(data['canvas_width'] ?? data['width']) ??
-        1024,
+        _defaultCanvasWidth(kind),
     canvasHeight:
         base?.canvasHeight ??
         _readInt(data['canvas_height'] ?? data['height']) ??
-        1365,
+        _defaultCanvasHeight(kind),
     generationStatus:
         base?.generationStatus ??
         _speechGenerationStatusFromWire(_readString(data['generation_status'])),
@@ -1879,6 +2068,58 @@ List<Map<String, dynamic>> _readMapList(dynamic raw) {
       : <Map<String, dynamic>>[single];
 }
 
+List<String> _readUrlList(dynamic raw) {
+  dynamic value = raw;
+  if (value is Map) {
+    if (value['data'] != null) {
+      value = value['data'];
+    } else if (value['urls'] != null) {
+      value = value['urls'];
+    } else if (value['values'] != null) {
+      value = value['values'];
+    }
+  }
+  if (value is String) {
+    final String trimmed = _readString(value).trim();
+    if (trimmed.isEmpty) {
+      return <String>[];
+    }
+    try {
+      value = jsonDecode(trimmed);
+    } on FormatException {
+      return <String>[trimmed];
+    }
+  }
+  if (value is Iterable) {
+    final List<String> urls = <String>[];
+    for (final dynamic item in value) {
+      if (item is Map) {
+        final String? url = _readFirstNonEmptyString(
+          Map<String, dynamic>.from(item),
+          const [
+            'url',
+            'image_url',
+            'imageurl',
+            'file_url',
+            'fileurl',
+            'download_url',
+          ],
+        );
+        if (url != null) {
+          urls.add(url);
+        }
+        continue;
+      }
+      final String url = _readString(item).trim();
+      if (url.isNotEmpty) {
+        urls.add(url);
+      }
+    }
+    return urls;
+  }
+  return <String>[];
+}
+
 String _readLocalizedString(
   Map<String, dynamic> data,
   String key,
@@ -1922,7 +2163,7 @@ String? _stringFromValue(dynamic value, String language) {
     return null;
   }
   if (localizedValue is String) {
-    return localizedValue;
+    return _decodeHtmlEntities(localizedValue);
   }
   if (localizedValue is num || localizedValue is bool) {
     return localizedValue.toString();
@@ -1949,7 +2190,7 @@ String _readString(dynamic value, {String fallback = ''}) {
     return fallback;
   }
   if (value is String) {
-    return value;
+    return _decodeHtmlEntities(value);
   }
   if (value is num || value is bool) {
     return value.toString();
@@ -1960,12 +2201,97 @@ String _readString(dynamic value, {String fallback = ''}) {
   return fallback;
 }
 
+String _decodeHtmlEntities(String value) {
+  if (!value.contains('&')) {
+    return value;
+  }
+
+  const Map<String, String> namedEntities = <String, String>{
+    'amp': '&',
+    'apos': "'",
+    'gt': '>',
+    'lt': '<',
+    'nbsp': ' ',
+    'quot': '"',
+  };
+
+  StringBuffer? buffer;
+  int cursor = 0;
+  while (cursor < value.length) {
+    final int ampersand = value.indexOf('&', cursor);
+    if (ampersand < 0) {
+      break;
+    }
+    final int semicolon = value.indexOf(';', ampersand + 1);
+    if (semicolon < 0) {
+      break;
+    }
+
+    final String entity = value.substring(ampersand + 1, semicolon);
+    final String? decoded = _decodeHtmlEntity(entity, namedEntities);
+    if (decoded == null) {
+      if (buffer != null) {
+        buffer.write(value.substring(cursor, semicolon + 1));
+      }
+      cursor = semicolon + 1;
+      continue;
+    }
+
+    if (buffer == null) {
+      buffer = StringBuffer(value.substring(0, ampersand));
+    } else {
+      buffer.write(value.substring(cursor, ampersand));
+    }
+    buffer.write(decoded);
+    cursor = semicolon + 1;
+  }
+
+  if (buffer == null) {
+    return value;
+  }
+  buffer.write(value.substring(cursor));
+  return buffer.toString();
+}
+
+String? _decodeHtmlEntity(String entity, Map<String, String> namedEntities) {
+  final String? namedValue = namedEntities[entity.toLowerCase()];
+  if (namedValue != null) {
+    return namedValue;
+  }
+  if (entity.startsWith('#x') || entity.startsWith('#X')) {
+    final int? codePoint = int.tryParse(entity.substring(2), radix: 16);
+    return codePoint == null ? null : String.fromCharCode(codePoint);
+  }
+  if (entity.startsWith('#')) {
+    final int? codePoint = int.tryParse(entity.substring(1));
+    return codePoint == null ? null : String.fromCharCode(codePoint);
+  }
+  return null;
+}
+
 String? _readFirstNonEmptyString(Map<String, dynamic> data, List<String> keys) {
   for (final String key in keys) {
     final String value = _readString(data[key]).trim();
     if (value.isNotEmpty) {
       return value;
     }
+  }
+  return null;
+}
+
+dynamic _readFirstPresentValue(Map<String, dynamic> data, List<String> keys) {
+  for (final String key in keys) {
+    if (!data.containsKey(key)) {
+      continue;
+    }
+    final dynamic value = data[key];
+    if (value == null) {
+      continue;
+    }
+    if (value is String && value.trim().isEmpty) {
+      continue;
+    }
+    return value;
   }
   return null;
 }
@@ -2029,6 +2355,68 @@ double? _readDouble(dynamic value) {
     return double.tryParse(value.trim());
   }
   return null;
+}
+
+int? _readTimelineMilliseconds(
+  Map<String, dynamic> data, {
+  required List<String> millisecondKeys,
+  required List<String> secondKeys,
+}) {
+  for (final String key in millisecondKeys) {
+    if (!data.containsKey(key)) {
+      continue;
+    }
+    final int? value = _readTimelineMillisecondsValue(
+      data[key],
+      treatAsSeconds: false,
+    );
+    if (value != null) {
+      return value;
+    }
+  }
+  for (final String key in secondKeys) {
+    if (!data.containsKey(key)) {
+      continue;
+    }
+    final int? value = _readTimelineMillisecondsValue(
+      data[key],
+      treatAsSeconds: true,
+    );
+    if (value != null) {
+      return value;
+    }
+  }
+  return null;
+}
+
+int? _readTimelineMillisecondsValue(
+  dynamic value, {
+  required bool treatAsSeconds,
+}) {
+  if (value == null) {
+    return null;
+  }
+  bool seconds = treatAsSeconds;
+  dynamic normalized = value;
+  if (value is String) {
+    String text = value.trim().toLowerCase().replaceAll(',', '.');
+    if (text.isEmpty) {
+      return null;
+    }
+    if (text.endsWith('ms')) {
+      seconds = false;
+      text = text.substring(0, text.length - 2).trim();
+    } else if (text.endsWith('s')) {
+      seconds = true;
+      text = text.substring(0, text.length - 1).trim();
+    }
+    normalized = text;
+  }
+  final double? number = _readDouble(normalized);
+  if (number == null || !number.isFinite) {
+    return null;
+  }
+  return math.max(0, seconds ? (number * 1000).round() : number.round());
 }
 
 bool _readBool(dynamic value, {bool fallback = false}) {
@@ -2195,8 +2583,17 @@ EcoUnityComicViewportKind _viewportKindFromWire(String value) {
   return EcoUnityComicViewportKind.portrait;
 }
 
+int _defaultCanvasWidth(EcoUnityComicViewportKind kind) {
+  return kind == EcoUnityComicViewportKind.landscape ? 1365 : 1024;
+}
+
+int _defaultCanvasHeight(EcoUnityComicViewportKind kind) {
+  return kind == EcoUnityComicViewportKind.landscape ? 1024 : 1365;
+}
+
 EcoUnitySpeechGenerationStatus _speechGenerationStatusFromWire(String value) {
-  return switch (value) {
+  final String normalized = value.trim().toLowerCase().replaceAll('-', '_');
+  return switch (normalized) {
     'needs_generation' => EcoUnitySpeechGenerationStatus.needsGeneration,
     'queued' => EcoUnitySpeechGenerationStatus.queued,
     'running' => EcoUnitySpeechGenerationStatus.running,

@@ -252,6 +252,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'lessons': 'Lições',
       'modules': 'Aprender',
       'resources': 'Recursos',
+      'progress': 'Progresso',
       'other': 'Menu:$item',
     });
     return '$_temp0';

@@ -252,6 +252,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'lessons': 'Unterrichtseinheiten',
       'modules': 'Lernen',
       'resources': 'Ressourcen',
+      'progress': 'Fortschritt',
       'other': 'Menü:$item',
     });
     return '$_temp0';

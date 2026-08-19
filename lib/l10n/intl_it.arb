@@ -130,7 +130,7 @@
       }
     }
   },
-  "navigation_item": "{item, select, home{Home} pathways{Percorsi} challenges{Sfide} videolist{Video} selfReflectionHub{Centro auto-riflessione} lessons{Lezioni} modules{Impara} resources{Risorse} other{Menu:{item}}}",
+  "navigation_item": "{item, select, home{Home} pathways{Percorsi} challenges{Sfide} videolist{Video} selfReflectionHub{Centro auto-riflessione} lessons{Lezioni} modules{Impara} resources{Risorse} progress{Progresso} other{Menu:{item}}}",
   "next": "Avanti",
   "noBadgesFound": "Nessun badge trovato",
   "noChallengesFound": "Nessuna sfida trovata",
