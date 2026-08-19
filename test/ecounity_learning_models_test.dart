@@ -51,6 +51,49 @@ void main() {
       },
     );
 
+    test('parses HTML-escaped quiz option and answer JSON', () {
+      final Map<String, dynamic> rawQuiz = <String, dynamic>{
+        'id': 32,
+        'activity_type': 'quiz',
+        'passing_logic': 'completion_only',
+        'questions': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 9,
+            'activity': 32,
+            'orderno': 10,
+            'question_type': 'multiple_choice',
+            'prompt': 'What does gender equality mean?',
+            'options_json':
+                '[{&quot;id&quot;:&quot;a&quot;,&quot;label&quot;:&quot;Everyone has to be exactly the same.&quot;},{&quot;id&quot;:&quot;b&quot;,&quot;label&quot;:&quot;Everyone should have equal rights, opportunities, and respect regardless of gender.&quot;}]',
+            'correct_answers_json': '[&quot;b&quot;]',
+            'points': 1,
+            'required': 1,
+          },
+        ],
+      };
+      final EcoUnityLearningActivity quiz = EcoUnityLearningActivity.fromJson(
+        rawQuiz,
+      );
+
+      expect(quiz.questions.single.options.map((option) => option.id), <String>[
+        'a',
+        'b',
+      ]);
+      expect(
+        quiz.questions.single.options.last.label,
+        'Everyone should have equal rights, opportunities, and respect regardless of gender.',
+      );
+
+      final EcoUnityQuizResult result = quiz.evaluateQuizAnswers(
+        <int, Set<String>>{
+          9: <String>{'b'},
+        },
+      );
+
+      expect(result.passed, isTrue);
+      expect(result.score, 1);
+    });
+
     test('calculates completion ratio from wrapped progress relations', () {
       final EcoUnitySdgModule module = EcoUnitySdgModule.fromJson(
         _sdgModuleFixture(),

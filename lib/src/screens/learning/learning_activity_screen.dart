@@ -712,48 +712,204 @@ class _QuizActivityView extends StatefulWidget {
 
 class _QuizActivityViewState extends State<_QuizActivityView> {
   final Map<int, Set<String>> _selectedAnswers = <int, Set<String>>{};
+  late PageController _pageController;
   EcoUnityQuizResult? _result;
+  bool _completed = false;
+  bool _submitting = false;
+  int _currentQuestionIndex = 0;
   int _attemptNumber = 0;
 
   @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void didUpdateWidget(covariant _QuizActivityView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.activity.id != widget.activity.id ||
+        oldWidget.activity.questions.length !=
+            widget.activity.questions.length) {
+      _selectedAnswers.clear();
+      _result = null;
+      _completed = false;
+      _submitting = false;
+      _currentQuestionIndex = 0;
+      _attemptNumber = 0;
+      _pageController.dispose();
+      _pageController = PageController();
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: <Widget>[
-        _ActivityHeroImage(activity: widget.activity),
-        if (widget.activity.heroImage != null) const SizedBox(height: 16),
-        _ActivityIntro(activity: widget.activity),
-        widget.reviewPanel,
-        const SizedBox(height: 16),
-        for (final EcoUnityQuizQuestion question in widget.activity.questions)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _QuestionCard(
-              question: question,
-              selectedAnswers:
-                  _selectedAnswers[_questionKey(question)] ?? <String>{},
-              onChanged: (Set<String> answers) {
-                setState(() {
-                  _selectedAnswers[_questionKey(question)] = answers;
-                  _result = null;
-                });
-              },
-            ),
+    final List<EcoUnityQuizQuestion> questions = widget.activity.questions;
+    if (questions.isEmpty) {
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: <Widget>[
+          _QuizActivityHeader(activity: widget.activity),
+          widget.reviewPanel,
+          const SizedBox(height: 16),
+          const _InlineActivityMessage(
+            icon: Icons.quiz_outlined,
+            title: 'No questions available',
+            message: 'This quiz does not currently include any questions.',
           ),
-        if (_result != null) ...<Widget>[
-          _QuizResultPanel(result: _result!),
-          const SizedBox(height: 12),
         ],
-        FilledButton.icon(
-          onPressed: _submit,
-          icon: const Icon(Icons.check),
-          label: const Text('Submit answers'),
-        ),
-      ],
+      );
+    }
+
+    final int safeQuestionIndex = _currentQuestionIndex
+        .clamp(0, questions.length - 1)
+        .toInt();
+    final EcoUnityQuizQuestion currentQuestion = questions[safeQuestionIndex];
+    final bool isLastQuestion = _currentQuestionIndex >= questions.length - 1;
+    final double answeredRatio = questions.isEmpty
+        ? 0
+        : (_currentQuestionIndex + 1) / questions.length;
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double availableHeight = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : MediaQuery.sizeOf(context).height * 0.78;
+        final double questionHeight = (availableHeight - 190)
+            .clamp(390.0, 640.0)
+            .toDouble();
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: <Widget>[
+            _QuizActivityHeader(activity: widget.activity),
+            widget.reviewPanel,
+            const SizedBox(height: 12),
+            _QuizProgressHeader(
+              currentIndex: _currentQuestionIndex,
+              questionCount: questions.length,
+              progressValue: answeredRatio,
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: questionHeight,
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: questions.length,
+                onPageChanged: (int index) {
+                  setState(() {
+                    _currentQuestionIndex = index;
+                    _result = null;
+                  });
+                },
+                itemBuilder: (BuildContext context, int index) {
+                  final EcoUnityQuizQuestion question = questions[index];
+                  return _QuizQuestionPage(
+                    question: question,
+                    selectedAnswers:
+                        _selectedAnswers[_questionKey(question)] ?? <String>{},
+                    onChanged: (Set<String> answers) {
+                      _updateAnswer(question, answers);
+                    },
+                    onSingleChoiceSelected: (String optionId) {
+                      _selectSingleChoice(question, optionId);
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (_result != null) ...<Widget>[
+              _QuizResultPanel(result: _result!),
+              const SizedBox(height: 12),
+            ],
+            _QuizPageControls(
+              canGoPrevious: _currentQuestionIndex > 0,
+              canGoNext: !isLastQuestion,
+              isLastQuestion: isLastQuestion,
+              submitting: _submitting,
+              completed: _completed,
+              currentQuestionRequiresAnswer: currentQuestion.required,
+              currentQuestionAnswered: _hasAnswer(currentQuestion),
+              onPrevious: _previousQuestion,
+              onNext: _nextQuestion,
+              onSubmit: _submit,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _updateAnswer(EcoUnityQuizQuestion question, Set<String> answers) {
+    setState(() {
+      _selectedAnswers[_questionKey(question)] = answers;
+      _result = null;
+    });
+  }
+
+  void _selectSingleChoice(EcoUnityQuizQuestion question, String optionId) {
+    final bool wasUnanswered = !_hasAnswer(question);
+    _updateAnswer(question, <String>{optionId});
+    if (wasUnanswered &&
+        _currentQuestionIndex < widget.activity.questions.length - 1) {
+      _advanceAfterSingleChoice(question);
+    }
+  }
+
+  Future<void> _advanceAfterSingleChoice(
+    EcoUnityQuizQuestion selectedQuestion,
+  ) async {
+    final int selectedQuestionIndex = _currentQuestionIndex;
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+    if (!mounted ||
+        selectedQuestionIndex != _currentQuestionIndex ||
+        !_pageController.hasClients ||
+        !_hasAnswer(selectedQuestion)) {
+      return;
+    }
+    _nextQuestion();
+  }
+
+  bool _hasAnswer(EcoUnityQuizQuestion question) {
+    return (_selectedAnswers[_questionKey(question)] ?? <String>{}).isNotEmpty;
+  }
+
+  void _previousQuestion() {
+    if (_currentQuestionIndex <= 0 || !_pageController.hasClients) {
+      return;
+    }
+    _pageController.previousPage(
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _nextQuestion() {
+    if (_currentQuestionIndex >= widget.activity.questions.length - 1 ||
+        !_pageController.hasClients) {
+      return;
+    }
+    _pageController.nextPage(
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
     );
   }
 
   Future<void> _submit() async {
+    if (_submitting || _completed) {
+      return;
+    }
+    setState(() {
+      _submitting = true;
+    });
+
     final EcoUnityQuizResult result = widget.activity.evaluateQuizAnswers(
       _selectedAnswers,
     );
@@ -762,89 +918,376 @@ class _QuizActivityViewState extends State<_QuizActivityView> {
       _result = result;
     });
 
-    await widget.onQuizSubmitted(result, _attemptNumber);
+    try {
+      await widget.onQuizSubmitted(result, _attemptNumber);
 
-    if (result.passed) {
-      await widget.onCompleted(<String, dynamic>{
-        'score': result.score,
-        'possible_score': result.possibleScore,
-        'correct_questions': result.correctQuestionCount,
-        'question_count': result.questionCount,
-        'passed': result.passed,
-        'attempt_number': _attemptNumber,
-      });
+      if (result.passed) {
+        await widget.onCompleted(<String, dynamic>{
+          'score': result.score,
+          'possible_score': result.possibleScore,
+          'correct_questions': result.correctQuestionCount,
+          'question_count': result.questionCount,
+          'passed': result.passed,
+          'attempt_number': _attemptNumber,
+        });
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _completed = true;
+        });
+      } else {
+        _moveToFirstRequiredUnansweredQuestion();
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+        });
+      }
+    }
+  }
+
+  void _moveToFirstRequiredUnansweredQuestion() {
+    final List<EcoUnityQuizQuestion> questions = widget.activity.questions;
+    for (int index = 0; index < questions.length; index += 1) {
+      final EcoUnityQuizQuestion question = questions[index];
+      if (question.required && !_hasAnswer(question)) {
+        if (_pageController.hasClients) {
+          _pageController.animateToPage(
+            index,
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+          );
+        }
+        return;
+      }
     }
   }
 }
 
-class _QuestionCard extends StatelessWidget {
-  const _QuestionCard({
-    required this.question,
-    required this.selectedAnswers,
-    required this.onChanged,
-  });
+class _QuizActivityHeader extends StatelessWidget {
+  const _QuizActivityHeader({required this.activity});
 
-  final EcoUnityQuizQuestion question;
-  final Set<String> selectedAnswers;
-  final ValueChanged<Set<String>> onChanged;
+  final EcoUnityLearningActivity activity;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: EcoUnityColors.surfaceContainer,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: EcoUnityColors.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAFBFB),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.quiz_outlined,
+                color: EcoUnityColors.deepTeal,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    activity.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: EcoUnityColors.deepTeal,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  if (activity.shortDescription.trim().isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 4),
+                    Text(
+                      activity.shortDescription.trim(),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: EcoUnityColors.textSecondary,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuizProgressHeader extends StatelessWidget {
+  const _QuizProgressHeader({
+    required this.currentIndex,
+    required this.questionCount,
+    required this.progressValue,
+  });
+
+  final int currentIndex;
+  final int questionCount;
+  final double progressValue;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: EcoUnityColors.surfaceContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              question.prompt,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              'Question ${currentIndex + 1} of $questionCount',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: EcoUnityColors.deepTeal,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w900,
               ),
             ),
             const SizedBox(height: 8),
-            if (question.allowsMultipleAnswers)
-              for (final EcoUnityQuizOption option in question.options)
-                CheckboxListTile(
-                  value: selectedAnswers.contains(option.id),
-                  onChanged: (bool? selected) {
-                    final Set<String> nextAnswers = <String>{
-                      ...selectedAnswers,
-                    };
-                    if (selected ?? false) {
-                      nextAnswers.add(option.id);
-                    } else {
-                      nextAnswers.remove(option.id);
-                    }
-                    onChanged(nextAnswers);
-                  },
-                  title: Text(option.label),
-                  controlAffinity: ListTileControlAffinity.leading,
-                )
-            else
-              RadioGroup<String>(
-                groupValue: selectedAnswers.isEmpty
-                    ? null
-                    : selectedAnswers.first,
-                onChanged: (String? value) {
-                  if (value != null) {
-                    onChanged(<String>{value});
-                  }
-                },
-                child: Column(
-                  children: <Widget>[
-                    for (final EcoUnityQuizOption option in question.options)
-                      RadioListTile<String>(
-                        value: option.id,
-                        title: Text(option.label),
-                      ),
-                  ],
-                ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                minHeight: 6,
+                value: progressValue.clamp(0, 1).toDouble(),
+                color: EcoUnityColors.turquoise,
+                backgroundColor: EcoUnityColors.surfaceContainerHigh,
               ),
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _QuizQuestionPage extends StatelessWidget {
+  const _QuizQuestionPage({
+    required this.question,
+    required this.selectedAnswers,
+    required this.onChanged,
+    required this.onSingleChoiceSelected,
+  });
+
+  final EcoUnityQuizQuestion question;
+  final Set<String> selectedAnswers;
+  final ValueChanged<Set<String>> onChanged;
+  final ValueChanged<String> onSingleChoiceSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: EcoUnityColors.outlineVariant),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                question.prompt,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: EcoUnityColors.deepTeal,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 14),
+              if (question.options.isEmpty)
+                const _InlineActivityMessage(
+                  icon: Icons.rule_outlined,
+                  title: 'No answer options',
+                  message:
+                      'This question does not currently include answer options.',
+                )
+              else
+                for (final EcoUnityQuizOption option
+                    in question.options) ...<Widget>[
+                  _QuizOptionCard(
+                    option: option,
+                    multipleChoice: question.allowsMultipleAnswers,
+                    selected: selectedAnswers.contains(option.id),
+                    onTap: () {
+                      if (question.allowsMultipleAnswers) {
+                        final Set<String> nextAnswers = <String>{
+                          ...selectedAnswers,
+                        };
+                        if (nextAnswers.contains(option.id)) {
+                          nextAnswers.remove(option.id);
+                        } else {
+                          nextAnswers.add(option.id);
+                        }
+                        onChanged(nextAnswers);
+                      } else {
+                        onSingleChoiceSelected(option.id);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuizOptionCard extends StatelessWidget {
+  const _QuizOptionCard({
+    required this.option,
+    required this.multipleChoice,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final EcoUnityQuizOption option;
+  final bool multipleChoice;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color borderColor = selected
+        ? EcoUnityColors.turquoise
+        : EcoUnityColors.outlineVariant;
+    final Color backgroundColor = selected
+        ? const Color(0xFFEAFBFB)
+        : EcoUnityColors.surface;
+    final IconData icon = multipleChoice
+        ? selected
+              ? Icons.check_box_rounded
+              : Icons.check_box_outline_blank_rounded
+        : selected
+        ? Icons.radio_button_checked_rounded
+        : Icons.radio_button_unchecked_rounded;
+
+    return Material(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: borderColor, width: selected ? 2 : 1),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  icon,
+                  color: selected
+                      ? EcoUnityColors.deepTeal
+                      : EcoUnityColors.textSecondary,
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    option.label,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: EcoUnityColors.textPrimary,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuizPageControls extends StatelessWidget {
+  const _QuizPageControls({
+    required this.canGoPrevious,
+    required this.canGoNext,
+    required this.isLastQuestion,
+    required this.submitting,
+    required this.completed,
+    required this.currentQuestionRequiresAnswer,
+    required this.currentQuestionAnswered,
+    required this.onPrevious,
+    required this.onNext,
+    required this.onSubmit,
+  });
+
+  final bool canGoPrevious;
+  final bool canGoNext;
+  final bool isLastQuestion;
+  final bool submitting;
+  final bool completed;
+  final bool currentQuestionRequiresAnswer;
+  final bool currentQuestionAnswered;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+  final VoidCallback onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool canLeaveCurrentQuestion =
+        !currentQuestionRequiresAnswer || currentQuestionAnswered;
+
+    return Row(
+      children: <Widget>[
+        IconButton.filledTonal(
+          onPressed: canGoPrevious ? onPrevious : null,
+          icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Previous',
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: isLastQuestion
+              ? FilledButton.icon(
+                  onPressed: completed || submitting ? null : onSubmit,
+                  icon: submitting
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          completed
+                              ? Icons.check_circle_rounded
+                              : Icons.check_rounded,
+                        ),
+                  label: Text(completed ? 'Completed' : 'Submit answers'),
+                )
+              : FilledButton.icon(
+                  onPressed: canGoNext && canLeaveCurrentQuestion
+                      ? onNext
+                      : null,
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text('Next'),
+                ),
+        ),
+      ],
     );
   }
 }
@@ -980,6 +1423,60 @@ class _ActivityHeroImage extends StatelessWidget {
               size: 36,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InlineActivityMessage extends StatelessWidget {
+  const _InlineActivityMessage({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: EcoUnityColors.surfaceContainer,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: EcoUnityColors.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Icon(icon, color: EcoUnityColors.deepTeal, size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: EcoUnityColors.textPrimary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    message,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: EcoUnityColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

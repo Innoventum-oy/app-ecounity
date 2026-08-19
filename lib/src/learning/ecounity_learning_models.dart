@@ -2474,10 +2474,11 @@ Map<String, dynamic> _decodeJsonMap(dynamic raw) {
 List<String> _readStringListFromJson(dynamic raw) {
   dynamic value = raw;
   if (value is String) {
+    final String normalized = _decodeHtmlEntities(value).trim();
     try {
-      value = jsonDecode(value);
+      value = jsonDecode(normalized);
     } on FormatException {
-      value = value.split(',');
+      value = normalized.split(',');
     }
   }
   if (value is Iterable) {
@@ -2495,8 +2496,12 @@ List<EcoUnityQuizOption> _parseQuizOptions(
 }) {
   dynamic value = raw;
   if (value is String) {
+    final String normalized = _decodeHtmlEntities(value).trim();
+    if (normalized.isEmpty) {
+      return <EcoUnityQuizOption>[];
+    }
     try {
-      value = jsonDecode(value);
+      value = jsonDecode(normalized);
     } on FormatException {
       value = null;
     }

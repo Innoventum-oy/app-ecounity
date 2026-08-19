@@ -28,7 +28,7 @@ List<NavigationItem> navItems = [
   NavigationItem(
     navigationIndex: 2,
     label: 'progress',
-    icon: const Icon(Icons.emoji_events_outlined),
+    icon: const Icon(Icons.insights_rounded),
     route: '/progress',
     view: 'progress',
   ),
