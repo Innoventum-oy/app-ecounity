@@ -252,6 +252,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'modules': 'Learn',
       'resources': 'Resources',
       'progress': 'Progress',
+      'teacher': 'Teacher',
       'other': 'Menu:$item',
     });
     return '$_temp0';
@@ -407,6 +408,68 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get start => 'Start';
+
+  @override
+  String get teacher_mode => 'Teacher mode';
+
+  @override
+  String get teacher_mode_label => 'I am a teacher';
+
+  @override
+  String get teacher_mode_description =>
+      'Teacher mode adds instructional information to learning content. Learner progress and badges are disabled while teacher mode is active.';
+
+  @override
+  String get teacher_mode_enable => 'Enable teacher mode';
+
+  @override
+  String get teacher_mode_active_title => 'Teacher mode is active';
+
+  @override
+  String get teacher_mode_active_description =>
+      'Instructional information is shown in learning activities. Learner progress and badges are hidden while this mode is active.';
+
+  @override
+  String get teacher_mode_turn_off => 'Turn off teacher mode';
+
+  @override
+  String get learning_objective => 'Learning objective';
+
+  @override
+  String get group_code => 'Group code';
+
+  @override
+  String get group_code_title => 'Join a learner group';
+
+  @override
+  String get group_code_description =>
+      'Enter the group code from your teacher or paste a QR enrollment link. Your app progress will be linked to that group anonymously.';
+
+  @override
+  String get group_code_hint => 'Group code or enrollment link';
+
+  @override
+  String get group_code_required => 'Enter a group code';
+
+  @override
+  String get join_group => 'Join group';
+
+  @override
+  String get selected_group => 'Selected group';
+
+  @override
+  String get group_connected => 'Group connected';
+
+  @override
+  String get group_connected_message =>
+      'Your app is now linked to the selected learner group.';
+
+  @override
+  String get clear_group => 'Clear group';
+
+  @override
+  String get group_code_error =>
+      'The group code was not found or is not active.';
 
   @override
   String get terms => 'Terms';

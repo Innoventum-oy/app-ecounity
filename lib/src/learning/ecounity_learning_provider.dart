@@ -112,7 +112,7 @@ class EcoUnityLearningProvider with ChangeNotifier {
     int? moduleId,
     int? activityId,
   }) async {
-    progressEntries = await _repository.loadProgress(
+    progressEntries = await _repository.loadLocalProgress(
       language: language,
       moduleId: moduleId,
       activityId: activityId,
@@ -158,7 +158,7 @@ class EcoUnityLearningProvider with ChangeNotifier {
     String language = 'en',
     Map<String, dynamic> payload = const <String, dynamic>{},
   }) async {
-    final EcoUnityProgressEntry? saved = await _repository.saveProgress(
+    final EcoUnityProgressEntry? saved = await _repository.saveLocalProgress(
       moduleId: moduleId,
       activityId: activityId,
       status: status,

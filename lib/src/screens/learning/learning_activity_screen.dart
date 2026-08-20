@@ -10,6 +10,8 @@ import 'package:ecounity/src/learning/widgets/ecounity_content_review_panel.dart
 import 'package:ecounity/src/learning/widgets/ecounity_learning_copy.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_comic_player.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_media_image.dart';
+import 'package:ecounity/src/learning/widgets/ecounity_teacher_objective_card.dart';
+import 'package:ecounity/src/providers/teacher_mode_provider.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/widgets/screenscaffold.dart';
 import 'package:flutter/material.dart';
@@ -105,15 +107,20 @@ class _EcoUnityLearningActivityScreenState
     if (data == null || activity == null) {
       return const Center(child: Text('Activity not found'));
     }
+    final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
+      context,
+    ).isTeacherMode;
 
     final Widget content = switch (activity.type) {
       EcoUnityActivityType.comic => _buildComic(
         activity,
         data.language,
         loadingAdditionalScenes: data.loadingAdditionalScenes,
+        teacherModeEnabled: teacherModeEnabled,
       ),
       EcoUnityActivityType.quiz => _QuizActivityView(
         activity: activity,
+        teacherModeEnabled: teacherModeEnabled,
         reviewPanel: _reviewPanel(activity, data.language),
         onQuizSubmitted: (EcoUnityQuizResult result, int attemptNumber) =>
             _trackQuizCompleted(activity, data.language, result, attemptNumber),
@@ -123,6 +130,7 @@ class _EcoUnityLearningActivityScreenState
       ),
       EcoUnityActivityType.reflection => _ReflectionActivityView(
         activity: activity,
+        teacherModeEnabled: teacherModeEnabled,
         reviewPanel: _reviewPanel(activity, data.language),
         submitLabel: 'Submit reflection',
         onCompleted: (Map<String, dynamic> payload) {
@@ -131,6 +139,7 @@ class _EcoUnityLearningActivityScreenState
       ),
       EcoUnityActivityType.challenge => _ReflectionActivityView(
         activity: activity,
+        teacherModeEnabled: teacherModeEnabled,
         reviewPanel: _reviewPanel(activity, data.language),
         submitLabel: 'Complete challenge',
         onCompleted: (Map<String, dynamic> payload) {
@@ -139,6 +148,7 @@ class _EcoUnityLearningActivityScreenState
       ),
       _ => _ReadableActivityView(
         activity: activity,
+        teacherModeEnabled: teacherModeEnabled,
         reviewPanel: _reviewPanel(activity, data.language),
         onCompleted: () {
           return _markCompleted(activity, data.language);
@@ -160,11 +170,19 @@ class _EcoUnityLearningActivityScreenState
     EcoUnityLearningActivity activity,
     String language, {
     required bool loadingAdditionalScenes,
+    required bool teacherModeEnabled,
   }) {
     if (activity.comicScenes.isEmpty) {
       return Column(
         children: <Widget>[
           _reviewPanel(activity, language),
+          if (teacherModeEnabled && activity.learningObjective.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: EcoUnityTeacherObjectiveCard(
+                learningObjective: activity.learningObjective,
+              ),
+            ),
           const Expanded(
             child: Center(child: Text('No comic scenes available')),
           ),
@@ -175,6 +193,13 @@ class _EcoUnityLearningActivityScreenState
     return Column(
       children: <Widget>[
         _reviewPanel(activity, language),
+        if (teacherModeEnabled && activity.learningObjective.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: EcoUnityTeacherObjectiveCard(
+              learningObjective: activity.learningObjective,
+            ),
+          ),
         Expanded(
           child: EcoUnityComicPlayer(
             comic: EcoUnityComic(
@@ -363,72 +388,91 @@ class _EcoUnityLearningActivityScreenState
   }) async {
     final int? moduleId = activity.moduleId;
     final int? activityId = activity.id;
-    if (moduleId == null || activityId == null) {
-      return;
+    final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
+      context,
+      listen: false,
+    ).isTeacherMode;
+
+    if (!teacherModeEnabled) {
+      if (moduleId == null || activityId == null) {
+        return;
+      }
+
+      final EcoUnityLearningProvider provider =
+          Provider.of<EcoUnityLearningProvider>(context, listen: false);
+
+      await provider.markActivityCompleted(
+        moduleId: moduleId,
+        activityId: activityId,
+        language: language,
+        payload: <String, dynamic>{
+          'activity_type': _activityTypeLabel(activity.type).toLowerCase(),
+          ...payload,
+        },
+      );
+
+      if (!mounted) {
+        return;
+      }
+      final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+      if (analytics != null) {
+        unawaited(
+          analytics.trackActivityCompleted(
+            activity,
+            language: language,
+            eventData: _completionAnalyticsData(
+              activity,
+              language,
+              payload: payload,
+            ),
+          ),
+        );
+      }
+      _trackModuleCompletedIfReady(provider, moduleId, language);
     }
 
-    final EcoUnityLearningProvider provider =
-        Provider.of<EcoUnityLearningProvider>(context, listen: false);
-
-    await provider.markActivityCompleted(
-      moduleId: moduleId,
-      activityId: activityId,
-      language: language,
-      payload: <String, dynamic>{
-        'activity_type': _activityTypeLabel(activity.type).toLowerCase(),
-        ...payload,
-      },
+    final bool showedCompletionDialog = await _showCompletionDialogIfNeeded(
+      activity,
+      language,
     );
-
     if (!mounted) {
       return;
     }
-    final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
-    if (analytics != null) {
-      unawaited(
-        analytics.trackActivityCompleted(
-          activity,
-          language: language,
-          eventData: _completionAnalyticsData(
-            activity,
-            language,
-            payload: payload,
-          ),
-        ),
-      );
+    if (showedCompletionDialog || activity.completionText.trim().isEmpty) {
+      await Navigator.of(context).maybePop();
     }
-    _trackModuleCompletedIfReady(provider, moduleId, language);
-    await _showCompletionDialogIfNeeded(activity, language);
   }
 
-  Future<void> _showCompletionDialogIfNeeded(
+  Future<bool> _showCompletionDialogIfNeeded(
     EcoUnityLearningActivity activity,
     String language,
   ) async {
     final String completionText = activity.completionText.trim();
     if (completionText.isEmpty) {
-      return;
+      return false;
     }
     final String key = _activityAnalyticsKey(activity, language);
     if (!_shownCompletionDialogKeys.add(key) || !mounted) {
-      return;
+      return false;
     }
 
-    await showDialog<void>(
+    final bool? shouldContinue = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Activity completed'),
           content: EcoUnityLearningCopy(text: completionText),
           actions: <Widget>[
             TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
               child: const Text('Continue'),
             ),
           ],
         );
       },
     );
+    return shouldContinue ?? false;
   }
 
   void _trackActivityStarted(
@@ -436,6 +480,9 @@ class _EcoUnityLearningActivityScreenState
     String language,
   ) {
     final int? activityId = activity.id;
+    if (_teacherModeEnabled()) {
+      return;
+    }
     if (activityId == null) {
       return;
     }
@@ -457,6 +504,9 @@ class _EcoUnityLearningActivityScreenState
     EcoUnityQuizResult result,
     int attemptNumber,
   ) {
+    if (_teacherModeEnabled()) {
+      return Future<void>.value();
+    }
     final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
     if (analytics == null) {
       return Future<void>.value();
@@ -474,6 +524,9 @@ class _EcoUnityLearningActivityScreenState
     String language,
     EcoUnityComicScene scene,
   ) {
+    if (_teacherModeEnabled()) {
+      return;
+    }
     final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
     if (analytics == null) {
       return;
@@ -489,6 +542,9 @@ class _EcoUnityLearningActivityScreenState
     EcoUnityComicScene scene,
     EcoUnityComicDecision decision,
   ) {
+    if (_teacherModeEnabled()) {
+      return;
+    }
     final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
     if (analytics == null) {
       return;
@@ -508,6 +564,9 @@ class _EcoUnityLearningActivityScreenState
     int moduleId,
     String language,
   ) {
+    if (_teacherModeEnabled()) {
+      return;
+    }
     final EcoUnitySdgModule? module = provider.moduleById(moduleId);
     if (module == null ||
         module.completionRatio(provider.progressEntries) < 1) {
@@ -577,6 +636,17 @@ class _EcoUnityLearningActivityScreenState
         .clamp(0, 86400)
         .toInt();
   }
+
+  bool _teacherModeEnabled() {
+    try {
+      return Provider.of<TeacherModeProvider>(
+        context,
+        listen: false,
+      ).isTeacherMode;
+    } catch (_) {
+      return false;
+    }
+  }
 }
 
 EcoUnityAnalyticsService? _analyticsOf(BuildContext context) {
@@ -613,11 +683,13 @@ bool _needsAdditionalComicScenes(EcoUnityLearningActivity activity) {
 class _ReadableActivityView extends StatefulWidget {
   const _ReadableActivityView({
     required this.activity,
+    required this.teacherModeEnabled,
     required this.reviewPanel,
     required this.onCompleted,
   });
 
   final EcoUnityLearningActivity activity;
+  final bool teacherModeEnabled;
   final Widget reviewPanel;
   final Future<void> Function() onCompleted;
 
@@ -636,7 +708,10 @@ class _ReadableActivityViewState extends State<_ReadableActivityView> {
       children: <Widget>[
         _ActivityHeroImage(activity: widget.activity),
         if (widget.activity.heroImage != null) const SizedBox(height: 16),
-        _ActivityIntro(activity: widget.activity),
+        _ActivityIntro(
+          activity: widget.activity,
+          teacherModeEnabled: widget.teacherModeEnabled,
+        ),
         widget.reviewPanel,
         if (widget.activity.body.isNotEmpty) ...<Widget>[
           const SizedBox(height: 16),
@@ -695,12 +770,14 @@ class _ReadableActivityViewState extends State<_ReadableActivityView> {
 class _QuizActivityView extends StatefulWidget {
   const _QuizActivityView({
     required this.activity,
+    required this.teacherModeEnabled,
     required this.reviewPanel,
     required this.onQuizSubmitted,
     required this.onCompleted,
   });
 
   final EcoUnityLearningActivity activity;
+  final bool teacherModeEnabled;
   final Widget reviewPanel;
   final Future<void> Function(EcoUnityQuizResult result, int attemptNumber)
   onQuizSubmitted;
@@ -755,7 +832,10 @@ class _QuizActivityViewState extends State<_QuizActivityView> {
       return ListView(
         padding: const EdgeInsets.all(16),
         children: <Widget>[
-          _QuizActivityHeader(activity: widget.activity),
+          _QuizActivityHeader(
+            activity: widget.activity,
+            teacherModeEnabled: widget.teacherModeEnabled,
+          ),
           widget.reviewPanel,
           const SizedBox(height: 16),
           const _InlineActivityMessage(
@@ -788,7 +868,10 @@ class _QuizActivityViewState extends State<_QuizActivityView> {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: <Widget>[
-            _QuizActivityHeader(activity: widget.activity),
+            _QuizActivityHeader(
+              activity: widget.activity,
+              teacherModeEnabled: widget.teacherModeEnabled,
+            ),
             widget.reviewPanel,
             const SizedBox(height: 12),
             _QuizProgressHeader(
@@ -919,7 +1002,9 @@ class _QuizActivityViewState extends State<_QuizActivityView> {
     });
 
     try {
-      await widget.onQuizSubmitted(result, _attemptNumber);
+      if (!widget.teacherModeEnabled) {
+        await widget.onQuizSubmitted(result, _attemptNumber);
+      }
 
       if (result.passed) {
         await widget.onCompleted(<String, dynamic>{
@@ -967,67 +1052,87 @@ class _QuizActivityViewState extends State<_QuizActivityView> {
 }
 
 class _QuizActivityHeader extends StatelessWidget {
-  const _QuizActivityHeader({required this.activity});
+  const _QuizActivityHeader({
+    required this.activity,
+    required this.teacherModeEnabled,
+  });
 
   final EcoUnityLearningActivity activity;
+  final bool teacherModeEnabled;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: EcoUnityColors.surfaceContainer,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: EcoUnityColors.outlineVariant),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAFBFB),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.quiz_outlined,
-                color: EcoUnityColors.deepTeal,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    activity.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: EcoUnityColors.deepTeal,
-                      fontWeight: FontWeight.w900,
-                    ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: EcoUnityColors.surfaceContainer,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: EcoUnityColors.outlineVariant),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEAFBFB),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  if (activity.shortDescription.trim().isNotEmpty) ...<Widget>[
-                    const SizedBox(height: 4),
-                    Text(
-                      activity.shortDescription.trim(),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: EcoUnityColors.textSecondary,
-                        height: 1.25,
+                  child: const Icon(
+                    Icons.quiz_outlined,
+                    color: EcoUnityColors.deepTeal,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        activity.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: EcoUnityColors.deepTeal,
+                              fontWeight: FontWeight.w900,
+                            ),
                       ),
-                    ),
-                  ],
-                ],
-              ),
+                      if (activity.shortDescription
+                          .trim()
+                          .isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 4),
+                        Text(
+                          activity.shortDescription.trim(),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: EcoUnityColors.textSecondary,
+                                height: 1.25,
+                              ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+        if (teacherModeEnabled && activity.learningObjective.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: EcoUnityTeacherObjectiveCard(
+              learningObjective: activity.learningObjective,
+            ),
+          ),
+      ],
     );
   }
 }
@@ -1295,12 +1400,14 @@ class _QuizPageControls extends StatelessWidget {
 class _ReflectionActivityView extends StatefulWidget {
   const _ReflectionActivityView({
     required this.activity,
+    required this.teacherModeEnabled,
     required this.reviewPanel,
     required this.submitLabel,
     required this.onCompleted,
   });
 
   final EcoUnityLearningActivity activity;
+  final bool teacherModeEnabled;
   final Widget reviewPanel;
   final String submitLabel;
   final Future<void> Function(Map<String, dynamic> payload) onCompleted;
@@ -1328,7 +1435,10 @@ class _ReflectionActivityViewState extends State<_ReflectionActivityView> {
       children: <Widget>[
         _ActivityHeroImage(activity: widget.activity),
         if (widget.activity.heroImage != null) const SizedBox(height: 16),
-        _ActivityIntro(activity: widget.activity),
+        _ActivityIntro(
+          activity: widget.activity,
+          teacherModeEnabled: widget.teacherModeEnabled,
+        ),
         widget.reviewPanel,
         if (widget.activity.body.isNotEmpty) ...<Widget>[
           const SizedBox(height: 16),
@@ -1484,9 +1594,13 @@ class _InlineActivityMessage extends StatelessWidget {
 }
 
 class _ActivityIntro extends StatelessWidget {
-  const _ActivityIntro({required this.activity});
+  const _ActivityIntro({
+    required this.activity,
+    required this.teacherModeEnabled,
+  });
 
   final EcoUnityLearningActivity activity;
+  final bool teacherModeEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -1509,14 +1623,11 @@ class _ActivityIntro extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
-            if (activity.learningObjective.isNotEmpty) ...<Widget>[
+            if (teacherModeEnabled &&
+                activity.learningObjective.isNotEmpty) ...<Widget>[
               const SizedBox(height: 12),
-              EcoUnityLearningCopy(
-                text: activity.learningObjective,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: EcoUnityColors.deepTeal,
-                  fontWeight: FontWeight.w600,
-                ),
+              EcoUnityTeacherObjectiveCard(
+                learningObjective: activity.learningObjective,
               ),
             ],
           ],

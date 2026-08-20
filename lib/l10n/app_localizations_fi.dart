@@ -252,6 +252,7 @@ class AppLocalizationsFi extends AppLocalizations {
       'modules': 'Opi',
       'resources': 'Resurssit',
       'progress': 'Edistyminen',
+      'teacher': 'Opettaja',
       'other': 'Valikko:$item',
     });
     return '$_temp0';
@@ -406,6 +407,68 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get start => 'Aloita';
+
+  @override
+  String get teacher_mode => 'Opettajatila';
+
+  @override
+  String get teacher_mode_label => 'Olen opettaja';
+
+  @override
+  String get teacher_mode_description =>
+      'Opettajatila lisää oppimissisältöihin opetuksellista tietoa. Oppijan edistyminen ja merkit poistetaan käytöstä, kun tila on aktiivinen.';
+
+  @override
+  String get teacher_mode_enable => 'Ota opettajatila käyttöön';
+
+  @override
+  String get teacher_mode_active_title => 'Opettajatila on aktiivinen';
+
+  @override
+  String get teacher_mode_active_description =>
+      'Oppimistehtävissä näytetään opetuksellista tietoa. Oppijan edistyminen ja merkit ovat piilossa, kun tämä tila on aktiivinen.';
+
+  @override
+  String get teacher_mode_turn_off => 'Poista opettajatila käytöstä';
+
+  @override
+  String get learning_objective => 'Oppimistavoite';
+
+  @override
+  String get group_code => 'Ryhmäkoodi';
+
+  @override
+  String get group_code_title => 'Liity oppijaryhmään';
+
+  @override
+  String get group_code_description =>
+      'Syötä opettajalta saamasi ryhmäkoodi tai liitä QR-liittymislinkki. Sovelluksen edistyminen liitetään tähän ryhmään anonyymisti.';
+
+  @override
+  String get group_code_hint => 'Ryhmäkoodi tai liittymislinkki';
+
+  @override
+  String get group_code_required => 'Syötä ryhmäkoodi';
+
+  @override
+  String get join_group => 'Liity ryhmään';
+
+  @override
+  String get selected_group => 'Valittu ryhmä';
+
+  @override
+  String get group_connected => 'Ryhmä yhdistetty';
+
+  @override
+  String get group_connected_message =>
+      'Sovellus on nyt liitetty valittuun oppijaryhmään.';
+
+  @override
+  String get clear_group => 'Poista ryhmä';
+
+  @override
+  String get group_code_error =>
+      'Ryhmäkoodia ei löytynyt tai se ei ole aktiivinen.';
 
   @override
   String get terms => 'Käyttöehdot';

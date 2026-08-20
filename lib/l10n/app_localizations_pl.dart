@@ -252,6 +252,7 @@ class AppLocalizationsPl extends AppLocalizations {
       'modules': 'Nauka',
       'resources': 'Zasoby',
       'progress': 'Postęp',
+      'teacher': 'Nauczyciel',
       'other': 'Menu:$item',
     });
     return '$_temp0';
@@ -407,6 +408,68 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get start => 'Rozpocznij';
+
+  @override
+  String get teacher_mode => 'Tryb nauczyciela';
+
+  @override
+  String get teacher_mode_label => 'Jestem nauczycielem';
+
+  @override
+  String get teacher_mode_description =>
+      'Tryb nauczyciela dodaje informacje dydaktyczne do treści. Postępy ucznia i odznaki są wyłączone, gdy ten tryb jest aktywny.';
+
+  @override
+  String get teacher_mode_enable => 'Włącz tryb nauczyciela';
+
+  @override
+  String get teacher_mode_active_title => 'Tryb nauczyciela jest aktywny';
+
+  @override
+  String get teacher_mode_active_description =>
+      'W aktywnościach są wyświetlane informacje dydaktyczne. Postępy ucznia i odznaki są ukryte, gdy ten tryb jest aktywny.';
+
+  @override
+  String get teacher_mode_turn_off => 'Wyłącz tryb nauczyciela';
+
+  @override
+  String get learning_objective => 'Cel nauki';
+
+  @override
+  String get group_code => 'Kod grupy';
+
+  @override
+  String get group_code_title => 'Dołącz do grupy uczniów';
+
+  @override
+  String get group_code_description =>
+      'Wpisz kod grupy od nauczyciela lub wklej link zapisu z kodu QR. Postęp w aplikacji zostanie anonimowo powiązany z tą grupą.';
+
+  @override
+  String get group_code_hint => 'Kod grupy lub link zapisu';
+
+  @override
+  String get group_code_required => 'Wpisz kod grupy';
+
+  @override
+  String get join_group => 'Dołącz do grupy';
+
+  @override
+  String get selected_group => 'Wybrana grupa';
+
+  @override
+  String get group_connected => 'Grupa połączona';
+
+  @override
+  String get group_connected_message =>
+      'Aplikacja jest teraz powiązana z wybraną grupą uczniów.';
+
+  @override
+  String get clear_group => 'Usuń grupę';
+
+  @override
+  String get group_code_error =>
+      'Nie znaleziono kodu grupy albo kod nie jest aktywny.';
 
   @override
   String get terms => 'Regulamin';

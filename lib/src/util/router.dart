@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import 'package:ecounity/l10n/app_localizations_extension.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
+import 'package:ecounity/src/providers/teacher_mode_provider.dart';
 import 'package:ecounity/src/providers/selected_pathway_notifier.dart';
 import 'package:ecounity/src/screens/achievements/achievements_view.dart';
 import 'package:ecounity/src/screens/challenges/challenges_screen.dart';
@@ -17,6 +18,7 @@ import 'package:ecounity/src/screens/learning/learning_module_detail_screen.dart
 import 'package:ecounity/src/screens/learning/learning_modules_screen.dart';
 import 'package:ecounity/src/screens/register/registration_form.dart';
 import 'package:ecounity/src/screens/challenges/quiz/quiz.dart';
+import 'package:ecounity/src/screens/teacher/teacher_view.dart';
 import 'package:ecounity/src/screens/video_list/video_list_screen.dart';
 import '../objects/ecounity_badge.dart';
 import '../screens/badge_view/badge_view.dart';
@@ -242,7 +244,19 @@ class AppRouter {
         break;
 
       case 'progress':
-        targetWidget = AchievementsView(navIndex: navIndex);
+        if (Provider.of<TeacherModeProvider>(
+          context,
+          listen: false,
+        ).isTeacherMode) {
+          targetWidget = TeacherView(navIndex: navIndex);
+        } else {
+          targetWidget = AchievementsView(navIndex: navIndex);
+        }
+        routeFound = true;
+        break;
+
+      case 'teacher':
+        targetWidget = TeacherView(navIndex: navIndex);
         routeFound = true;
         break;
 

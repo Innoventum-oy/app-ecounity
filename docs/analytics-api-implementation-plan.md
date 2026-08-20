@@ -1,6 +1,6 @@
 # EcoUnity analytics app API integration
 
-This document defines the app-side API contract for sending EcoUnity analytics from the Flutter app to iCMS.
+This document defines the app-side API contract for EcoUnity Flutter app analytics, group enrollment, and teacher-mode aggregate reporting.
 
 The backend stores pseudonymous analytics only. Do not send learner names, emails, phone numbers, school pupil IDs, exact birth dates, GPS/device location, free-text reflections, answer text, comments, notes, stack traces, or raw error messages.
 
@@ -12,7 +12,7 @@ Use the normal EcoUnity iCMS host as the base URL.
 https://<ecounity-cms-host>
 ```
 
-All analytics calls are `POST` requests with JSON bodies.
+Analytics ingestion calls are `POST` requests with JSON bodies.
 
 ```http
 Content-Type: application/json
@@ -22,15 +22,19 @@ X-EcoUnity-Analytics-Token: <configured app analytics token>
 
 The token must match `settings.analytics.ingestionToken` in `site/modules/ecounitylearning/settings.json`.
 
+Public enrollment and teacher-mode report endpoints do not use `X-EcoUnity-Analytics-Token`. Enrollment is protected by the generated join token in the URL. Teacher-mode reporting is protected by a generated six-letter uppercase teacher token and returns aggregate group statistics only.
+
 ## Recommended app lifecycle
 
 1. On first app launch, generate a random UUID and store it locally as `analytics_user_id`.
-2. Call `POST /api/ecounitylearning/analytics/identity`.
-3. When a foreground app session starts, generate a random UUID as `session_id`.
-4. Call `POST /api/ecounitylearning/analytics/session/start`.
-5. Queue analytics events locally and send them to `POST /api/ecounitylearning/analytics/events/batch`.
-6. When the app session ends or is backgrounded long enough to count as ended, call `POST /api/ecounitylearning/analytics/session/end`.
-7. Retry failed event batches later. Keep `event_id` stable across retries so the backend can de-duplicate.
+2. If the app opens from a QR/deep link, resolve the join token with `GET /api/ecounitylearning/group/{join_token}`.
+3. Store the returned `group_key` / `pilot_key` locally as the user's current group context.
+4. Call `POST /api/ecounitylearning/analytics/identity`.
+5. When a foreground app session starts, generate a random UUID as `session_id`.
+6. Call `POST /api/ecounitylearning/analytics/session/start`.
+7. Queue analytics events locally and send them to `POST /api/ecounitylearning/analytics/events/batch`.
+8. When the app session ends or is backgrounded long enough to count as ended, call `POST /api/ecounitylearning/analytics/session/end`.
+9. Retry failed event batches later. Keep `event_id` stable across retries so the backend can de-duplicate.
 
 ## Common fields
 
@@ -40,7 +44,8 @@ These fields are accepted on identity, session, and event payloads.
 | --- | --- | --- | --- |
 | `analytics_user_id` | string | Required except identity may omit | Random UUID or opaque app id. If identity omits it, the backend generates one and returns it. |
 | `session_id` | string | Required for session calls, optional for events | Random UUID for one foreground app session. |
-| `pilot_key` | string | Optional | Stable non-PII pilot key, for example `FI-01`. |
+| `pilot_key` | string | Optional | Stable non-PII group key, for example `FI-01`. The analytics tables still store this field as `pilot_key` for compatibility. |
+| `pilot_enrolment_token` | string | Optional | Generated join token from a QR/deep link. Also accepted as `pilot_enrollment_token`, `enrolment_token`, or `enrollment_token`; the backend resolves it to `pilot_key`, `country`, and `language` when enrollment is active. |
 | `pilot_participant_code` | string | Optional | Non-PII participant matching code. `participant_code` is also accepted. |
 | `country` | string | Optional | Pilot/project country code, for example `FI`. Not GPS. |
 | `language` | string | Optional | App/content language, for example `en`, `fi`, `el`. Defaults to `en`. |
@@ -48,6 +53,63 @@ These fields are accepted on identity, session, and event payloads.
 | `app_version` | string | Optional | App version/build string. |
 
 Timestamps may be ISO 8601 strings or Unix timestamps in seconds or milliseconds. The backend accepts timestamps from `2020-01-01` up to 24 hours in the future.
+
+## Endpoint: group enrollment
+
+```http
+GET /api/ecounitylearning/group/{join_token}
+GET /api/ecounitylearning/pilot/{join_token}
+```
+
+Resolves a generated group join token into non-PII group context. New app code should prefer the `/group/` path. The `/pilot/` path remains available for older clients and existing printed QR links.
+
+The app may also be opened directly by the Universal Link / Android App Link paths:
+
+```text
+/ecounitylearning/group/{join_token}
+/ecounitylearning/pilot/{join_token}
+```
+
+When this happens, extract the final path segment as the join token and call the API endpoint above to get structured group context.
+
+### Response
+
+```json
+{
+  "status": "ok",
+  "group": {
+    "id": 1,
+    "pilot_key": "FI-01",
+    "pilot_group_identifier": "FI-01",
+    "group_key": "FI-01",
+    "group_identifier": "FI-01",
+    "name": "Finland group 1",
+    "country": "FI",
+    "language": "fi",
+    "status": "active",
+    "enrolment_token": "f4k9x7p2q8mn",
+    "join_token": "f4k9x7p2q8mn",
+    "deep_link_url": "https://ecounity.devsite.fi/ecounitylearning/pilot/f4k9x7p2q8mn",
+    "enrolment_enabled": 1
+  },
+  "pilot": {
+    "...": "same payload as group for backward compatibility"
+  }
+}
+```
+
+Store `group.group_key` as the current group identifier and send it as `pilot_key` on analytics calls. Alternatively, the app may send the raw join token as `pilot_enrolment_token`; the backend resolves active secure join tokens during ingestion.
+
+### Invalid or disabled link
+
+```json
+{
+  "status": "error",
+  "message": "Group enrollment link was not found or is not active."
+}
+```
+
+Invalid, disabled, missing, or weak legacy tokens return `404`.
 
 ## Endpoint: identity
 
@@ -73,6 +135,8 @@ Creates or updates the pseudonymous analytics user context.
 ```
 
 `analytics_user_id` may be omitted on this endpoint. If omitted, store the returned `analytics_user_id` locally and use it for all future calls.
+
+If the app only has a join token and has not yet resolved it, this endpoint may include `pilot_enrolment_token` instead of `pilot_key`.
 
 ### Response
 
@@ -341,6 +405,185 @@ Only context fields are inherited from the batch envelope: `pilot_key`, `pilot_p
 ```
 
 Batch-level errors return an error response. Per-event validation errors are reported in `results` with `status: "rejected"` while valid events in the same batch are still accepted.
+
+## Endpoint: teacher group report
+
+```http
+GET /api/ecounitylearning/groups/{teacher_token}/report
+GET /api/ecounitylearning/group/{teacher_token}/report
+```
+
+Returns aggregate teacher-mode statistics for one group. The teacher token is a generated six-letter uppercase code stored on the group object. It is intentionally easy to type, so the endpoint never returns learner identifiers, participant codes, raw events, or event payload JSON.
+
+Optional query filters:
+
+```text
+date_from=2026-08-01
+date_to=2026-08-31
+sdg_number=5
+country=FI
+language=fi
+platform=android
+app_version=1.0.0
+```
+
+### Response
+
+```json
+{
+  "status": "ok",
+  "report": {
+    "group": {
+      "id": 1,
+      "group_key": "FI-01",
+      "pilot_key": "FI-01",
+      "name": "Finland group 1",
+      "country": "FI",
+      "language": "fi",
+      "status": "active"
+    },
+    "filters": {
+      "date_from": "2026-08-01",
+      "date_to": "2026-08-31",
+      "pilot_key": "FI-01",
+      "sdg_number": 5,
+      "country": "",
+      "language": "",
+      "platform": "",
+      "app_version": ""
+    },
+    "summary": {
+      "enrolled_users": 24,
+      "participant_code_rows": 0,
+      "active_users": 22,
+      "sessions": 68,
+      "events": 340,
+      "activity_opened_users": 21,
+      "activity_completed_users": 17,
+      "activity_completion_rate": 81.0
+    },
+    "sdgs": [
+      {
+        "sdg_number": 5,
+        "module_opened_users": 20,
+        "module_completed_users": 14,
+        "activity_opened_users": 19,
+        "activity_completed_users": 15,
+        "activity_completion_rate": 78.9,
+        "activities": [
+          {
+            "sdg_number": 5,
+            "activity_id": 17,
+            "activity_type": "mlr",
+            "title": "What is Gender Equality?",
+            "slug": "sdg-5-mlr-1",
+            "opened_users": 18,
+            "completed_users": 14,
+            "completion_rate": 77.8
+          }
+        ]
+      }
+    ],
+    "schemaReady": true,
+    "schemaMissing": false,
+    "lastUpdated": "2026-08-20 09:30:00"
+  }
+}
+```
+
+`activity_completion_rate` is `null` when there are no opened users in the denominator.
+
+### Invalid teacher token
+
+```json
+{
+  "status": "error",
+  "message": "Group report token was not found."
+}
+```
+
+Invalid or unknown teacher tokens return `404`.
+
+## Endpoint: teacher group comparison
+
+```http
+POST /api/ecounitylearning/groups/compare
+POST /api/ecounitylearning/group/compare
+```
+
+Compares aggregate teacher-mode statistics for multiple groups. The endpoint accepts up to 12 valid teacher tokens per request. Unknown tokens are ignored; if no valid groups are found, the endpoint returns `404`.
+
+### Request
+
+```json
+{
+  "tokens": ["ABCDEF", "QWERTY"],
+  "date_from": "2026-08-01",
+  "date_to": "2026-08-31",
+  "sdg_number": 5
+}
+```
+
+Accepted token field aliases: `tokens`, `teacher_tokens`, `teacherTokens`, `group_tokens`, and `groupTokens`.
+
+### Response
+
+```json
+{
+  "status": "ok",
+  "requested_group_count": 2,
+  "returned_group_count": 2,
+  "comparison": {
+    "filters": {
+      "date_from": "2026-08-01",
+      "date_to": "2026-08-31",
+      "pilot_key": "",
+      "sdg_number": 5,
+      "country": "",
+      "language": "",
+      "platform": "",
+      "app_version": ""
+    },
+    "groups": [
+      {
+        "group_key": "FI-01",
+        "pilot_key": "FI-01",
+        "name": "Finland group 1",
+        "enrolled_users": 24,
+        "active_users": 22,
+        "activity_opened_users": 21,
+        "activity_completed_users": 17,
+        "activity_completion_rate": 81.0
+      }
+    ],
+    "sdgs": [
+      {
+        "sdg_number": 5,
+        "groups": [
+          {
+            "group_key": "FI-01",
+            "name": "Finland group 1",
+            "module_opened_users": 20,
+            "module_completed_users": 14,
+            "activity_opened_users": 19,
+            "activity_completed_users": 15,
+            "activity_completion_rate": 78.9
+          }
+        ]
+      }
+    ],
+    "reports": [
+      {
+        "...": "full per-group report objects"
+      }
+    ],
+    "hasReports": true,
+    "lastUpdated": "2026-08-20 09:30:00"
+  }
+}
+```
+
+The real response includes full per-group `reports`; clients that only need a compact comparison can read `comparison.groups` and `comparison.sdgs`.
 
 ## Whitelisted event types
 
@@ -631,6 +874,7 @@ Do not send raw exception text, stack traces, URLs containing personal data, or 
 | `201` | New identity/session/event accepted | Mark sent. |
 | `400` | Invalid payload, disallowed event type, prohibited PII/free-text, bad timestamp | Drop or quarantine the event; fix client payload. |
 | `401` | Missing or invalid analytics token | Stop sending until app configuration is fixed. |
+| `404` | Enrollment link, teacher token, or comparison groups were not found | Ask for a new QR/code or show an unavailable group state. |
 | `503` | Token not configured or analytics schema unavailable | Retry later after backend configuration/deployment. |
 | `500` | Unexpected ingestion failure | Retry later with the same `event_id`. |
 

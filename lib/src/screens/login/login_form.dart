@@ -12,7 +12,11 @@ import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:core/core.dart' as core;
 import 'package:ecounity/l10n/app_localizations_extension.dart';
+import 'package:ecounity/src/analytics/ecounity_group_context.dart';
+import 'package:ecounity/src/analytics/ecounity_group_enrollment_service.dart';
+import 'package:ecounity/src/providers/ecounity_group_context_provider.dart';
 import 'package:ecounity/src/providers/locale_provider.dart';
+import 'package:ecounity/src/providers/teacher_mode_provider.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/util/utils.dart';
 import '../../util/router.dart';
@@ -45,7 +49,7 @@ const List<Locale> _welcomeLocales = <Locale>[
 ];
 
 /// Login screen mode
-enum LoginMode { initial, login, register, reset }
+enum LoginMode { initial, login, groupCode, register, reset }
 
 /// Login screen widget
 class Login extends StatefulWidget {
@@ -75,6 +79,8 @@ class LoginState extends State<Login> {
   LoginMode mode = LoginMode.initial; // login mode
   String versionInfo = '';
   String appDataVersion = '';
+  final TextEditingController _groupCodeController = TextEditingController();
+  String? _groupCodeError;
 
   String _fundingLogoAssetFor(Locale locale) {
     return _fundingLogoAssetsByLanguage[locale.languageCode] ??
@@ -139,6 +145,7 @@ class LoginState extends State<Login> {
 
   @override
   void dispose() {
+    _groupCodeController.dispose();
     super.dispose();
   }
 
@@ -150,6 +157,137 @@ class LoginState extends State<Login> {
             appDataVersion = val;
           }),
         );
+  }
+
+  Future<void> _setTeacherMode(bool enabled) async {
+    final TeacherModeProvider teacherModeProvider =
+        Provider.of<TeacherModeProvider>(context, listen: false);
+    if (!enabled) {
+      await teacherModeProvider.setTeacherMode(false);
+      return;
+    }
+
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(context.l10n.teacher_mode),
+          content: Text(context.l10n.teacher_mode_description),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(context.l10n.button_cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(context.l10n.teacher_mode_enable),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true && mounted) {
+      await teacherModeProvider.setTeacherMode(true);
+    }
+  }
+
+  Future<void> _submitGroupCode() async {
+    final String code = _groupCodeController.text.trim();
+    if (code.isEmpty) {
+      setState(() {
+        _groupCodeError = context.l10n.group_code_required;
+      });
+      return;
+    }
+
+    setState(() {
+      _groupCodeError = null;
+    });
+
+    try {
+      final EcoUnityAnalyticsGroupContext group =
+          await Provider.of<EcoUnityGroupContextProvider>(
+            context,
+            listen: false,
+          ).enrollWithCode(code);
+      final String language = await _applyGroupLanguage(group.language);
+      if (!mounted) {
+        return;
+      }
+      final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+      if (analytics != null) {
+        await analytics.handleGroupContextChanged(language: language);
+      }
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        mode = LoginMode.initial;
+        _groupCodeController.clear();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.group_connected_message),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } on EcoUnityGroupEnrollmentException catch (exception) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _groupCodeError = exception.message.isNotEmpty
+            ? exception.message
+            : context.l10n.group_code_error;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _groupCodeError = context.l10n.group_code_error;
+      });
+    }
+  }
+
+  Future<void> _clearGroupContext() async {
+    await Provider.of<EcoUnityGroupContextProvider>(
+      context,
+      listen: false,
+    ).clearCurrentGroup();
+    if (!mounted) {
+      return;
+    }
+    final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
+    if (analytics != null) {
+      await analytics.handleGroupContextChanged(
+        language: Localizations.localeOf(context).languageCode,
+      );
+    }
+  }
+
+  Future<String> _applyGroupLanguage(String? languageCode) async {
+    final String fallbackLanguage = Localizations.localeOf(
+      context,
+    ).languageCode;
+    final String? normalized = languageCode?.trim().toLowerCase();
+    if (normalized == null ||
+        !_welcomeLocales.any(
+          (Locale locale) => locale.languageCode == normalized,
+        )) {
+      return await core.Settings().getLanguage() ?? fallbackLanguage;
+    }
+
+    Provider.of<LocaleProvider>(
+      context,
+      listen: false,
+    ).setLocale(Locale(normalized));
+    await core.Settings().setLanguage(normalized);
+    if (mounted) {
+      await loadAppData(context);
+    }
+    return normalized;
   }
 
   Widget serverSelect() {
@@ -397,6 +535,10 @@ class LoginState extends State<Login> {
 
     final List<Widget> debugControls = [];
     final List<Widget> contents = [];
+    final EcoUnityGroupContextProvider groupContextProvider =
+        Provider.of<EcoUnityGroupContextProvider>(context);
+    final TeacherModeProvider teacherModeProvider =
+        Provider.of<TeacherModeProvider>(context);
     if (serversLoaded && kDebugMode && !_screenshotMode) {
       debugControls.add(serverSelect());
     }
@@ -419,6 +561,18 @@ class LoginState extends State<Login> {
             Wrap(spacing: 8, runSpacing: 8, children: debugControls),
           ],
           const SizedBox(height: 18),
+          _TeacherModeCheckbox(
+            selected: teacherModeProvider.isTeacherMode,
+            onChanged: _setTeacherMode,
+          ),
+          if (groupContextProvider.currentGroup != null) ...<Widget>[
+            const SizedBox(height: 12),
+            _SelectedGroupCard(
+              group: groupContextProvider.currentGroup!,
+              onClear: _clearGroupContext,
+            ),
+          ],
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
@@ -434,15 +588,100 @@ class LoginState extends State<Login> {
           ),
           const SizedBox(height: 8),
           Center(
-            child: TextButton(
-              onPressed: () {
-                setState(() {
-                  mode = LoginMode.login;
-                });
-              },
-              child: Text(context.l10n.button_login),
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
+              children: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      mode = LoginMode.login;
+                    });
+                  },
+                  child: Text(context.l10n.button_login),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _groupCodeError = null;
+                      mode = LoginMode.groupCode;
+                    });
+                  },
+                  icon: const Icon(Icons.qr_code_2_rounded),
+                  label: Text(context.l10n.group_code),
+                ),
+              ],
             ),
           ),
+        ]);
+        break;
+      case LoginMode.groupCode:
+        contents.addAll(<Widget>[
+          Row(
+            children: <Widget>[
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    mode = LoginMode.initial;
+                  });
+                },
+                icon: const Icon(Icons.arrow_back),
+              ),
+              Expanded(
+                child: Text(
+                  context.l10n.group_code_title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: EcoUnityColors.deepTeal,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            context.l10n.group_code_description,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: EcoUnityColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 18),
+          TextField(
+            controller: _groupCodeController,
+            enabled: !groupContextProvider.enrolling,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _submitGroupCode(),
+            decoration: InputDecoration(
+              labelText: context.l10n.group_code,
+              hintText: context.l10n.group_code_hint,
+              prefixIcon: const Icon(Icons.qr_code_2_rounded),
+              errorText: _groupCodeError ?? groupContextProvider.error,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: groupContextProvider.enrolling
+                  ? null
+                  : _submitGroupCode,
+              icon: groupContextProvider.enrolling
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.group_add_outlined),
+              label: Text(context.l10n.join_group),
+            ),
+          ),
+          if (groupContextProvider.currentGroup != null) ...<Widget>[
+            const SizedBox(height: 16),
+            _SelectedGroupCard(
+              group: groupContextProvider.currentGroup!,
+              onClear: _clearGroupContext,
+            ),
+          ],
         ]);
         break;
       case LoginMode.login:
@@ -609,6 +848,142 @@ class LoginState extends State<Login> {
         style: const TextStyle(
           fontWeight: FontWeight.w300,
           //color: Color(0xFFffe8d7)
+        ),
+      ),
+    );
+  }
+}
+
+class _TeacherModeCheckbox extends StatelessWidget {
+  const _TeacherModeCheckbox({required this.selected, required this.onChanged});
+
+  final bool selected;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => onChanged(!selected),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: selected ? EcoUnityColors.teacherSurface : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: selected
+                  ? EcoUnityColors.teacherBorder
+                  : EcoUnityColors.outlineVariant,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            child: Row(
+              children: <Widget>[
+                Checkbox(
+                  value: selected,
+                  onChanged: (bool? value) => onChanged(value ?? false),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    context.l10n.teacher_mode_label,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: EcoUnityColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.school_outlined,
+                  color: EcoUnityColors.warmOrange,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectedGroupCard extends StatelessWidget {
+  const _SelectedGroupCard({required this.group, required this.onClear});
+
+  final EcoUnityAnalyticsGroupContext group;
+  final Future<void> Function() onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final String subtitle = <String>[
+      if (group.effectivePilotKey != null) group.effectivePilotKey!,
+      if (group.country != null) group.country!,
+      if (group.language != null) group.language!.toUpperCase(),
+    ].join(' · ');
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAFBFB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: EcoUnityColors.turquoise),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: <Widget>[
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: EcoUnityColors.turquoise,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.groups_2_outlined, color: Colors.white),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    context.l10n.selected_group,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: EcoUnityColors.deepTeal,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    group.displayName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: EcoUnityColors.textPrimary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (subtitle.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: EcoUnityColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: context.l10n.clear_group,
+              onPressed: () => unawaited(onClear()),
+              icon: const Icon(Icons.close_rounded),
+            ),
+          ],
         ),
       ),
     );

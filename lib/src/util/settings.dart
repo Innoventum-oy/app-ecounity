@@ -51,6 +51,7 @@ class AppRoutes {
   static const String modules = '/learningmodules';
   static const String submodules = '/submodules';
   static const String progress = '/progress';
+  static const String teacher = '/teacher';
   static const String resources = '/resources';
 }
 

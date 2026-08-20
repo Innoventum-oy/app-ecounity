@@ -523,7 +523,7 @@ abstract class AppLocalizations {
   /// Menu navigation items map
   ///
   /// In en, this message translates to:
-  /// **'{item, select, home{Home} pathways{Pathways} challenges{Challenges} videolist{Videos} selfReflectionHub{Self-reflection Hub} lessons{Lessons} modules{Learn} resources{Resources} progress{Progress} other{Menu:{item}}}'**
+  /// **'{item, select, home{Home} pathways{Pathways} challenges{Challenges} videolist{Videos} selfReflectionHub{Self-reflection Hub} lessons{Lessons} modules{Learn} resources{Resources} progress{Progress} teacher{Teacher} other{Menu:{item}}}'**
   String navigation_item(String item);
 
   /// No description provided for @next.
@@ -801,6 +801,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start'**
   String get start;
+
+  /// No description provided for @teacher_mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher mode'**
+  String get teacher_mode;
+
+  /// No description provided for @teacher_mode_label.
+  ///
+  /// In en, this message translates to:
+  /// **'I am a teacher'**
+  String get teacher_mode_label;
+
+  /// No description provided for @teacher_mode_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher mode adds instructional information to learning content. Learner progress and badges are disabled while teacher mode is active.'**
+  String get teacher_mode_description;
+
+  /// No description provided for @teacher_mode_enable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable teacher mode'**
+  String get teacher_mode_enable;
+
+  /// No description provided for @teacher_mode_active_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher mode is active'**
+  String get teacher_mode_active_title;
+
+  /// No description provided for @teacher_mode_active_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructional information is shown in learning activities. Learner progress and badges are hidden while this mode is active.'**
+  String get teacher_mode_active_description;
+
+  /// No description provided for @teacher_mode_turn_off.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off teacher mode'**
+  String get teacher_mode_turn_off;
+
+  /// No description provided for @learning_objective.
+  ///
+  /// In en, this message translates to:
+  /// **'Learning objective'**
+  String get learning_objective;
+
+  /// No description provided for @group_code.
+  ///
+  /// In en, this message translates to:
+  /// **'Group code'**
+  String get group_code;
+
+  /// No description provided for @group_code_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Join a learner group'**
+  String get group_code_title;
+
+  /// No description provided for @group_code_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the group code from your teacher or paste a QR enrollment link. Your app progress will be linked to that group anonymously.'**
+  String get group_code_description;
+
+  /// No description provided for @group_code_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Group code or enrollment link'**
+  String get group_code_hint;
+
+  /// No description provided for @group_code_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a group code'**
+  String get group_code_required;
+
+  /// No description provided for @join_group.
+  ///
+  /// In en, this message translates to:
+  /// **'Join group'**
+  String get join_group;
+
+  /// No description provided for @selected_group.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected group'**
+  String get selected_group;
+
+  /// No description provided for @group_connected.
+  ///
+  /// In en, this message translates to:
+  /// **'Group connected'**
+  String get group_connected;
+
+  /// No description provided for @group_connected_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Your app is now linked to the selected learner group.'**
+  String get group_connected_message;
+
+  /// No description provided for @clear_group.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear group'**
+  String get clear_group;
+
+  /// No description provided for @group_code_error.
+  ///
+  /// In en, this message translates to:
+  /// **'The group code was not found or is not active.'**
+  String get group_code_error;
 
   /// No description provided for @terms.
   ///

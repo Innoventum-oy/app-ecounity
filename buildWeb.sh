@@ -1,6 +1,6 @@
-user="root"
-server="dev1.innoventum.fi"
-path="/var/www/ecounityproject.app/www/html/app/"
+user="janne"
+server="icms4-dev.innoventum.fi"
+path="/var/www/ecounity.app/www/html/app/"
 baseHref="/app/"
 echo building ...
 # Build the web version of the app

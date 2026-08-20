@@ -53,6 +53,7 @@ void main() {
     expect(event['activity_id'], 108);
     expect(event['activity_type'], 'reflection');
     expect(eventData['activity_key'], 'sdg-5-reflection');
+    expect(eventData['source'], 'app');
     expect(eventData['duration_seconds'], 42);
     expect(eventData['score'], 7);
     expect(eventData['max_score'], 10);

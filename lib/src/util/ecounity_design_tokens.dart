@@ -18,4 +18,7 @@ class EcoUnityColors {
   static const Color success = Color(0xFF2F7D20);
   static const Color warning = Color(0xFF8A5200);
   static const Color error = Color(0xFFBA1A1A);
+  static const Color teacherSurface = Color(0xFFFFF4E6);
+  static const Color teacherSurfaceHigh = Color(0xFFFFE2BF);
+  static const Color teacherBorder = Color(0xFFE7A44D);
 }

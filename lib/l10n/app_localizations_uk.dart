@@ -252,6 +252,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'modules': 'Навчання',
       'resources': 'Ресурси',
       'progress': 'Прогрес',
+      'teacher': 'Учитель',
       'other': 'Меню:$item',
     });
     return '$_temp0';
@@ -406,6 +407,67 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get start => 'Почати';
+
+  @override
+  String get teacher_mode => 'Режим учителя';
+
+  @override
+  String get teacher_mode_label => 'Я вчитель';
+
+  @override
+  String get teacher_mode_description =>
+      'Режим учителя додає методичну інформацію до навчального контенту. Прогрес учня та відзнаки вимкнені, поки цей режим активний.';
+
+  @override
+  String get teacher_mode_enable => 'Увімкнути режим учителя';
+
+  @override
+  String get teacher_mode_active_title => 'Режим учителя активний';
+
+  @override
+  String get teacher_mode_active_description =>
+      'У навчальних активностях показується методична інформація. Прогрес учня та відзнаки приховані, поки цей режим активний.';
+
+  @override
+  String get teacher_mode_turn_off => 'Вимкнути режим учителя';
+
+  @override
+  String get learning_objective => 'Навчальна мета';
+
+  @override
+  String get group_code => 'Код групи';
+
+  @override
+  String get group_code_title => 'Приєднатися до навчальної групи';
+
+  @override
+  String get group_code_description =>
+      'Введіть код групи від учителя або вставте QR-посилання для реєстрації. Прогрес у застосунку буде анонімно пов\'язаний із цією групою.';
+
+  @override
+  String get group_code_hint => 'Код групи або посилання для реєстрації';
+
+  @override
+  String get group_code_required => 'Введіть код групи';
+
+  @override
+  String get join_group => 'Приєднатися до групи';
+
+  @override
+  String get selected_group => 'Вибрана група';
+
+  @override
+  String get group_connected => 'Групу підключено';
+
+  @override
+  String get group_connected_message =>
+      'Застосунок тепер пов\'язаний із вибраною навчальною групою.';
+
+  @override
+  String get clear_group => 'Очистити групу';
+
+  @override
+  String get group_code_error => 'Код групи не знайдено або він не активний.';
 
   @override
   String get terms => 'Умови';

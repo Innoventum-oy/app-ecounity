@@ -252,6 +252,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'modules': 'Impara',
       'resources': 'Risorse',
       'progress': 'Progresso',
+      'teacher': 'Docente',
       'other': 'Menu:$item',
     });
     return '$_temp0';
@@ -407,6 +408,68 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get start => 'Inizia';
+
+  @override
+  String get teacher_mode => 'Modalità docente';
+
+  @override
+  String get teacher_mode_label => 'Sono un docente';
+
+  @override
+  String get teacher_mode_description =>
+      'La modalità docente aggiunge informazioni didattiche ai contenuti. I progressi degli studenti e i badge sono disattivati mentre questa modalità è attiva.';
+
+  @override
+  String get teacher_mode_enable => 'Attiva modalità docente';
+
+  @override
+  String get teacher_mode_active_title => 'La modalità docente è attiva';
+
+  @override
+  String get teacher_mode_active_description =>
+      'Le attività mostrano informazioni didattiche. I progressi degli studenti e i badge restano nascosti mentre questa modalità è attiva.';
+
+  @override
+  String get teacher_mode_turn_off => 'Disattiva modalità docente';
+
+  @override
+  String get learning_objective => 'Obiettivo di apprendimento';
+
+  @override
+  String get group_code => 'Codice gruppo';
+
+  @override
+  String get group_code_title => 'Unisciti a un gruppo di apprendimento';
+
+  @override
+  String get group_code_description =>
+      'Inserisci il codice gruppo del docente o incolla un link di iscrizione QR. I progressi nell\'app saranno collegati al gruppo in modo anonimo.';
+
+  @override
+  String get group_code_hint => 'Codice gruppo o link di iscrizione';
+
+  @override
+  String get group_code_required => 'Inserisci un codice gruppo';
+
+  @override
+  String get join_group => 'Unisciti al gruppo';
+
+  @override
+  String get selected_group => 'Gruppo selezionato';
+
+  @override
+  String get group_connected => 'Gruppo collegato';
+
+  @override
+  String get group_connected_message =>
+      'L\'app è ora collegata al gruppo di apprendimento selezionato.';
+
+  @override
+  String get clear_group => 'Rimuovi gruppo';
+
+  @override
+  String get group_code_error =>
+      'Il codice gruppo non è stato trovato o non è attivo.';
 
   @override
   String get terms => 'Termini';

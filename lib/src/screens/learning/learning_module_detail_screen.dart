@@ -8,6 +8,7 @@ import 'package:ecounity/src/learning/ecounity_learning_text_utils.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_content_review_panel.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_learning_copy.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_media_image.dart';
+import 'package:ecounity/src/providers/teacher_mode_provider.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/util/router.dart';
 import 'package:ecounity/src/widgets/screenscaffold.dart';
@@ -82,6 +83,15 @@ class _EcoUnityLearningModuleDetailScreenState
       return const Center(child: Text('Module not found'));
     }
 
+    final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
+      context,
+    ).isTeacherMode;
+    final Set<int> completedActivityIds = teacherModeEnabled
+        ? <int>{}
+        : _completedActivityIds(
+            context.watch<EcoUnityLearningProvider>().progressEntries,
+          );
+
     return SizedBox(
       height: MediaQuery.sizeOf(context).height * 0.78,
       child: ListView(
@@ -104,6 +114,9 @@ class _EcoUnityLearningModuleDetailScreenState
                 padding: const EdgeInsets.only(bottom: 10),
                 child: _ActivityCard(
                   activity: activity,
+                  completed:
+                      activity.id != null &&
+                      completedActivityIds.contains(activity.id),
                   onTap: () {
                     AppRouter.navigate(
                       context,
@@ -127,10 +140,19 @@ class _EcoUnityLearningModuleDetailScreenState
     }
     final EcoUnityLearningProvider provider =
         Provider.of<EcoUnityLearningProvider>(context, listen: false);
+    final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
+      context,
+      listen: false,
+    ).isTeacherMode;
     final String language = await core.Settings().getLanguage() ?? 'en';
-    final EcoUnitySdgModule? module =
-        await provider.loadModule(moduleId, language: language) ??
-        widget.module;
+    final Future<EcoUnitySdgModule?> moduleFuture = provider.loadModule(
+      moduleId,
+      language: language,
+    );
+    final Future<List<EcoUnityProgressEntry>>? progressFuture =
+        teacherModeEnabled ? null : provider.loadProgress(language: language);
+    final EcoUnitySdgModule? module = await moduleFuture ?? widget.module;
+    await progressFuture;
     if (module != null) {
       _trackModuleOpened(module, language);
     }
@@ -138,6 +160,12 @@ class _EcoUnityLearningModuleDetailScreenState
   }
 
   void _trackModuleOpened(EcoUnitySdgModule module, String language) {
+    if (Provider.of<TeacherModeProvider>(
+      context,
+      listen: false,
+    ).isTeacherMode) {
+      return;
+    }
     final int? moduleId = module.id;
     if (moduleId == null) {
       return;
@@ -326,33 +354,103 @@ class _EmptyActivitiesMessage extends StatelessWidget {
 }
 
 class _ActivityCard extends StatelessWidget {
-  const _ActivityCard({required this.activity, required this.onTap});
+  const _ActivityCard({
+    required this.activity,
+    required this.completed,
+    required this.onTap,
+  });
 
   final EcoUnityLearningActivity activity;
+  final bool completed;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final Color cardColor = completed ? const Color(0xFFEAF8E4) : Colors.white;
+    final Color borderColor = completed
+        ? EcoUnityColors.success.withValues(alpha: 0.35)
+        : EcoUnityColors.outlineVariant;
+    final Color leadingBackground = completed
+        ? EcoUnityColors.success
+        : EcoUnityColors.surfaceContainer;
+    final Color leadingForeground = completed
+        ? Colors.white
+        : EcoUnityColors.deepTeal;
+
     return Card(
+      color: cardColor,
+      elevation: completed ? 0 : null,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: borderColor),
+      ),
       child: ListTile(
         onTap: onTap,
         minVerticalPadding: 12,
         leading: CircleAvatar(
-          backgroundColor: EcoUnityColors.surfaceContainer,
-          foregroundColor: EcoUnityColors.deepTeal,
-          child: Icon(_activityIcon(activity.type)),
+          backgroundColor: leadingBackground,
+          foregroundColor: leadingForeground,
+          child: Icon(
+            completed ? Icons.check_rounded : _activityIcon(activity.type),
+          ),
         ),
-        title: Text(
-          activity.title,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+        title: Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                activity.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: completed
+                    ? Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: EcoUnityColors.deepTeal,
+                        fontWeight: FontWeight.w800,
+                      )
+                    : null,
+              ),
+            ),
+            if (completed) ...<Widget>[
+              const SizedBox(width: 8),
+              const _CompletedActivityChip(),
+            ],
+          ],
         ),
         subtitle: Text(
           _activityLabel(activity),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: Icon(
+          completed ? Icons.check_circle_rounded : Icons.chevron_right,
+          color: completed ? EcoUnityColors.success : null,
+        ),
+      ),
+    );
+  }
+}
+
+class _CompletedActivityChip extends StatelessWidget {
+  const _CompletedActivityChip();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: EcoUnityColors.success.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Text(
+          'Completed',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: EcoUnityColors.success,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
       ),
     );
   }
@@ -367,6 +465,16 @@ IconData _activityIcon(EcoUnityActivityType type) {
     EcoUnityActivityType.challenge => Icons.flag,
     EcoUnityActivityType.unknown => Icons.help_outline,
   };
+}
+
+Set<int> _completedActivityIds(List<EcoUnityProgressEntry> progressEntries) {
+  return progressEntries
+      .where((EcoUnityProgressEntry entry) {
+        return entry.status == EcoUnityProgressStatus.completed;
+      })
+      .map((EcoUnityProgressEntry entry) => entry.activityId)
+      .whereType<int>()
+      .toSet();
 }
 
 EcoUnityAnalyticsService? _analyticsOf(BuildContext context) {

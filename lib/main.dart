@@ -4,10 +4,14 @@ import 'dart:developer';
 import 'package:core/core.dart' as core;
 import 'package:ecounity/l10n/app_localizations_extension.dart';
 import 'package:ecounity/src/analytics/ecounity_analytics_service.dart';
+import 'package:ecounity/src/analytics/ecounity_group_context.dart';
+import 'package:ecounity/src/analytics/ecounity_group_enrollment_service.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/providers/ecounity_badge_provider.dart';
+import 'package:ecounity/src/providers/ecounity_group_context_provider.dart';
 import 'package:ecounity/src/providers/locale_provider.dart';
 import 'package:ecounity/src/providers/selected_pathway_notifier.dart';
+import 'package:ecounity/src/providers/teacher_mode_provider.dart';
 import 'package:ecounity/src/screens/dashboard/dashboard.dart';
 import 'package:ecounity/src/screens/login/login_form.dart';
 import 'package:ecounity/src/util/app_theme.dart';
@@ -87,6 +91,12 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => EcoUnityLearningProvider(),
         ), // EcoUnityLearningProvider
+        ChangeNotifierProvider(
+          create: (_) => EcoUnityGroupContextProvider(),
+        ), // EcoUnityGroupContextProvider
+        ChangeNotifierProvider(
+          create: (_) => TeacherModeProvider(),
+        ), // TeacherModeProvider
         Provider<EcoUnityAnalyticsService>(
           create: (_) => EcoUnityAnalyticsService(),
         ),
@@ -271,6 +281,11 @@ class _AppLocalizationState extends State<AppLocalizationState>
       return;
     }
 
+    await _handleInitialGroupEnrollmentLink();
+    if (!mounted) {
+      return;
+    }
+
     try {
       await updateAppVersionDate(context, forceRefresh: true);
     } catch (e, stackTrace) {
@@ -281,6 +296,60 @@ class _AppLocalizationState extends State<AppLocalizationState>
         );
       }
     }
+  }
+
+  Future<void> _handleInitialGroupEnrollmentLink() async {
+    final String? joinToken = EcoUnityGroupEnrollmentService.joinTokenFromUri(
+      Uri.base,
+    );
+    if (joinToken == null || joinToken.isEmpty) {
+      return;
+    }
+
+    try {
+      final EcoUnityAnalyticsGroupContext group =
+          await Provider.of<EcoUnityGroupContextProvider>(
+            context,
+            listen: false,
+          ).enrollWithCode(joinToken);
+      final String language = await _applyGroupLanguage(group.language);
+      if (!mounted) {
+        return;
+      }
+      await Provider.of<EcoUnityAnalyticsService>(
+        context,
+        listen: false,
+      ).handleGroupContextChanged(language: language);
+    } catch (e, stackTrace) {
+      if (kDebugMode || kProfileMode) {
+        log(
+          'Could not resolve group enrollment link: $e',
+          stackTrace: stackTrace,
+        );
+      }
+    }
+  }
+
+  Future<String> _applyGroupLanguage(String? languageCode) async {
+    final String fallbackLanguage = Localizations.localeOf(
+      context,
+    ).languageCode;
+    final String? normalized = languageCode?.trim().toLowerCase();
+    if (normalized == null ||
+        !AppLocalizations.supportedLocales.any(
+          (Locale locale) => locale.languageCode == normalized,
+        )) {
+      return await core.Settings().getLanguage() ?? fallbackLanguage;
+    }
+
+    await core.Settings().setLanguage(normalized);
+    if (mounted) {
+      Provider.of<LocaleProvider>(
+        context,
+        listen: false,
+      ).setLocale(Locale(normalized));
+    }
+    return normalized;
   }
 
   @override

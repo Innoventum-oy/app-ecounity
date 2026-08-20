@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:core/core.dart' as core;
+import 'package:ecounity/src/analytics/ecounity_group_context.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -20,6 +21,7 @@ class EcoUnityAnalyticsConfig {
     this.disabledReason,
     this.serverName,
     this.pilotKey,
+    this.pilotEnrolmentToken,
     this.pilotParticipantCode,
     this.country,
     this.language,
@@ -32,6 +34,7 @@ class EcoUnityAnalyticsConfig {
   final String? disabledReason;
   final String? serverName;
   final String? pilotKey;
+  final String? pilotEnrolmentToken;
   final String? pilotParticipantCode;
   final String? country;
   final String? language;
@@ -69,6 +72,8 @@ class EcoUnityAnalyticsConfig {
     final PackageInfo packageInfo = await PackageInfo.fromPlatform();
     final String appVersion =
         '${packageInfo.version}+${packageInfo.buildNumber}';
+    final EcoUnityAnalyticsGroupContext? groupContext =
+        await EcoUnityAnalyticsGroupContextStore().load();
 
     final bool enabledByConfig = _readEnabledFlag(analyticsMap['enabled']);
     final bool enabled = token.isNotEmpty && enabledByConfig;
@@ -84,8 +89,18 @@ class EcoUnityAnalyticsConfig {
       serverName: serverName,
       pilotKey: _nullableFirstNonEmptyString(<Object?>[
         pilotKeyFromEnv,
+        groupContext?.effectivePilotKey,
         analyticsMap['pilotKey'],
         analyticsMap['pilot_key'],
+      ]),
+      pilotEnrolmentToken: _nullableFirstNonEmptyString(<Object?>[
+        groupContext?.joinToken,
+        analyticsMap['pilotEnrolmentToken'],
+        analyticsMap['pilot_enrolment_token'],
+        analyticsMap['pilotEnrollmentToken'],
+        analyticsMap['pilot_enrollment_token'],
+        analyticsMap['enrolment_token'],
+        analyticsMap['enrollment_token'],
       ]),
       pilotParticipantCode: _nullableFirstNonEmptyString(<Object?>[
         participantCodeFromEnv,
@@ -95,9 +110,13 @@ class EcoUnityAnalyticsConfig {
       ]),
       country: _nullableFirstNonEmptyString(<Object?>[
         countryFromEnv,
+        groupContext?.country,
         analyticsMap['country'],
       ]),
-      language: language,
+      language: _nullableFirstNonEmptyString(<Object?>[
+        language,
+        groupContext?.language,
+      ]),
       platform: _currentPlatform(),
       appVersion: appVersion,
     );
@@ -110,6 +129,7 @@ class EcoUnityAnalyticsConfig {
       disabledReason: disabledReason,
       serverName: serverName,
       pilotKey: pilotKey,
+      pilotEnrolmentToken: pilotEnrolmentToken,
       pilotParticipantCode: pilotParticipantCode,
       country: country,
       language: language ?? this.language,
@@ -283,6 +303,12 @@ class EcoUnityAnalyticsService {
     await startSession(language: language);
   }
 
+  Future<void> handleGroupContextChanged({String? language}) async {
+    await endSession(language: language);
+    _clearServerBoundState();
+    await startSession(language: language);
+  }
+
   Future<void> startSession({String? language}) async {
     final int generation = _serverStateGeneration;
     final EcoUnityAnalyticsConfig config = (await _ensureConfig()).copyWith(
@@ -442,6 +468,7 @@ class EcoUnityAnalyticsService {
       activityId: activity.id,
       activityType: _activityTypeToWire(activity.type),
       eventData: <String, Object?>{
+        'source': 'app',
         if (activity.slug.isNotEmpty) 'activity_key': activity.slug,
         ...eventData,
       },
@@ -930,6 +957,8 @@ class EcoUnityAnalyticsService {
 Map<String, dynamic> _contextPayload(EcoUnityAnalyticsConfig config) {
   return <String, dynamic>{
     if (_hasText(config.pilotKey)) 'pilot_key': config.pilotKey,
+    if (!_hasText(config.pilotKey) && _hasText(config.pilotEnrolmentToken))
+      'pilot_enrolment_token': config.pilotEnrolmentToken,
     if (_hasText(config.pilotParticipantCode))
       'pilot_participant_code': config.pilotParticipantCode,
     if (_hasText(config.country)) 'country': config.country,
@@ -981,6 +1010,7 @@ const Set<String> _allowedEventDataKeys = <String>{
   'scene_key',
   'duration_seconds',
   'attempt_number',
+  'source',
   'error_code',
   'screen',
   'previous_language',

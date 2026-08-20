@@ -252,6 +252,7 @@ class AppLocalizationsRo extends AppLocalizations {
       'modules': 'Învățare',
       'resources': 'Resources',
       'progress': 'Progres',
+      'teacher': 'Profesor',
       'other': 'Menu:$item',
     });
     return '$_temp0';
@@ -407,6 +408,68 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get start => 'Start';
+
+  @override
+  String get teacher_mode => 'Mod profesor';
+
+  @override
+  String get teacher_mode_label => 'Sunt profesor';
+
+  @override
+  String get teacher_mode_description =>
+      'Modul profesor adaugă informații didactice la conținut. Progresul elevilor și insignele sunt dezactivate cât timp acest mod este activ.';
+
+  @override
+  String get teacher_mode_enable => 'Activează modul profesor';
+
+  @override
+  String get teacher_mode_active_title => 'Modul profesor este activ';
+
+  @override
+  String get teacher_mode_active_description =>
+      'Activitățile afișează informații didactice. Progresul elevilor și insignele sunt ascunse cât timp acest mod este activ.';
+
+  @override
+  String get teacher_mode_turn_off => 'Dezactivează modul profesor';
+
+  @override
+  String get learning_objective => 'Obiectiv de învățare';
+
+  @override
+  String get group_code => 'Cod de grup';
+
+  @override
+  String get group_code_title => 'Alătură-te unui grup de învățare';
+
+  @override
+  String get group_code_description =>
+      'Introdu codul de grup primit de la profesor sau lipește un link de înscriere QR. Progresul din aplicație va fi asociat anonim cu acel grup.';
+
+  @override
+  String get group_code_hint => 'Cod de grup sau link de înscriere';
+
+  @override
+  String get group_code_required => 'Introdu un cod de grup';
+
+  @override
+  String get join_group => 'Alătură-te grupului';
+
+  @override
+  String get selected_group => 'Grup selectat';
+
+  @override
+  String get group_connected => 'Grup conectat';
+
+  @override
+  String get group_connected_message =>
+      'Aplicația este acum asociată cu grupul de învățare selectat.';
+
+  @override
+  String get clear_group => 'Elimină grupul';
+
+  @override
+  String get group_code_error =>
+      'Codul de grup nu a fost găsit sau nu este activ.';
 
   @override
   String get terms => 'Terms';

@@ -6,6 +6,7 @@ import 'package:ecounity/src/learning/ecounity_learning_dashboard_summary.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/learning/ecounity_learning_text_utils.dart';
+import 'package:ecounity/src/providers/teacher_mode_provider.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/util/router.dart';
 import 'package:ecounity/src/widgets/bottom_navigation.dart';
@@ -95,10 +96,14 @@ class DashBoardState extends State<DashBoard> {
               EcoUnityLearningProvider provider,
               Widget? child,
             ) {
+              final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
+                context,
+              ).isTeacherMode;
               return _DashboardBody(
                 provider: provider,
                 loading: _loadingDashboard,
                 error: _loadError ?? provider.error,
+                teacherModeEnabled: teacherModeEnabled,
                 onRefresh: () => _loadDashboardData(reload: true),
               );
             },
@@ -122,6 +127,10 @@ class DashBoardState extends State<DashBoard> {
 
     final EcoUnityLearningProvider provider =
         Provider.of<EcoUnityLearningProvider>(context, listen: false);
+    final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
+      context,
+      listen: false,
+    ).isTeacherMode;
     final String fallbackLanguage = Localizations.localeOf(
       context,
     ).languageCode;
@@ -130,12 +139,16 @@ class DashBoardState extends State<DashBoard> {
 
     try {
       await provider.loadModules(language: language, reload: reload);
-      try {
-        await provider.loadProgress(language: language);
-      } catch (exception, stackTrace) {
-        if (kDebugMode) {
-          debugPrint('Unable to load EcoUnity dashboard progress: $exception');
-          debugPrintStack(stackTrace: stackTrace);
+      if (!teacherModeEnabled) {
+        try {
+          await provider.loadProgress(language: language);
+        } catch (exception, stackTrace) {
+          if (kDebugMode) {
+            debugPrint(
+              'Unable to load EcoUnity dashboard progress: $exception',
+            );
+            debugPrintStack(stackTrace: stackTrace);
+          }
         }
       }
     } catch (exception, stackTrace) {
@@ -230,12 +243,14 @@ class _DashboardBody extends StatelessWidget {
     required this.provider,
     required this.loading,
     required this.error,
+    required this.teacherModeEnabled,
     required this.onRefresh,
   });
 
   final EcoUnityLearningProvider provider;
   final bool loading;
   final String? error;
+  final bool teacherModeEnabled;
   final Future<void> Function() onRefresh;
 
   @override
@@ -252,7 +267,9 @@ class _DashboardBody extends StatelessWidget {
     final EcoUnityLearningDashboardSummary summary =
         EcoUnityLearningDashboardSummary.fromLearningState(
           modules: provider.modules,
-          progressEntries: provider.progressEntries,
+          progressEntries: teacherModeEnabled
+              ? const <EcoUnityProgressEntry>[]
+              : provider.progressEntries,
         );
 
     return Center(
@@ -270,12 +287,21 @@ class _DashboardBody extends StatelessWidget {
               ],
               const _DashboardIntro(),
               const SizedBox(height: 14),
-              _ContinueLearningCard(summary: summary),
-              const SizedBox(height: 16),
-              _DashboardStats(summary: summary),
-              const SizedBox(height: 18),
-              _FeaturedModulesSection(summary: summary),
-              if (summary.latestChallenge != null) ...<Widget>[
+              if (teacherModeEnabled) ...<Widget>[
+                const _TeacherDashboardCard(),
+                const SizedBox(height: 18),
+              ] else ...<Widget>[
+                _ContinueLearningCard(summary: summary),
+                const SizedBox(height: 16),
+                _DashboardStats(summary: summary),
+                const SizedBox(height: 18),
+              ],
+              _FeaturedModulesSection(
+                summary: summary,
+                showProgress: !teacherModeEnabled,
+              ),
+              if (!teacherModeEnabled &&
+                  summary.latestChallenge != null) ...<Widget>[
                 const SizedBox(height: 14),
                 _LatestChallengeCard(activity: summary.latestChallenge!),
               ],
@@ -311,6 +337,75 @@ class _DashboardIntro extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _TeacherDashboardCard extends StatelessWidget {
+  const _TeacherDashboardCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: EcoUnityColors.teacherSurface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: EcoUnityColors.teacherBorder),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: EcoUnityColors.teacherSurfaceHigh,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.school_outlined,
+                    color: EcoUnityColors.deepTeal,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    context.l10n.teacher_mode_active_title,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: EcoUnityColors.deepTeal,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              context.l10n.teacher_mode_active_description,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: EcoUnityColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 14),
+            FilledButton.icon(
+              onPressed: () {
+                AppRouter.navigate(
+                  context,
+                  'learningmodules',
+                  1,
+                  replaceRoute: false,
+                );
+              },
+              icon: const Icon(Icons.source_outlined),
+              label: Text(context.l10n.navigation_item('modules')),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -492,9 +587,13 @@ class _StatTile extends StatelessWidget {
 }
 
 class _FeaturedModulesSection extends StatelessWidget {
-  const _FeaturedModulesSection({required this.summary});
+  const _FeaturedModulesSection({
+    required this.summary,
+    required this.showProgress,
+  });
 
   final EcoUnityLearningDashboardSummary summary;
+  final bool showProgress;
 
   @override
   Widget build(BuildContext context) {
@@ -521,6 +620,7 @@ class _FeaturedModulesSection extends StatelessWidget {
             return _ModulePreviewCard(
               module: module,
               ratio: summary.completionRatioFor(module),
+              showProgress: showProgress,
             );
           },
         );
@@ -530,16 +630,21 @@ class _FeaturedModulesSection extends StatelessWidget {
 }
 
 class _ModulePreviewCard extends StatelessWidget {
-  const _ModulePreviewCard({required this.module, required this.ratio});
+  const _ModulePreviewCard({
+    required this.module,
+    required this.ratio,
+    required this.showProgress,
+  });
 
   final EcoUnitySdgModule module;
   final double ratio;
+  final bool showProgress;
 
   @override
   Widget build(BuildContext context) {
     final double clampedRatio = ratio.clamp(0, 1);
-    final bool started = clampedRatio > 0;
-    final bool completed = clampedRatio >= 1;
+    final bool started = showProgress && clampedRatio > 0;
+    final bool completed = showProgress && clampedRatio >= 1;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -571,16 +676,19 @@ class _ModulePreviewCard extends StatelessWidget {
               Row(
                 children: <Widget>[
                   _SdgBadge(value: module.sdgNumber),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _ModuleStatusChip(
-                      label: completed
-                          ? 'Done'
-                          : started
-                          ? 'Started'
-                          : 'New',
+                  if (showProgress) ...<Widget>[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _ModuleStatusChip(
+                        label: completed
+                            ? 'Done'
+                            : started
+                            ? 'Started'
+                            : 'New',
+                      ),
                     ),
-                  ),
+                  ] else
+                    const Spacer(),
                 ],
               ),
               const SizedBox(height: 10),
@@ -594,14 +702,16 @@ class _ModulePreviewCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              LinearProgressIndicator(
-                value: clampedRatio,
-                minHeight: 6,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              const SizedBox(height: 6),
+              if (showProgress) ...<Widget>[
+                LinearProgressIndicator(
+                  value: clampedRatio,
+                  minHeight: 6,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                const SizedBox(height: 6),
+              ],
               Text(
-                _moduleProgressLabel(module, clampedRatio),
+                _moduleProgressLabel(module, showProgress ? clampedRatio : 0),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(

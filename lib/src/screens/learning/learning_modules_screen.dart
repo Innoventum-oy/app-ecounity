@@ -3,6 +3,7 @@ import 'package:ecounity/l10n/app_localizations_extension.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_media_image.dart';
+import 'package:ecounity/src/providers/teacher_mode_provider.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/util/router.dart';
 import 'package:ecounity/src/widgets/bottom_navigation.dart';
@@ -86,6 +87,9 @@ class _EcoUnityLearningModulesScreenState
               EcoUnityLearningProvider provider,
               Widget? child,
             ) {
+              final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
+                context,
+              ).isTeacherMode;
               if (provider.loadingStatus == core.DataLoadingStatus.loading &&
                   provider.modules.isEmpty) {
                 return const Center(child: CircularProgressIndicator());
@@ -99,7 +103,10 @@ class _EcoUnityLearningModulesScreenState
 
               return _LearningModulesBody(
                 modules: provider.modules,
-                progressEntries: provider.progressEntries,
+                progressEntries: teacherModeEnabled
+                    ? const <EcoUnityProgressEntry>[]
+                    : provider.progressEntries,
+                teacherModeEnabled: teacherModeEnabled,
                 loading:
                     provider.loadingStatus == core.DataLoadingStatus.loading,
                 selectedFilter: _selectedFilter,
@@ -131,10 +138,16 @@ class _EcoUnityLearningModulesScreenState
   Future<void> _loadModules() async {
     final EcoUnityLearningProvider provider =
         Provider.of<EcoUnityLearningProvider>(context, listen: false);
+    final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
+      context,
+      listen: false,
+    ).isTeacherMode;
     final String language = await core.Settings().getLanguage() ?? 'en';
     try {
       await provider.loadModules(language: language, reload: true);
-      await provider.loadProgress(language: language);
+      if (!teacherModeEnabled) {
+        await provider.loadProgress(language: language);
+      }
     } catch (exception, stackTrace) {
       if (kDebugMode) {
         debugPrint('Unable to load EcoUnity learning modules: $exception');
@@ -254,6 +267,7 @@ class _LearningModulesBody extends StatelessWidget {
   const _LearningModulesBody({
     required this.modules,
     required this.progressEntries,
+    required this.teacherModeEnabled,
     required this.loading,
     required this.selectedFilter,
     required this.onFilterChanged,
@@ -263,6 +277,7 @@ class _LearningModulesBody extends StatelessWidget {
 
   final List<EcoUnitySdgModule> modules;
   final List<EcoUnityProgressEntry> progressEntries;
+  final bool teacherModeEnabled;
   final bool loading;
   final _ModuleFilter selectedFilter;
   final ValueChanged<_ModuleFilter> onFilterChanged;
@@ -271,6 +286,9 @@ class _LearningModulesBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _ModuleFilter effectiveFilter = teacherModeEnabled
+        ? _ModuleFilter.all
+        : selectedFilter;
     final List<_ModuleCardData> cardData = modules
         .map(
           (EcoUnitySdgModule module) => _ModuleCardData(
@@ -278,7 +296,7 @@ class _LearningModulesBody extends StatelessWidget {
             completionRatio: module.completionRatio(progressEntries),
           ),
         )
-        .where((data) => selectedFilter.matches(data))
+        .where((data) => effectiveFilter.matches(data))
         .toList();
 
     return Center(
@@ -300,13 +318,16 @@ class _LearningModulesBody extends StatelessWidget {
                   ],
                   _ModuleListHeader(moduleCount: modules.length),
                   const SizedBox(height: 12),
-                  _ModuleFilterBar(
-                    selectedFilter: selectedFilter,
-                    onFilterChanged: onFilterChanged,
-                  ),
-                  const SizedBox(height: 18),
+                  if (!teacherModeEnabled) ...<Widget>[
+                    _ModuleFilterBar(
+                      selectedFilter: selectedFilter,
+                      onFilterChanged: onFilterChanged,
+                    ),
+                    const SizedBox(height: 18),
+                  ] else
+                    const SizedBox(height: 6),
                   if (cardData.isEmpty)
-                    _FilteredEmptyState(filter: selectedFilter)
+                    _FilteredEmptyState(filter: effectiveFilter)
                   else
                     GridView.builder(
                       shrinkWrap: true,
@@ -322,6 +343,7 @@ class _LearningModulesBody extends StatelessWidget {
                         final _ModuleCardData data = cardData[index];
                         return _ModuleCard(
                           data: data,
+                          showProgress: !teacherModeEnabled,
                           onTap: () => onModuleTap(data.module),
                         );
                       },
@@ -439,16 +461,21 @@ class _ModuleFilterPill extends StatelessWidget {
 }
 
 class _ModuleCard extends StatelessWidget {
-  const _ModuleCard({required this.data, required this.onTap});
+  const _ModuleCard({
+    required this.data,
+    required this.showProgress,
+    required this.onTap,
+  });
 
   final _ModuleCardData data;
+  final bool showProgress;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final EcoUnitySdgModule module = data.module;
     final _ModuleCardStatus status = data.status;
-    final bool started = status == _ModuleCardStatus.started;
+    final bool started = showProgress && status == _ModuleCardStatus.started;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -472,8 +499,11 @@ class _ModuleCard extends StatelessWidget {
               Row(
                 children: <Widget>[
                   _SdgModuleIcon(module: module, highlighted: started),
-                  const SizedBox(width: 8),
-                  Expanded(child: _ModuleStatusChip(status: status)),
+                  if (showProgress) ...<Widget>[
+                    const SizedBox(width: 8),
+                    Expanded(child: _ModuleStatusChip(status: status)),
+                  ] else
+                    const Spacer(),
                 ],
               ),
               const SizedBox(height: 10),
@@ -487,16 +517,18 @@ class _ModuleCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              LinearProgressIndicator(
-                value: data.visibleProgressRatio,
-                minHeight: 6,
-                borderRadius: BorderRadius.circular(999),
-                backgroundColor: EcoUnityColors.outlineVariant,
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  EcoUnityColors.leafGreen,
+              if (showProgress) ...<Widget>[
+                LinearProgressIndicator(
+                  value: data.visibleProgressRatio,
+                  minHeight: 6,
+                  borderRadius: BorderRadius.circular(999),
+                  backgroundColor: EcoUnityColors.outlineVariant,
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    EcoUnityColors.leafGreen,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
+                const SizedBox(height: 6),
+              ],
               Text(
                 data.progressLabel,
                 maxLines: 1,

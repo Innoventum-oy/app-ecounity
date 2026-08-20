@@ -253,6 +253,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'modules': 'Lernen',
       'resources': 'Ressourcen',
       'progress': 'Fortschritt',
+      'teacher': 'Lehrkraft',
       'other': 'Menü:$item',
     });
     return '$_temp0';
@@ -408,6 +409,68 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get start => 'Starten';
+
+  @override
+  String get teacher_mode => 'Lehrkraft-Modus';
+
+  @override
+  String get teacher_mode_label => 'Ich bin eine Lehrkraft';
+
+  @override
+  String get teacher_mode_description =>
+      'Der Lehrkraft-Modus ergänzt Lerninhalte um Hinweise für den Unterricht. Lernfortschritt und Abzeichen sind deaktiviert, solange dieser Modus aktiv ist.';
+
+  @override
+  String get teacher_mode_enable => 'Lehrkraft-Modus aktivieren';
+
+  @override
+  String get teacher_mode_active_title => 'Lehrkraft-Modus ist aktiv';
+
+  @override
+  String get teacher_mode_active_description =>
+      'In Lernaktivitäten werden Hinweise für den Unterricht angezeigt. Lernfortschritt und Abzeichen sind ausgeblendet, solange dieser Modus aktiv ist.';
+
+  @override
+  String get teacher_mode_turn_off => 'Lehrkraft-Modus ausschalten';
+
+  @override
+  String get learning_objective => 'Lernziel';
+
+  @override
+  String get group_code => 'Gruppencode';
+
+  @override
+  String get group_code_title => 'Einer Lerngruppe beitreten';
+
+  @override
+  String get group_code_description =>
+      'Gib den Gruppencode deiner Lehrkraft ein oder füge einen QR-Einschreibelink ein. Dein App-Fortschritt wird anonym mit dieser Gruppe verknüpft.';
+
+  @override
+  String get group_code_hint => 'Gruppencode oder Einschreibelink';
+
+  @override
+  String get group_code_required => 'Gib einen Gruppencode ein';
+
+  @override
+  String get join_group => 'Gruppe beitreten';
+
+  @override
+  String get selected_group => 'Ausgewählte Gruppe';
+
+  @override
+  String get group_connected => 'Gruppe verbunden';
+
+  @override
+  String get group_connected_message =>
+      'Deine App ist nun mit der ausgewählten Lerngruppe verknüpft.';
+
+  @override
+  String get clear_group => 'Gruppe entfernen';
+
+  @override
+  String get group_code_error =>
+      'Der Gruppencode wurde nicht gefunden oder ist nicht aktiv.';
 
   @override
   String get terms => 'Bedingungen';

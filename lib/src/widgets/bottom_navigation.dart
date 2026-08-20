@@ -1,16 +1,35 @@
 import 'dart:developer';
 
+import 'package:ecounity/src/providers/teacher_mode_provider.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../util/navigation_item.dart';
 import '../util/settings.dart' as constants;
 import 'package:ecounity/l10n/app_localizations_extension.dart';
 import '../util/router.dart';
 
 Widget bottomNavigation(BuildContext context, {int currentIndex = 0}) {
+  final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
+    context,
+  ).isTeacherMode;
   final List<NavigationItem> bottomNavItems = constants.navItems
       .where((item) => item.displayInBottomNavigation)
+      .map((NavigationItem item) {
+        if (!teacherModeEnabled || item.view != 'progress') {
+          return item;
+        }
+        return NavigationItem(
+          navigationIndex: item.navigationIndex,
+          label: 'teacher',
+          icon: const Icon(Icons.school_outlined),
+          route: '/teacher',
+          view: 'teacher',
+          displayInDashboard: item.displayInDashboard,
+          displayInBottomNavigation: item.displayInBottomNavigation,
+        );
+      })
       .toList();
   return DecoratedBox(
     decoration: const BoxDecoration(

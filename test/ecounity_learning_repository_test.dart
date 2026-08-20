@@ -446,6 +446,33 @@ void main() {
       expect(saved?.payload, <String, dynamic>{'score': 3});
     });
 
+    test(
+      'saves app progress locally without calling backend object save',
+      () async {
+        final _FakeLearningBackend backend = _FakeLearningBackend();
+        final EcoUnityLearningRepository repository =
+            EcoUnityLearningRepository(backend: backend);
+
+        final EcoUnityProgressEntry? saved = await repository.saveLocalProgress(
+          moduleId: 2,
+          activityId: 17,
+          status: EcoUnityProgressStatus.completed,
+          language: 'en',
+          payload: <String, dynamic>{'source': 'app'},
+        );
+        final List<EcoUnityProgressEntry> localProgress = await repository
+            .loadLocalProgress(language: 'en', moduleId: 2);
+
+        expect(backend.savedObjectType, isNull);
+        expect(saved?.status, EcoUnityProgressStatus.completed);
+        expect(saved?.completedAt, isNotNull);
+        expect(localProgress.map((entry) => entry.activityId), <int?>[17]);
+        expect(localProgress.single.payload, <String, dynamic>{
+          'source': 'app',
+        });
+      },
+    );
+
     test('updates module content status and reloads the module', () async {
       final Map<String, dynamic> moduleResponse = _moduleResponse(sdgNumber: 12)
         ..['content_status'] = 'approved';

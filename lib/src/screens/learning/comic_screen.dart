@@ -6,6 +6,8 @@ import 'package:ecounity/src/learning/ecounity_comic_speech_audio_controller.dar
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_comic_player.dart';
+import 'package:ecounity/src/learning/widgets/ecounity_teacher_objective_card.dart';
+import 'package:ecounity/src/providers/teacher_mode_provider.dart';
 import 'package:ecounity/src/widgets/screenscaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -105,37 +107,53 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
       scenes: activity.comicScenes,
       rawData: activity.rawData,
     );
+    final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
+      context,
+    ).isTeacherMode;
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final double height = constraints.hasBoundedHeight
             ? constraints.maxHeight
             : MediaQuery.sizeOf(context).height * 0.82;
+        final Widget player = EcoUnityComicPlayer(
+          comic: comic,
+          language: data.language,
+          loadingAdditionalScenes: data.loadingAdditionalScenes,
+          onCompleted: () => _markCompleted(activity, data.language),
+          onSceneViewed: (EcoUnityComicScene scene) {
+            _trackComicSceneViewed(activity, data.language, scene);
+          },
+          onDecisionSelected:
+              (EcoUnityComicScene scene, EcoUnityComicDecision decision) {
+                _trackComicDecisionSelected(
+                  activity,
+                  data.language,
+                  scene,
+                  decision,
+                );
+              },
+          onPrepareSpeech: _speechAudioController.prepareCues,
+          onSpeechCueChanged: (EcoUnityComicSpeechItem? speech) {
+            unawaited(_speechAudioController.playCue(speech));
+          },
+        );
         return SizedBox(
           width: double.infinity,
           height: height,
-          child: EcoUnityComicPlayer(
-            comic: comic,
-            language: data.language,
-            loadingAdditionalScenes: data.loadingAdditionalScenes,
-            onCompleted: () => _markCompleted(activity, data.language),
-            onSceneViewed: (EcoUnityComicScene scene) {
-              _trackComicSceneViewed(activity, data.language, scene);
-            },
-            onDecisionSelected:
-                (EcoUnityComicScene scene, EcoUnityComicDecision decision) {
-                  _trackComicDecisionSelected(
-                    activity,
-                    data.language,
-                    scene,
-                    decision,
-                  );
-                },
-            onPrepareSpeech: _speechAudioController.prepareCues,
-            onSpeechCueChanged: (EcoUnityComicSpeechItem? speech) {
-              unawaited(_speechAudioController.playCue(speech));
-            },
-          ),
+          child: teacherModeEnabled && activity.learningObjective.isNotEmpty
+              ? Column(
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                      child: EcoUnityTeacherObjectiveCard(
+                        learningObjective: activity.learningObjective,
+                      ),
+                    ),
+                    Expanded(child: player),
+                  ],
+                )
+              : player,
         );
       },
     );
@@ -250,6 +268,9 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
   ) async {
     final int? moduleId = activity.moduleId;
     final int? activityId = activity.id;
+    if (_teacherModeEnabled()) {
+      return;
+    }
     if (moduleId == null || activityId == null) {
       return;
     }
@@ -286,6 +307,9 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
     EcoUnityLearningActivity activity,
     String language,
   ) {
+    if (_teacherModeEnabled()) {
+      return;
+    }
     final int? activityId = activity.id;
     if (activityId == null) {
       return;
@@ -307,6 +331,9 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
     String language,
     EcoUnityComicScene scene,
   ) {
+    if (_teacherModeEnabled()) {
+      return;
+    }
     final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
     if (analytics == null) {
       return;
@@ -322,6 +349,9 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
     EcoUnityComicScene scene,
     EcoUnityComicDecision decision,
   ) {
+    if (_teacherModeEnabled()) {
+      return;
+    }
     final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
     if (analytics == null) {
       return;
@@ -341,6 +371,9 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
     int moduleId,
     String language,
   ) {
+    if (_teacherModeEnabled()) {
+      return;
+    }
     final EcoUnitySdgModule? module = provider.moduleById(moduleId);
     if (module == null ||
         module.completionRatio(provider.progressEntries) < 1) {
@@ -372,6 +405,17 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
         .inSeconds
         .clamp(0, 86400)
         .toInt();
+  }
+
+  bool _teacherModeEnabled() {
+    try {
+      return Provider.of<TeacherModeProvider>(
+        context,
+        listen: false,
+      ).isTeacherMode;
+    } catch (_) {
+      return false;
+    }
   }
 }
 

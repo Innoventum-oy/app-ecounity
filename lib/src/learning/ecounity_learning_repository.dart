@@ -162,6 +162,9 @@ class EcoUnityLearningRepository {
   final Map<_ComicSceneListCacheKey, Future<List<Map<String, dynamic>>>>
   _comicSceneListLoadFutures =
       <_ComicSceneListCacheKey, Future<List<Map<String, dynamic>>>>{};
+  final Map<_ProgressCacheKey, EcoUnityProgressEntry> _localProgressCache =
+      <_ProgressCacheKey, EcoUnityProgressEntry>{};
+  bool _localProgressLoaded = false;
 
   EcoUnityLearningActivity? cachedActivity(
     int activityId, {
@@ -406,6 +409,89 @@ class EcoUnityLearningRepository {
     );
 
     return _asMapList(rawData).map(EcoUnityProgressEntry.fromJson).toList();
+  }
+
+  Future<List<EcoUnityProgressEntry>> loadLocalProgress({
+    String? language,
+    int? moduleId,
+    int? activityId,
+  }) async {
+    await _ensureLocalProgressLoaded();
+    final String? normalizedLanguage = language == null
+        ? null
+        : _normalizeLanguage(language);
+
+    final List<EcoUnityProgressEntry> entries =
+        _localProgressCache.values.where((EcoUnityProgressEntry entry) {
+          if (normalizedLanguage != null &&
+              _normalizeLanguage(entry.language) != normalizedLanguage) {
+            return false;
+          }
+          if (moduleId != null && entry.moduleId != moduleId) {
+            return false;
+          }
+          if (activityId != null && entry.activityId != activityId) {
+            return false;
+          }
+          return true;
+        }).toList()..sort((EcoUnityProgressEntry a, EcoUnityProgressEntry b) {
+          final DateTime aTime =
+              a.completedAt ??
+              a.startedAt ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+          final DateTime bTime =
+              b.completedAt ??
+              b.startedAt ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+          return aTime.compareTo(bTime);
+        });
+    return entries;
+  }
+
+  Future<EcoUnityProgressEntry?> saveLocalProgress({
+    required int moduleId,
+    required int activityId,
+    required EcoUnityProgressStatus status,
+    String language = 'en',
+    String source = 'app',
+    Map<String, dynamic> payload = const <String, dynamic>{},
+  }) async {
+    await _ensureLocalProgressLoaded();
+    final String normalizedLanguage = _normalizeLanguage(language);
+    final _ProgressCacheKey key = _ProgressCacheKey(
+      activityId,
+      normalizedLanguage,
+    );
+    final EcoUnityProgressEntry? existing = _localProgressCache[key];
+    if (existing?.status == EcoUnityProgressStatus.completed &&
+        status == EcoUnityProgressStatus.opened) {
+      return existing;
+    }
+
+    final DateTime now = DateTime.now().toUtc();
+    final DateTime? completedAt =
+        status == EcoUnityProgressStatus.completed ||
+            status == EcoUnityProgressStatus.submitted
+        ? now
+        : existing?.completedAt;
+    final Map<String, dynamic> progressData = <String, dynamic>{
+      'id': existing?.id ?? Object.hash(activityId, normalizedLanguage).abs(),
+      'module': moduleId,
+      'activity': activityId,
+      'language': normalizedLanguage,
+      'status': _progressStatusToWire(status),
+      'source': source,
+      'payload_json': jsonEncode(payload),
+      'started_at': (existing?.startedAt ?? now).toIso8601String(),
+      if (completedAt != null) 'completed_at': completedAt.toIso8601String(),
+    };
+
+    final EcoUnityProgressEntry entry = EcoUnityProgressEntry.fromJson(
+      progressData,
+    );
+    _localProgressCache[key] = entry;
+    await _writeLocalProgress();
+    return entry;
   }
 
   Future<EcoUnityProgressEntry?> saveProgress({
@@ -895,6 +981,41 @@ class EcoUnityLearningRepository {
     return null;
   }
 
+  Future<void> _ensureLocalProgressLoaded() async {
+    if (_localProgressLoaded) {
+      return;
+    }
+    _localProgressLoaded = true;
+    final List<Map<String, dynamic>>? stored = await _readPersistentMapList(
+      _localProgressStorageKey,
+    );
+    if (stored == null) {
+      return;
+    }
+    for (final Map<String, dynamic> item in stored) {
+      final EcoUnityProgressEntry entry = EcoUnityProgressEntry.fromJson(item);
+      final int? activityId = entry.activityId;
+      if (activityId == null) {
+        continue;
+      }
+      _localProgressCache[_ProgressCacheKey(
+            activityId,
+            _normalizeLanguage(entry.language),
+          )] =
+          entry;
+    }
+  }
+
+  Future<void> _writeLocalProgress() async {
+    if (!_usePersistentCache) {
+      return;
+    }
+    await _writePersistentMapList(
+      _localProgressStorageKey,
+      _localProgressCache.values.map(_progressEntryToStorageMap).toList(),
+    );
+  }
+
   Future<Map<String, dynamic>?> _readPersistentMap(String key) async {
     if (!_usePersistentCache) {
       return null;
@@ -1090,6 +1211,24 @@ String _comicSceneListCacheStorageKey(_ComicSceneListCacheKey key) {
   return 'comic-scenes:${key.activityId}:${key.language}';
 }
 
+const String _localProgressStorageKey = 'local-progress';
+
+Map<String, dynamic> _progressEntryToStorageMap(EcoUnityProgressEntry entry) {
+  return <String, dynamic>{
+    'id': entry.id,
+    'module': entry.moduleId,
+    'activity': entry.activityId,
+    'language': entry.language,
+    'status': _progressStatusToWire(entry.status),
+    'source': entry.source,
+    'payload_json': jsonEncode(entry.payload),
+    if (entry.startedAt != null)
+      'started_at': entry.startedAt!.toIso8601String(),
+    if (entry.completedAt != null)
+      'completed_at': entry.completedAt!.toIso8601String(),
+  };
+}
+
 class _ActivityCacheKey {
   const _ActivityCacheKey(this.activityId, this.language, this.comicSceneLimit);
 
@@ -1135,6 +1274,23 @@ class _ComicSceneListCacheKey {
   @override
   bool operator ==(Object other) {
     return other is _ComicSceneListCacheKey &&
+        other.activityId == activityId &&
+        other.language == language;
+  }
+
+  @override
+  int get hashCode => Object.hash(activityId, language);
+}
+
+class _ProgressCacheKey {
+  const _ProgressCacheKey(this.activityId, this.language);
+
+  final int activityId;
+  final String language;
+
+  @override
+  bool operator ==(Object other) {
+    return other is _ProgressCacheKey &&
         other.activityId == activityId &&
         other.language == language;
   }
