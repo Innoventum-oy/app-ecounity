@@ -379,6 +379,85 @@ class AppLocalizationsDe extends AppLocalizations {
   String get screenTitle_resources => 'Ressourcen';
 
   @override
+  String get dashboard_no_modules_available => 'Keine Module verfügbar';
+
+  @override
+  String get dashboard_welcome_back => 'Willkommen zurück';
+
+  @override
+  String get dashboard_ready_prompt => 'Bereit, heute aktiv zu werden?';
+
+  @override
+  String get dashboard_start_learning => 'Lernen starten';
+
+  @override
+  String dashboard_continue_sdg(int sdgNumber) {
+    return 'SDG $sdgNumber fortsetzen';
+  }
+
+  @override
+  String dashboard_start_sdg(int sdgNumber) {
+    return 'SDG $sdgNumber starten';
+  }
+
+  @override
+  String get dashboard_explore_modules => 'EcoUnity-Lernmodule erkunden';
+
+  @override
+  String get dashboard_browse_modules => 'Module durchsuchen';
+
+  @override
+  String get dashboard_resume_module => 'Modul fortsetzen';
+
+  @override
+  String get dashboard_start_module => 'Modul starten';
+
+  @override
+  String get dashboard_stat_modules => 'Module';
+
+  @override
+  String get dashboard_stat_activities => 'Aktivitäten';
+
+  @override
+  String get dashboard_stat_badges => 'Abzeichen';
+
+  @override
+  String get dashboard_module_status_done => 'Fertig';
+
+  @override
+  String get dashboard_module_status_started => 'Begonnen';
+
+  @override
+  String get dashboard_module_status_new => 'Neu';
+
+  @override
+  String get dashboard_latest_challenge => 'Neueste Herausforderung';
+
+  @override
+  String get dashboard_one_minute_left => '1 Min. übrig';
+
+  @override
+  String dashboard_minutes_left(int minutes) {
+    return '$minutes Min. übrig';
+  }
+
+  @override
+  String get dashboard_one_minute => '1 Min.';
+
+  @override
+  String dashboard_minutes(int minutes) {
+    return '$minutes Min.';
+  }
+
+  @override
+  String get dashboard_one_activity => '1 Aktivität';
+
+  @override
+  String dashboard_activities(int activities) {
+    return '$activities Aktivitäten';
+  }
+
+  @override
   String get select => 'Auswählen';
 
   @override
@@ -432,6 +511,195 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get teacher_mode_turn_off => 'Lehrkraft-Modus ausschalten';
+
+  @override
+  String get button_add => 'Hinzufügen';
+
+  @override
+  String get learning_module_title => 'Modul';
+
+  @override
+  String learning_module_load_error(String error) {
+    return 'Modul konnte nicht geladen werden: $error';
+  }
+
+  @override
+  String get learning_module_not_found => 'Modul nicht gefunden';
+
+  @override
+  String get learning_empty_activities =>
+      'Aktivitäten erscheinen hier, sobald dieses Modul bereit ist.';
+
+  @override
+  String learning_group_stats_for(String group) {
+    return 'Gruppenstatistiken für $group werden angezeigt';
+  }
+
+  @override
+  String get learning_group_stats_empty =>
+      'Füge in der Lehrkraftansicht eine Gruppe hinzu und wähle sie aus, um hier Statistiken zu sehen.';
+
+  @override
+  String learning_sdg_modules_count(int count) {
+    return 'SDG-Lernmodule: $count';
+  }
+
+  @override
+  String learning_module_filter(String filter) {
+    String _temp0 = intl.Intl.selectLogic(filter, {
+      'all': 'Alle',
+      'started': 'Begonnen',
+      'done': 'Fertig',
+      'challenges': 'Herausforderungen',
+      'other': 'Alle',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String learning_no_filtered_modules(String filter) {
+    String _temp0 = intl.Intl.selectLogic(filter, {
+      'all': 'Noch keine Module verfügbar.',
+      'started': 'Noch keine begonnenen Module.',
+      'done': 'Noch keine abgeschlossenen Module.',
+      'challenges': 'Noch keine Herausforderungsmodule.',
+      'other': 'Noch keine Module.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String learning_module_status(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'new': 'Neu',
+      'started': 'Begonnen',
+      'done': 'Fertig',
+      'other': 'Neu',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get learning_badge_earned => 'Abzeichen erhalten';
+
+  @override
+  String get learning_in_progress => 'In Bearbeitung';
+
+  @override
+  String get learning_one_minute_left => '1 Min. übrig';
+
+  @override
+  String learning_minutes_left(int minutes) {
+    return '$minutes Min. übrig';
+  }
+
+  @override
+  String get learning_one_minute => '1 Min.';
+
+  @override
+  String learning_minutes(int minutes) {
+    return '$minutes Min.';
+  }
+
+  @override
+  String get learning_one_activity => '1 Aktivität';
+
+  @override
+  String learning_activities(int activities) {
+    return '$activities Aktivitäten';
+  }
+
+  @override
+  String learning_activity_type(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'comic': 'Comic',
+      'mlr': 'Mikrolernen',
+      'quiz': 'Quiz',
+      'reflection': 'Reflexion',
+      'challenge': 'Herausforderung',
+      'unknown': 'Aktivität',
+      'other': 'Aktivität',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get teacher_group_statistics_title => 'Gruppenstatistiken';
+
+  @override
+  String get teacher_refresh_active_group => 'Aktive Gruppe aktualisieren';
+
+  @override
+  String get teacher_group_report_description =>
+      'Füge Lehrkraft-Tokens hinzu, um aggregierten Fortschritt auf Gruppenebene zu sehen. Die App speichert nur zusammengefasste Berichte, keine Lernendenidentitäten.';
+
+  @override
+  String get teacher_token_label => 'Lehrkraft-Token';
+
+  @override
+  String get teacher_token_hint => 'ABCDEF';
+
+  @override
+  String get teacher_group => 'Gruppe';
+
+  @override
+  String get teacher_active_group => 'Aktive Gruppe';
+
+  @override
+  String get teacher_select_group => 'Gruppe auswählen';
+
+  @override
+  String teacher_token_value(String token) {
+    return 'Token $token';
+  }
+
+  @override
+  String get teacher_metric_enrolled => 'Eingeschrieben';
+
+  @override
+  String get teacher_metric_active => 'Aktiv';
+
+  @override
+  String get teacher_metric_completed => 'Abgeschlossen';
+
+  @override
+  String get teacher_refresh_group => 'Gruppe aktualisieren';
+
+  @override
+  String get teacher_remove_group => 'Gruppe entfernen';
+
+  @override
+  String get teacher_empty_groups =>
+      'Füge ein Gruppen-Token hinzu, um Statistiken in den Lernansichten zu aktivieren.';
+
+  @override
+  String get teacher_loading_saved_groups =>
+      'Gespeicherte Gruppen werden geladen...';
+
+  @override
+  String teacher_stats_opened(int opened, String total) {
+    return 'Geöffnet $opened/$total';
+  }
+
+  @override
+  String teacher_stats_completed(String percent) {
+    return 'Abgeschlossen $percent';
+  }
+
+  @override
+  String teacher_stats_activity_completion(String percent) {
+    return '$percent Aktivitätsabschluss';
+  }
+
+  @override
+  String teacher_stats_avg_score(String score) {
+    return 'Durchschn. Punktzahl $score';
+  }
+
+  @override
+  String teacher_stats_avg_score_with_max(String score, String maxScore) {
+    return 'Durchschn. Punktzahl $score/$maxScore';
+  }
 
   @override
   String get learning_objective => 'Lernziel';
@@ -493,6 +761,9 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get welcome_title =>
       'Willkommen bei der Ecounity-App - Ihrem Portal für digitales Lernen, Inspiration und unternehmerisches Wachstum.';
+
+  @override
+  String get welcome_tagline => 'Gemeinsam für den Planeten!';
 
   @override
   String get login_introduction_text =>

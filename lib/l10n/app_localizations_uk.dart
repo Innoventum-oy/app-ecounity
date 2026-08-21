@@ -377,6 +377,86 @@ class AppLocalizationsUk extends AppLocalizations {
   String get screenTitle_resources => 'Ресурси';
 
   @override
+  String get dashboard_no_modules_available => 'Немає доступних модулів';
+
+  @override
+  String get dashboard_welcome_back => 'З поверненням';
+
+  @override
+  String get dashboard_ready_prompt => 'Готові діяти сьогодні?';
+
+  @override
+  String get dashboard_start_learning => 'Почати навчання';
+
+  @override
+  String dashboard_continue_sdg(int sdgNumber) {
+    return 'Продовжити ЦСР $sdgNumber';
+  }
+
+  @override
+  String dashboard_start_sdg(int sdgNumber) {
+    return 'Почати ЦСР $sdgNumber';
+  }
+
+  @override
+  String get dashboard_explore_modules =>
+      'Досліджуйте навчальні модулі EcoUnity';
+
+  @override
+  String get dashboard_browse_modules => 'Переглянути модулі';
+
+  @override
+  String get dashboard_resume_module => 'Продовжити модуль';
+
+  @override
+  String get dashboard_start_module => 'Почати модуль';
+
+  @override
+  String get dashboard_stat_modules => 'Модулі';
+
+  @override
+  String get dashboard_stat_activities => 'Активності';
+
+  @override
+  String get dashboard_stat_badges => 'Бейджі';
+
+  @override
+  String get dashboard_module_status_done => 'Готово';
+
+  @override
+  String get dashboard_module_status_started => 'Розпочато';
+
+  @override
+  String get dashboard_module_status_new => 'Новий';
+
+  @override
+  String get dashboard_latest_challenge => 'Останній виклик';
+
+  @override
+  String get dashboard_one_minute_left => 'Залишилась 1 хв';
+
+  @override
+  String dashboard_minutes_left(int minutes) {
+    return 'Залишилось $minutes хв';
+  }
+
+  @override
+  String get dashboard_one_minute => '1 хв';
+
+  @override
+  String dashboard_minutes(int minutes) {
+    return '$minutes хв';
+  }
+
+  @override
+  String get dashboard_one_activity => '1 активність';
+
+  @override
+  String dashboard_activities(int activities) {
+    return '$activities активностей';
+  }
+
+  @override
   String get select => 'Вибрати';
 
   @override
@@ -430,6 +510,194 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get teacher_mode_turn_off => 'Вимкнути режим учителя';
+
+  @override
+  String get button_add => 'Додати';
+
+  @override
+  String get learning_module_title => 'Модуль';
+
+  @override
+  String learning_module_load_error(String error) {
+    return 'Не вдалося завантажити модуль: $error';
+  }
+
+  @override
+  String get learning_module_not_found => 'Модуль не знайдено';
+
+  @override
+  String get learning_empty_activities =>
+      'Активності з\'являться тут, коли цей модуль буде готовий.';
+
+  @override
+  String learning_group_stats_for(String group) {
+    return 'Показано статистику групи $group';
+  }
+
+  @override
+  String get learning_group_stats_empty =>
+      'Додайте та виберіть групу в режимі вчителя, щоб показати статистику тут.';
+
+  @override
+  String learning_sdg_modules_count(int count) {
+    return 'Навчальні модулі ЦСР: $count';
+  }
+
+  @override
+  String learning_module_filter(String filter) {
+    String _temp0 = intl.Intl.selectLogic(filter, {
+      'all': 'Усі',
+      'started': 'Розпочаті',
+      'done': 'Готові',
+      'challenges': 'Виклики',
+      'other': 'Усі',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String learning_no_filtered_modules(String filter) {
+    String _temp0 = intl.Intl.selectLogic(filter, {
+      'all': 'Поки немає доступних модулів.',
+      'started': 'Поки немає розпочатих модулів.',
+      'done': 'Поки немає завершених модулів.',
+      'challenges': 'Поки немає модулів із викликами.',
+      'other': 'Поки немає модулів.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String learning_module_status(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'new': 'Новий',
+      'started': 'Розпочато',
+      'done': 'Готово',
+      'other': 'Новий',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get learning_badge_earned => 'Бейдж отримано';
+
+  @override
+  String get learning_in_progress => 'У процесі';
+
+  @override
+  String get learning_one_minute_left => 'Залишилась 1 хв';
+
+  @override
+  String learning_minutes_left(int minutes) {
+    return 'Залишилось $minutes хв';
+  }
+
+  @override
+  String get learning_one_minute => '1 хв';
+
+  @override
+  String learning_minutes(int minutes) {
+    return '$minutes хв';
+  }
+
+  @override
+  String get learning_one_activity => '1 активність';
+
+  @override
+  String learning_activities(int activities) {
+    return '$activities активностей';
+  }
+
+  @override
+  String learning_activity_type(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'comic': 'Комікс',
+      'mlr': 'Мікронавчання',
+      'quiz': 'Вікторина',
+      'reflection': 'Рефлексія',
+      'challenge': 'Виклик',
+      'unknown': 'Активність',
+      'other': 'Активність',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get teacher_group_statistics_title => 'Статистика групи';
+
+  @override
+  String get teacher_refresh_active_group => 'Оновити активну групу';
+
+  @override
+  String get teacher_group_report_description =>
+      'Додайте токени вчителя, щоб бачити агрегований прогрес групи. Застосунок зберігає лише підсумкові звіти, а не ідентичності учнів.';
+
+  @override
+  String get teacher_token_label => 'Токен учителя';
+
+  @override
+  String get teacher_token_hint => 'ABCDEF';
+
+  @override
+  String get teacher_group => 'Група';
+
+  @override
+  String get teacher_active_group => 'Активна група';
+
+  @override
+  String get teacher_select_group => 'Вибрати групу';
+
+  @override
+  String teacher_token_value(String token) {
+    return 'Токен $token';
+  }
+
+  @override
+  String get teacher_metric_enrolled => 'Зараховано';
+
+  @override
+  String get teacher_metric_active => 'Активні';
+
+  @override
+  String get teacher_metric_completed => 'Завершено';
+
+  @override
+  String get teacher_refresh_group => 'Оновити групу';
+
+  @override
+  String get teacher_remove_group => 'Видалити групу';
+
+  @override
+  String get teacher_empty_groups =>
+      'Додайте токен групи, щоб увімкнути статистику в навчальних екранах.';
+
+  @override
+  String get teacher_loading_saved_groups => 'Завантаження збережених груп...';
+
+  @override
+  String teacher_stats_opened(int opened, String total) {
+    return 'Відкрито $opened/$total';
+  }
+
+  @override
+  String teacher_stats_completed(String percent) {
+    return 'Завершено $percent';
+  }
+
+  @override
+  String teacher_stats_activity_completion(String percent) {
+    return '$percent завершення активностей';
+  }
+
+  @override
+  String teacher_stats_avg_score(String score) {
+    return 'Середній бал $score';
+  }
+
+  @override
+  String teacher_stats_avg_score_with_max(String score, String maxScore) {
+    return 'Середній бал $score/$maxScore';
+  }
 
   @override
   String get learning_objective => 'Навчальна мета';
@@ -490,6 +758,9 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get welcome_title =>
       'Ласкаво просимо до додатка Ecounity — вашого доступу до цифрового навчання, натхнення та підприємницького зростання.';
+
+  @override
+  String get welcome_tagline => 'Разом заради планети!';
 
   @override
   String get login_introduction_text =>

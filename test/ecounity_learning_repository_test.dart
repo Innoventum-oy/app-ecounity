@@ -414,6 +414,134 @@ void main() {
       );
     });
 
+    test('warms full comic activity cache without loading non-comics', () async {
+      final Map<String, dynamic> moduleData = _moduleResponse(sdgNumber: 5)
+        ..['activities'] = <Map<String, dynamic>>[
+          _activityResponse(id: 36, orderNo: 10, type: 'comic'),
+          _activityResponse(id: 17, orderNo: 20, type: 'mlr'),
+        ];
+      final List<EcoUnitySdgModule> modules = <EcoUnitySdgModule>[
+        EcoUnitySdgModule.fromJson(moduleData),
+      ];
+      final Map<String, dynamic> comicActivity =
+          _activityResponse(id: 36, orderNo: 10, type: 'comic')
+            ..['comic_scenes'] = <Map<String, dynamic>>[
+              <String, dynamic>{'objectid': 2},
+            ];
+      final _FakeLearningBackend backend = _FakeLearningBackend()
+        ..detailResponses['${EcoUnityLearningRepository.activityObjectType}:36'] =
+            comicActivity
+        ..detailResponses['${EcoUnityLearningRepository.activityObjectType}:17'] =
+            _activityResponse(id: 17, orderNo: 20, type: 'mlr')
+        ..listResponses[EcoUnityLearningRepository.comicSceneObjectType] =
+            <dynamic>[_sceneResponse(id: 2, sceneKey: 'start', orderNo: 10)];
+
+      final EcoUnityLearningRepository repository = EcoUnityLearningRepository(
+        backend: backend,
+      );
+
+      await repository.warmComicActivityCache(modules);
+
+      expect(
+        backend.detailRequestKeys,
+        contains('${EcoUnityLearningRepository.activityObjectType}:36'),
+      );
+      expect(
+        backend.detailRequestKeys,
+        isNot(contains('${EcoUnityLearningRepository.activityObjectType}:17')),
+      );
+
+      backend.detailRequestKeys.clear();
+      backend.listRequests.clear();
+
+      final EcoUnityLearningActivity? warmedActivity = await repository
+          .loadActivity(36);
+
+      expect(warmedActivity?.comicScenes.single.sceneKey, 'start');
+      expect(backend.detailRequestKeys, isEmpty);
+      expect(backend.listRequests, isEmpty);
+    });
+
+    test(
+      'uses comic activity index when module activities are only stubs',
+      () async {
+        final Map<String, dynamic> moduleData = _moduleResponse(sdgNumber: 5)
+          ..['activities'] = <Map<String, dynamic>>[
+            <String, dynamic>{'objectid': 36, 'name': 'Comic activity'},
+          ];
+        final List<EcoUnitySdgModule> modules = <EcoUnitySdgModule>[
+          EcoUnitySdgModule.fromJson(moduleData),
+        ];
+        final _FakeLearningBackend backend = _FakeLearningBackend()
+          ..listResponses[EcoUnityLearningRepository.activityObjectType] =
+              <dynamic>[_activityResponse(id: 36, orderNo: 10, type: 'comic')]
+          ..listResponses[EcoUnityLearningRepository.comicSceneObjectType] =
+              <dynamic>[]
+          ..detailResponses['${EcoUnityLearningRepository.activityObjectType}:36'] =
+              _activityResponse(id: 36, orderNo: 10, type: 'comic');
+
+        final EcoUnityLearningRepository repository =
+            EcoUnityLearningRepository(backend: backend);
+
+        await repository.warmComicActivityCache(modules, language: 'fi');
+
+        final _ListRequest activityIndexRequest = backend.listRequests
+            .firstWhere(
+              (_ListRequest request) =>
+                  request.objectType ==
+                  EcoUnityLearningRepository.activityObjectType,
+            );
+        expect(activityIndexRequest.params['activity_type'], 'comic');
+        expect(activityIndexRequest.params['language'], 'fi');
+        expect(activityIndexRequest.params['fields'], contains('id'));
+        expect(activityIndexRequest.params['limit'], 100);
+        expect(
+          backend.detailRequestKeys,
+          contains('${EcoUnityLearningRepository.activityObjectType}:36'),
+        );
+      },
+    );
+
+    test('bounds concurrent comic cache warmup requests', () async {
+      final Map<String, dynamic> moduleData = _moduleResponse(sdgNumber: 5)
+        ..['activities'] = <Map<String, dynamic>>[
+          _activityResponse(id: 36, orderNo: 10, type: 'comic'),
+          _activityResponse(id: 37, orderNo: 20, type: 'comic'),
+          _activityResponse(id: 38, orderNo: 30, type: 'comic'),
+        ];
+      final List<EcoUnitySdgModule> modules = <EcoUnitySdgModule>[
+        EcoUnitySdgModule.fromJson(moduleData),
+      ];
+      final _FakeLearningBackend backend = _FakeLearningBackend()
+        ..detailDelay = const Duration(milliseconds: 20)
+        ..listResponses[EcoUnityLearningRepository.comicSceneObjectType] =
+            <dynamic>[]
+        ..detailResponses['${EcoUnityLearningRepository.activityObjectType}:36'] =
+            _activityResponse(id: 36, orderNo: 10, type: 'comic')
+        ..detailResponses['${EcoUnityLearningRepository.activityObjectType}:37'] =
+            _activityResponse(id: 37, orderNo: 20, type: 'comic')
+        ..detailResponses['${EcoUnityLearningRepository.activityObjectType}:38'] =
+            _activityResponse(id: 38, orderNo: 30, type: 'comic');
+
+      final EcoUnityLearningRepository repository = EcoUnityLearningRepository(
+        backend: backend,
+      );
+
+      await repository.warmComicActivityCache(modules, concurrency: 2);
+
+      expect(backend.maxActiveDetailRequests, lessThanOrEqualTo(2));
+      expect(
+        backend.detailRequestKeys
+            .where(
+              (String key) => key.startsWith(
+                '${EcoUnityLearningRepository.activityObjectType}:',
+              ),
+            )
+            .length,
+        3,
+      );
+    });
+
     test('saves progress with backend field names and JSON payload', () async {
       final _FakeLearningBackend backend = _FakeLearningBackend();
       final EcoUnityLearningRepository repository = EcoUnityLearningRepository(

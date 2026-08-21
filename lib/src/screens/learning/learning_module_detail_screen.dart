@@ -1,13 +1,16 @@
 import 'dart:async';
 
 import 'package:core/core.dart' as core;
+import 'package:ecounity/l10n/app_localizations_extension.dart';
 import 'package:ecounity/src/analytics/ecounity_analytics_service.dart';
+import 'package:ecounity/src/analytics/ecounity_teacher_report_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/learning/ecounity_learning_text_utils.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_content_review_panel.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_learning_copy.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_media_image.dart';
+import 'package:ecounity/src/providers/ecounity_teacher_report_provider.dart';
 import 'package:ecounity/src/providers/teacher_mode_provider.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/util/router.dart';
@@ -60,7 +63,7 @@ class _EcoUnityLearningModuleDetailScreenState
           (BuildContext context, AsyncSnapshot<EcoUnitySdgModule?> snapshot) {
             final EcoUnitySdgModule? module = snapshot.data ?? widget.module;
             return ScreenScaffold(
-              title: module?.title ?? 'Module',
+              title: module?.title ?? context.l10n.learning_module_title,
               navigationIndex: widget.navIndex,
               child: _buildBody(context, snapshot, module),
             );
@@ -77,15 +80,22 @@ class _EcoUnityLearningModuleDetailScreenState
       return const Center(child: CircularProgressIndicator());
     }
     if (snapshot.hasError) {
-      return Center(child: Text('Unable to load module: ${snapshot.error}'));
+      return Center(
+        child: Text(
+          context.l10n.learning_module_load_error('${snapshot.error}'),
+        ),
+      );
     }
     if (module == null) {
-      return const Center(child: Text('Module not found'));
+      return Center(child: Text(context.l10n.learning_module_not_found));
     }
 
     final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
       context,
     ).isTeacherMode;
+    final EcoUnityTeacherGroupReport? teacherReport = teacherModeEnabled
+        ? Provider.of<EcoUnityTeacherReportProvider>(context).activeReport
+        : null;
     final Set<int> completedActivityIds = teacherModeEnabled
         ? <int>{}
         : _completedActivityIds(
@@ -117,6 +127,11 @@ class _EcoUnityLearningModuleDetailScreenState
                   completed:
                       activity.id != null &&
                       completedActivityIds.contains(activity.id),
+                  teacherStats: teacherReport?.activityStatsFor(
+                    activityId: activity.id,
+                    slug: activity.slug,
+                  ),
+                  groupSize: teacherReport?.enrolledUsers,
                   onTap: () {
                     AppRouter.navigate(
                       context,
@@ -340,7 +355,7 @@ class _EmptyActivitiesMessage extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Activities will appear here when this module is ready.',
+                context.l10n.learning_empty_activities,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: EcoUnityColors.textSecondary,
                 ),
@@ -357,11 +372,15 @@ class _ActivityCard extends StatelessWidget {
   const _ActivityCard({
     required this.activity,
     required this.completed,
+    required this.teacherStats,
+    required this.groupSize,
     required this.onTap,
   });
 
   final EcoUnityLearningActivity activity;
   final bool completed;
+  final EcoUnityTeacherActivityStats? teacherStats;
+  final int? groupSize;
   final VoidCallback onTap;
 
   @override
@@ -415,14 +434,113 @@ class _ActivityCard extends StatelessWidget {
             ],
           ],
         ),
-        subtitle: Text(
-          _activityLabel(activity),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+        isThreeLine: teacherStats != null,
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                _activityLabel(context, activity),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (teacherStats != null) ...<Widget>[
+                const SizedBox(height: 8),
+                _TeacherActivityStats(
+                  stats: teacherStats!,
+                  groupSize: groupSize,
+                  isQuiz: activity.isQuiz,
+                ),
+              ],
+            ],
+          ),
         ),
         trailing: Icon(
           completed ? Icons.check_circle_rounded : Icons.chevron_right,
           color: completed ? EcoUnityColors.success : null,
+        ),
+      ),
+    );
+  }
+}
+
+class _TeacherActivityStats extends StatelessWidget {
+  const _TeacherActivityStats({
+    required this.stats,
+    required this.groupSize,
+    required this.isQuiz,
+  });
+
+  final EcoUnityTeacherActivityStats stats;
+  final int? groupSize;
+  final bool isQuiz;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 7,
+      runSpacing: 7,
+      children: <Widget>[
+        _TeacherStatChip(
+          icon: Icons.visibility_outlined,
+          label: context.l10n.teacher_stats_opened(
+            stats.openedUsers,
+            groupSize?.toString() ?? '-',
+          ),
+        ),
+        _TeacherStatChip(
+          icon: Icons.check_circle_outline_rounded,
+          label: context.l10n.teacher_stats_completed(
+            _percentLabel(stats.completionRate),
+          ),
+        ),
+        if (isQuiz && stats.averageScore != null)
+          _TeacherStatChip(
+            icon: Icons.speed_rounded,
+            label: stats.maxScore == null
+                ? context.l10n.teacher_stats_avg_score(
+                    _numberLabel(stats.averageScore!),
+                  )
+                : context.l10n.teacher_stats_avg_score_with_max(
+                    _numberLabel(stats.averageScore!),
+                    _numberLabel(stats.maxScore!),
+                  ),
+          ),
+      ],
+    );
+  }
+}
+
+class _TeacherStatChip extends StatelessWidget {
+  const _TeacherStatChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: EcoUnityColors.teacherSurface,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: EcoUnityColors.teacherBorder),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(icon, size: 14, color: EcoUnityColors.deepTeal),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: EcoUnityColors.deepTeal,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -445,7 +563,7 @@ class _CompletedActivityChip extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Text(
-          'Completed',
+          context.l10n.completed,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             color: EcoUnityColors.success,
             fontWeight: FontWeight.w900,
@@ -485,22 +603,46 @@ EcoUnityAnalyticsService? _analyticsOf(BuildContext context) {
   }
 }
 
-String _activityLabel(EcoUnityLearningActivity activity) {
+String _activityLabel(BuildContext context, EcoUnityLearningActivity activity) {
   final String description = ecoUnityPlainText(
     activity.shortDescription,
     maxLength: 90,
   );
   final List<String> parts = <String>[
     switch (activity.type) {
-      EcoUnityActivityType.comic => 'Comic',
-      EcoUnityActivityType.mlr => 'Micro-learning',
-      EcoUnityActivityType.quiz => 'Quiz',
-      EcoUnityActivityType.reflection => 'Reflection',
-      EcoUnityActivityType.challenge => 'Challenge',
-      EcoUnityActivityType.unknown => 'Activity',
+      EcoUnityActivityType.comic => context.l10n.learning_activity_type(
+        'comic',
+      ),
+      EcoUnityActivityType.mlr => context.l10n.learning_activity_type('mlr'),
+      EcoUnityActivityType.quiz => context.l10n.learning_activity_type('quiz'),
+      EcoUnityActivityType.reflection => context.l10n.learning_activity_type(
+        'reflection',
+      ),
+      EcoUnityActivityType.challenge => context.l10n.learning_activity_type(
+        'challenge',
+      ),
+      EcoUnityActivityType.unknown => context.l10n.learning_activity_type(
+        'unknown',
+      ),
     },
-    if (activity.estimatedMinutes != null) '${activity.estimatedMinutes} min',
+    if (activity.estimatedMinutes != null)
+      activity.estimatedMinutes == 1
+          ? context.l10n.learning_one_minute
+          : context.l10n.learning_minutes(activity.estimatedMinutes!),
     if (description.isNotEmpty) description,
   ];
   return parts.join(' · ');
+}
+
+String _percentLabel(double? value) {
+  if (value == null) {
+    return '-';
+  }
+  final bool wholeNumber = value == value.roundToDouble();
+  return '${value.toStringAsFixed(wholeNumber ? 0 : 1)}%';
+}
+
+String _numberLabel(double value) {
+  final bool wholeNumber = value == value.roundToDouble();
+  return value.toStringAsFixed(wholeNumber ? 0 : 1);
 }

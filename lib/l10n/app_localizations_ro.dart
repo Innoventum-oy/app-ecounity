@@ -9,28 +9,28 @@ class AppLocalizationsRo extends AppLocalizations {
   AppLocalizationsRo([String locale = 'ro']) : super(locale);
 
   @override
-  String get about => 'About';
+  String get about => 'Despre';
 
   @override
-  String get age => 'Age';
+  String get age => 'Vârstă';
 
   @override
-  String get account => 'Account';
+  String get account => 'Cont';
 
   @override
-  String get achievements => 'Achievements';
+  String get achievements => 'Realizări';
 
   @override
-  String get answer_saved => 'Answer saved';
+  String get answer_saved => 'Răspuns salvat';
 
   @override
   String get application_name => 'Ecounity';
 
   @override
-  String get attention => 'Attention';
+  String get attention => 'Atenție';
 
   @override
-  String get authenticating => 'Authenticating...';
+  String get authenticating => 'Se autentifică...';
 
   @override
   String get badge => 'Badge';
@@ -46,13 +46,13 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
-  String get button_accept => 'Accept';
+  String get button_accept => 'Acceptă';
 
   @override
-  String get button_approve => 'Approve';
+  String get button_approve => 'Aprobă';
 
   @override
-  String get badge_awarded => 'New badge awarded';
+  String get badge_awarded => 'Insignă nouă obținută';
 
   @override
   String badge_awarded_congratulations(String badge) {
@@ -60,101 +60,100 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
-  String get button_back => 'Back';
+  String get button_back => 'Înapoi';
 
   @override
-  String get button_cancel => 'Cancel';
+  String get button_cancel => 'Anulează';
 
   @override
-  String get button_close => 'Close';
+  String get button_close => 'Închide';
 
   @override
-  String get button_confirm => 'Confirm';
+  String get button_confirm => 'Confirmă';
 
   @override
-  String get button_continue => 'Continue';
+  String get button_continue => 'Continuă';
 
   @override
-  String get button_continue_as_guest => 'Continue as guest';
+  String get button_continue_as_guest => 'Continuă ca invitat';
 
   @override
-  String get button_create => 'Create';
+  String get button_create => 'Creează';
 
   @override
-  String get button_create_account => 'Create account';
+  String get button_create_account => 'Creează cont';
 
   @override
-  String get button_delete => 'Delete';
+  String get button_delete => 'Șterge';
 
   @override
-  String get button_edit => 'Edit';
+  String get button_edit => 'Editează';
 
   @override
-  String get button_finish => 'Finish';
+  String get button_finish => 'Finalizează';
 
   @override
-  String get button_forgot_password => 'Forgot password?';
+  String get button_forgot_password => 'Ai uitat parola?';
 
   @override
-  String get button_login => 'Login';
+  String get button_login => 'Autentificare';
 
   @override
-  String get button_logout => 'Logout';
+  String get button_logout => 'Deconectare';
 
   @override
-  String get button_next => 'Next';
+  String get button_next => 'Următorul';
 
   @override
   String get button_ok => 'OK';
 
   @override
-  String get button_previous => 'Previous';
+  String get button_previous => 'Anteriorul';
 
   @override
-  String get button_register => 'Register';
+  String get button_register => 'Înregistrare';
 
   @override
-  String get button_reject => 'Reject';
+  String get button_reject => 'Respinge';
 
   @override
-  String get button_save => 'Save';
+  String get button_save => 'Salvează';
 
   @override
-  String get button_send => 'Send';
+  String get button_send => 'Trimite';
 
   @override
-  String get button_submit => 'Submit';
+  String get button_submit => 'Trimite';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Anulează';
 
   @override
-  String get choose_language => 'Choose language';
+  String get choose_language => 'Alege limba';
 
   @override
-  String get collected_badges => 'Collected badges';
+  String get collected_badges => 'Insigne obținute';
 
   @override
-  String get completed => 'Completed';
+  String get completed => 'Finalizat';
 
   @override
-  String get confirm_deleting_account =>
-      'Are you sure you want to delete your account?';
+  String get confirm_deleting_account => 'Sigur dorești să ștergi contul?';
 
   @override
   String get contact => 'Contact';
 
   @override
-  String get delete_account => 'Delete account';
+  String get delete_account => 'Șterge contul';
 
   @override
-  String get email => 'Email';
+  String get email => 'E-mail';
 
   @override
-  String get email_not_valid => 'The given email address is not valid';
+  String get email_not_valid => 'Adresa de e-mail introdusă nu este validă';
 
   @override
-  String get email_or_phone_number => 'Email or phone number';
+  String get email_or_phone_number => 'E-mail sau număr de telefon';
 
   @override
   String error(String error) {
@@ -162,10 +161,10 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
-  String get error_default => 'Unable to complete the request';
+  String get error_default => 'Solicitarea nu a putut fi finalizată';
 
   @override
-  String get error_occurred => 'An error occurred';
+  String get error_occurred => 'A apărut o eroare';
 
   @override
   String errorViewNotFound(String view) {
@@ -173,7 +172,7 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
-  String get errors_in_form => 'Errors in form';
+  String get errors_in_form => 'Erori în formular';
 
   @override
   String field_required(String field) {
@@ -181,26 +180,26 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
-  String get firstName => 'First name';
+  String get firstName => 'Prenume';
 
   @override
   String get funding_disclaimer =>
-      'Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Education and Culture Executive Agency (EACEA). Neither the European Union nor EACEA can be held responsible for them.';
+      'Finanțat de Uniunea Europeană. Punctele de vedere și opiniile exprimate aparțin însă exclusiv autorului/autorilor și nu reflectă neapărat punctele de vedere ale Uniunii Europene sau ale Agenției Executive Europene pentru Educație și Cultură (EACEA). Nici Uniunea Europeană, nici EACEA nu pot fi considerate responsabile pentru acestea.';
 
   @override
-  String get great => 'Great';
+  String get great => 'Foarte bine';
 
   @override
-  String get home => 'Home';
+  String get home => 'Acasă';
 
   @override
-  String get introduction => 'Introduction';
+  String get introduction => 'Introducere';
 
   @override
   String get language => 'Limbă';
 
   @override
-  String get select_language => 'Select language';
+  String get select_language => 'Selectează limba';
 
   @override
   String locale(String language) {
@@ -212,188 +211,268 @@ class AppLocalizationsRo extends AppLocalizations {
       'pl': 'Poloneză',
       'de': 'Germană',
       'uk': 'Ucraineană',
-      'it': 'Italian',
-      'pt': 'Portuguese',
+      'it': 'Italiană',
+      'pt': 'Portugheză',
       'other': 'Limbă:$language',
     });
     return '$_temp0';
   }
 
   @override
-  String get lastName => 'Last name';
+  String get lastName => 'Nume';
 
   @override
-  String get loading => 'Loading...';
+  String get loading => 'Se încarcă...';
 
   @override
-  String get login => 'Login';
+  String get login => 'Autentificare';
 
   @override
-  String get login_failed => 'Login failed';
+  String get login_failed => 'Autentificare eșuată';
 
   @override
-  String get logout => 'Logout';
+  String get logout => 'Deconectare';
 
   @override
-  String get logout_confirmation => 'Are you sure you want to logout?';
+  String get logout_confirmation => 'Sigur dorești să te deconectezi?';
 
   @override
-  String get markAsCompleted => 'Mark as completed';
+  String get markAsCompleted => 'Marchează ca finalizat';
 
   @override
   String navigation_item(String item) {
     String _temp0 = intl.Intl.selectLogic(item, {
-      'home': 'Home',
-      'pathways': 'Pathways',
-      'challenges': 'Challenges',
-      'videolist': 'Videos',
-      'selfReflectionHub': 'Self-reflection Hub',
-      'lessons': 'Lessons',
+      'home': 'Acasă',
+      'pathways': 'Trasee',
+      'challenges': 'Provocări',
+      'videolist': 'Videouri',
+      'selfReflectionHub': 'Auto-reflecție',
+      'lessons': 'Lecții',
       'modules': 'Învățare',
-      'resources': 'Resources',
+      'resources': 'Resurse',
       'progress': 'Progres',
       'teacher': 'Profesor',
-      'other': 'Menu:$item',
+      'other': 'Meniu:$item',
     });
     return '$_temp0';
   }
 
   @override
-  String get next => 'Next';
+  String get next => 'Următorul';
 
   @override
-  String get noBadgesFound => 'No badges found';
+  String get noBadgesFound => 'Nu s-au găsit insigne';
 
   @override
-  String get noChallengesFound => 'No challenges were found';
+  String get noChallengesFound => 'Nu s-au găsit provocări';
 
   @override
-  String get noContentFound => 'No content found';
+  String get noContentFound => 'Nu s-a găsit conținut';
 
   @override
-  String get noPathwaysFound => 'No learning contents were found';
+  String get noPathwaysFound => 'Nu s-au găsit conținuturi de învățare';
 
   @override
-  String get noTranscriptAvailable => 'No transcript available';
+  String get noTranscriptAvailable => 'Nu există transcriere disponibilă';
 
   @override
-  String get noVideosFound => 'No videos were found';
+  String get noVideosFound => 'Nu s-au găsit videouri';
 
   @override
-  String get noLessonsFound => 'No lessons were found';
+  String get noLessonsFound => 'Nu s-au găsit lecții';
 
   @override
-  String get page_content => 'Page content';
+  String get page_content => 'Conținutul paginii';
 
   @override
-  String get password => 'Password';
+  String get password => 'Parolă';
 
   @override
-  String get pathway => 'Learning content';
+  String get pathway => 'Conținut de învățare';
 
   @override
-  String get pathway_already_completed => 'Learning content is completed';
+  String get pathway_already_completed =>
+      'Conținutul de învățare este finalizat';
 
   @override
-  String get pathway_completed => 'Learning content completed';
+  String get pathway_completed => 'Conținut de învățare finalizat';
 
   @override
-  String get phone => 'Phone';
+  String get phone => 'Telefon';
 
   @override
-  String get phone_or_email => 'Phone number or email address';
+  String get phone_or_email => 'Număr de telefon sau e-mail';
 
   @override
-  String get please_complete_form_properly =>
-      'Please complete the form properly';
+  String get please_complete_form_properly => 'Completează formularul corect';
 
   @override
-  String get please_enter_password => 'Please enter a password';
+  String get please_enter_password => 'Introdu o parolă';
 
   @override
   String get please_enter_phone_or_email =>
-      'Please enter a phone number or email address';
+      'Introdu un număr de telefon sau o adresă de e-mail';
 
   @override
   String get please_provide_valid_phone_or_email =>
-      'Please provide a valid phone number or email address';
+      'Introdu un număr de telefon sau o adresă de e-mail validă';
 
   @override
-  String get previous => 'Previous';
+  String get previous => 'Anteriorul';
 
   @override
-  String get privacy => 'Privacy';
+  String get privacy => 'Confidențialitate';
 
   @override
-  String get privacy_policy => 'Privacy Policy';
+  String get privacy_policy => 'Politica de confidențialitate';
 
   @override
-  String get profile => 'Profile';
+  String get profile => 'Profil';
 
   @override
-  String get register => 'Register';
+  String get register => 'Înregistrare';
 
   @override
-  String get registration_failed => 'Registration failed';
+  String get registration_failed => 'Înregistrare eșuată';
 
   @override
-  String get registration_successful => 'Registration successful';
+  String get registration_successful => 'Înregistrare reușită';
 
   @override
   String registration_successful_message(String firstName) {
-    return 'Welcome to Ecounity $firstName!';
+    return 'Bun venit la Ecounity, $firstName!';
   }
 
   @override
-  String get references => 'References';
+  String get references => 'Referințe';
 
   @override
-  String get saving_data_failed => 'Saving data failed';
+  String get saving_data_failed => 'Salvarea datelor a eșuat';
 
   @override
-  String get quiz_not_passed => 'Quiz not passed';
+  String get quiz_not_passed => 'Quizul nu a fost trecut';
 
   @override
-  String get screenTitle_challenges => 'Challenges';
+  String get screenTitle_challenges => 'Provocări';
 
   @override
-  String get screenTitle_home => 'Home';
+  String get screenTitle_home => 'Acasă';
 
   @override
-  String get screenTitle_pathways => 'Pathways';
+  String get screenTitle_pathways => 'Trasee';
 
   @override
-  String get screenTitle_selfReflectionHub => 'Self-reflection Hub';
+  String get screenTitle_selfReflectionHub => 'Auto-reflecție';
 
   @override
-  String get screenTitle_videos => 'Videos';
+  String get screenTitle_videos => 'Videouri';
 
   @override
-  String get screenTitle_lessons => 'Lessons';
+  String get screenTitle_lessons => 'Lecții';
 
   @override
   String get screenTitle_modules => 'Învățare';
 
   @override
-  String get screenTitle_resources => 'Resources';
+  String get screenTitle_resources => 'Resurse';
 
   @override
-  String get select => 'Select';
+  String get dashboard_no_modules_available => 'Nu sunt module disponibile';
 
   @override
-  String get selected => 'Selected';
+  String get dashboard_welcome_back => 'Bine ai revenit';
 
   @override
-  String get sendAnswer => 'Save answer';
+  String get dashboard_ready_prompt => 'Ești gata să acționezi astăzi?';
+
+  @override
+  String get dashboard_start_learning => 'Începe învățarea';
+
+  @override
+  String dashboard_continue_sdg(int sdgNumber) {
+    return 'Continuă SDG $sdgNumber';
+  }
+
+  @override
+  String dashboard_start_sdg(int sdgNumber) {
+    return 'Începe SDG $sdgNumber';
+  }
+
+  @override
+  String get dashboard_explore_modules =>
+      'Explorează modulele de învățare EcoUnity';
+
+  @override
+  String get dashboard_browse_modules => 'Răsfoiește modulele';
+
+  @override
+  String get dashboard_resume_module => 'Reia modulul';
+
+  @override
+  String get dashboard_start_module => 'Începe modulul';
+
+  @override
+  String get dashboard_stat_modules => 'Module';
+
+  @override
+  String get dashboard_stat_activities => 'Activități';
+
+  @override
+  String get dashboard_stat_badges => 'Insigne';
+
+  @override
+  String get dashboard_module_status_done => 'Finalizat';
+
+  @override
+  String get dashboard_module_status_started => 'Început';
+
+  @override
+  String get dashboard_module_status_new => 'Nou';
+
+  @override
+  String get dashboard_latest_challenge => 'Cea mai recentă provocare';
+
+  @override
+  String get dashboard_one_minute_left => '1 min rămas';
+
+  @override
+  String dashboard_minutes_left(int minutes) {
+    return '$minutes min rămase';
+  }
+
+  @override
+  String get dashboard_one_minute => '1 min';
+
+  @override
+  String dashboard_minutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get dashboard_one_activity => '1 activitate';
+
+  @override
+  String dashboard_activities(int activities) {
+    return '$activities activități';
+  }
+
+  @override
+  String get select => 'Selectează';
+
+  @override
+  String get selected => 'Selectat';
+
+  @override
+  String get sendAnswer => 'Salvează răspunsul';
 
   @override
   String get server => 'Server';
 
   @override
-  String get settings => 'Settings';
+  String get settings => 'Setări';
 
   @override
-  String get stage => 'Stage';
+  String get stage => 'Etapă';
 
   @override
   String stageValue(String item) {
@@ -407,7 +486,7 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
-  String get start => 'Start';
+  String get start => 'Începe';
 
   @override
   String get teacher_mode => 'Mod profesor';
@@ -431,6 +510,194 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get teacher_mode_turn_off => 'Dezactivează modul profesor';
+
+  @override
+  String get button_add => 'Adaugă';
+
+  @override
+  String get learning_module_title => 'Modul';
+
+  @override
+  String learning_module_load_error(String error) {
+    return 'Modulul nu a putut fi încărcat: $error';
+  }
+
+  @override
+  String get learning_module_not_found => 'Modulul nu a fost găsit';
+
+  @override
+  String get learning_empty_activities =>
+      'Activitățile vor apărea aici când acest modul este gata.';
+
+  @override
+  String learning_group_stats_for(String group) {
+    return 'Se afișează statisticile grupului $group';
+  }
+
+  @override
+  String get learning_group_stats_empty =>
+      'Adaugă și selectează un grup de profesor în vizualizarea Profesor pentru a afișa statistici aici.';
+
+  @override
+  String learning_sdg_modules_count(int count) {
+    return 'Module de învățare SDG: $count';
+  }
+
+  @override
+  String learning_module_filter(String filter) {
+    String _temp0 = intl.Intl.selectLogic(filter, {
+      'all': 'Toate',
+      'started': 'Începute',
+      'done': 'Finalizate',
+      'challenges': 'Provocări',
+      'other': 'Toate',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String learning_no_filtered_modules(String filter) {
+    String _temp0 = intl.Intl.selectLogic(filter, {
+      'all': 'Nu există încă module disponibile.',
+      'started': 'Nu există încă module începute.',
+      'done': 'Nu există încă module finalizate.',
+      'challenges': 'Nu există încă module cu provocări.',
+      'other': 'Nu există încă module.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String learning_module_status(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'new': 'Nou',
+      'started': 'Început',
+      'done': 'Finalizat',
+      'other': 'Nou',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get learning_badge_earned => 'Insignă obținută';
+
+  @override
+  String get learning_in_progress => 'În curs';
+
+  @override
+  String get learning_one_minute_left => '1 min rămas';
+
+  @override
+  String learning_minutes_left(int minutes) {
+    return '$minutes min rămase';
+  }
+
+  @override
+  String get learning_one_minute => '1 min';
+
+  @override
+  String learning_minutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get learning_one_activity => '1 activitate';
+
+  @override
+  String learning_activities(int activities) {
+    return '$activities activități';
+  }
+
+  @override
+  String learning_activity_type(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'comic': 'Comic',
+      'mlr': 'Micro-învățare',
+      'quiz': 'Quiz',
+      'reflection': 'Reflecție',
+      'challenge': 'Provocare',
+      'unknown': 'Activitate',
+      'other': 'Activitate',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get teacher_group_statistics_title => 'Statistici de grup';
+
+  @override
+  String get teacher_refresh_active_group => 'Reîmprospătează grupul activ';
+
+  @override
+  String get teacher_group_report_description =>
+      'Adaugă tokenuri de profesor pentru a vedea progresul agregat la nivel de grup. Aplicația stochează doar rapoarte rezumative, nu identități ale elevilor.';
+
+  @override
+  String get teacher_token_label => 'Token profesor';
+
+  @override
+  String get teacher_token_hint => 'ABCDEF';
+
+  @override
+  String get teacher_group => 'Grup';
+
+  @override
+  String get teacher_active_group => 'Grup activ';
+
+  @override
+  String get teacher_select_group => 'Selectează grupul';
+
+  @override
+  String teacher_token_value(String token) {
+    return 'Token $token';
+  }
+
+  @override
+  String get teacher_metric_enrolled => 'Înscriși';
+
+  @override
+  String get teacher_metric_active => 'Activi';
+
+  @override
+  String get teacher_metric_completed => 'Finalizat';
+
+  @override
+  String get teacher_refresh_group => 'Reîmprospătează grupul';
+
+  @override
+  String get teacher_remove_group => 'Elimină grupul';
+
+  @override
+  String get teacher_empty_groups =>
+      'Adaugă un token de grup pentru a activa statisticile în vizualizările de învățare.';
+
+  @override
+  String get teacher_loading_saved_groups => 'Se încarcă grupurile salvate...';
+
+  @override
+  String teacher_stats_opened(int opened, String total) {
+    return 'Deschis $opened/$total';
+  }
+
+  @override
+  String teacher_stats_completed(String percent) {
+    return 'Finalizat $percent';
+  }
+
+  @override
+  String teacher_stats_activity_completion(String percent) {
+    return '$percent finalizare activități';
+  }
+
+  @override
+  String teacher_stats_avg_score(String score) {
+    return 'Scor mediu $score';
+  }
+
+  @override
+  String teacher_stats_avg_score_with_max(String score, String maxScore) {
+    return 'Scor mediu $score/$maxScore';
+  }
 
   @override
   String get learning_objective => 'Obiectiv de învățare';
@@ -472,26 +739,29 @@ class AppLocalizationsRo extends AppLocalizations {
       'Codul de grup nu a fost găsit sau nu este activ.';
 
   @override
-  String get terms => 'Terms';
+  String get terms => 'Termeni';
 
   @override
-  String get unnamed => 'Unnamed';
+  String get unnamed => 'Fără nume';
 
   @override
-  String get view_introduction => 'Introduction';
+  String get view_introduction => 'Introducere';
 
   @override
-  String get you_have_this_badge => 'You have this badge';
+  String get you_have_this_badge => 'Ai această insignă';
 
   @override
-  String get your_password => 'Your password';
+  String get your_password => 'Parola ta';
 
   @override
-  String get view_brochure => 'View brochure';
+  String get view_brochure => 'Vezi broșura';
 
   @override
   String get welcome_title =>
-      'Welcome to the Ecounity App - your gateway to digital learning, inspiration, and entrepreneurial growth.';
+      'Bun venit în aplicația EcoUnity - poarta ta către învățare digitală, inspirație și dezvoltare antreprenorială.';
+
+  @override
+  String get welcome_tagline => 'Împreună pentru planetă!';
 
   @override
   String get login_introduction_text =>
@@ -531,10 +801,10 @@ class AppLocalizationsRo extends AppLocalizations {
   String get links => 'Links';
 
   @override
-  String get refresh => 'Refresh';
+  String get refresh => 'Reîmprospătează';
 
   @override
-  String get cache_cleared => 'Cache cleared. Please reload the page.';
+  String get cache_cleared => 'Cache-ul a fost golit. Reîncarcă pagina.';
 
   @override
   String get module_completed => 'Module completed';
@@ -567,7 +837,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get unknown => 'Unknown';
 
   @override
-  String get error_loading_button => 'Error loading button';
+  String get error_loading_button => 'Eroare la încărcarea butonului';
 
   @override
   String get seek => 'Seek';

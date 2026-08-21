@@ -21,7 +21,6 @@ import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/util/utils.dart';
 import '../../util/router.dart';
 import '../../util/settings.dart';
-import '../../widgets/content_page.dart';
 
 const bool _screenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
 
@@ -31,10 +30,12 @@ const String _defaultFundingLogoAsset =
 const Map<String, String> _fundingLogoAssetsByLanguage = {
   'de': 'assets/images/DE_Co-fundedbytheEU_RGB_NEG.png',
   'en': _defaultFundingLogoAsset,
+  'es': 'assets/images/ES_Co-fundedbytheEU_RGB_NEG.png',
   'fi': 'assets/images/FI_Co-fundedbytheEU_RGB_NEG.png',
   'it': 'assets/images/IT_Co-fundedbytheEU_RGB_NEG.png',
   'pl': 'assets/images/PL_Co-fundedbytheEU_RGB_NEG.png',
   'pt': 'assets/images/PT_Co-fundedbytheEU_RGB_NEG.png',
+  'ro': 'assets/images/RO_Co-fundedbytheEU_RGB_NEG.png',
   'uk': 'assets/images/UK_Co-fundedbytheEU_RGB_NEG.png',
 };
 
@@ -836,12 +837,12 @@ class LoginState extends State<Login> {
   Widget policyLink() {
     return TextButton(
       onPressed: () {
-        //View policy page
-        setState(() {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => ContentPage('privacy-policy')),
-          );
-        });
+        AppRouter.navigate(
+          context,
+          '/settings/privacy',
+          0,
+          replaceRoute: false,
+        );
       },
       child: Text(
         context.l10n.privacy_policy,
@@ -1013,7 +1014,7 @@ class _WelcomeHeader extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Text(
-          'Together for Planet!',
+          context.l10n.welcome_tagline,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             color: EcoUnityColors.textSecondary,

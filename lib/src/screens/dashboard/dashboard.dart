@@ -261,7 +261,9 @@ class _DashboardBody extends StatelessWidget {
     }
 
     if (provider.modules.isEmpty) {
-      return Center(child: Text(error ?? 'No modules available'));
+      return Center(
+        child: Text(error ?? context.l10n.dashboard_no_modules_available),
+      );
     }
 
     final EcoUnityLearningDashboardSummary summary =
@@ -322,7 +324,7 @@ class _DashboardIntro extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          'Welcome back',
+          context.l10n.dashboard_welcome_back,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
             color: EcoUnityColors.turquoise,
             fontWeight: FontWeight.w800,
@@ -330,7 +332,7 @@ class _DashboardIntro extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Ready to take action today?',
+          context.l10n.dashboard_ready_prompt,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             color: EcoUnityColors.deepTeal,
             fontWeight: FontWeight.w800,
@@ -420,12 +422,13 @@ class _ContinueLearningCard extends StatelessWidget {
     final EcoUnitySdgModule? module = summary.continueModule;
     final double ratio = summary.continueModuleCompletionRatio.clamp(0, 1);
     final bool started = ratio > 0;
-    final String action = started ? 'Continue' : 'Start';
     final String title = module?.sdgNumber == null
-        ? 'Start learning'
-        : '$action SDG ${module!.sdgNumber}';
+        ? context.l10n.dashboard_start_learning
+        : started
+        ? context.l10n.dashboard_continue_sdg(module!.sdgNumber!)
+        : context.l10n.dashboard_start_sdg(module!.sdgNumber!);
     final String subtitle =
-        module?.title ?? 'Explore EcoUnity learning modules';
+        module?.title ?? context.l10n.dashboard_explore_modules;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -491,10 +494,10 @@ class _ContinueLearningCard extends StatelessWidget {
                 },
                 child: Text(
                   module == null
-                      ? 'Browse modules'
+                      ? context.l10n.dashboard_browse_modules
                       : started
-                      ? 'Resume module'
-                      : 'Start module',
+                      ? context.l10n.dashboard_resume_module
+                      : context.l10n.dashboard_start_module,
                 ),
               ),
             ),
@@ -523,20 +526,23 @@ class _DashboardStats extends StatelessWidget {
         child: Row(
           children: <Widget>[
             Expanded(
-              child: _StatTile(value: summary.moduleCount, label: 'Modules'),
+              child: _StatTile(
+                value: summary.moduleCount,
+                label: context.l10n.dashboard_stat_modules,
+              ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: _StatTile(
                 value: summary.activityCount,
-                label: 'Activities',
+                label: context.l10n.dashboard_stat_activities,
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: _StatTile(
                 value: summary.earnedBadgeCount,
-                label: 'Badges',
+                label: context.l10n.dashboard_stat_badges,
               ),
             ),
           ],
@@ -681,10 +687,10 @@ class _ModulePreviewCard extends StatelessWidget {
                     Expanded(
                       child: _ModuleStatusChip(
                         label: completed
-                            ? 'Done'
+                            ? context.l10n.dashboard_module_status_done
                             : started
-                            ? 'Started'
-                            : 'New',
+                            ? context.l10n.dashboard_module_status_started
+                            : context.l10n.dashboard_module_status_new,
                       ),
                     ),
                   ] else
@@ -711,7 +717,11 @@ class _ModulePreviewCard extends StatelessWidget {
                 const SizedBox(height: 6),
               ],
               Text(
-                _moduleProgressLabel(module, showProgress ? clampedRatio : 0),
+                _moduleProgressLabel(
+                  context,
+                  module,
+                  showProgress ? clampedRatio : 0,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -764,7 +774,7 @@ class _LatestChallengeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'Latest challenge',
+                  context.l10n.dashboard_latest_challenge,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: EcoUnityColors.warning,
                     fontWeight: FontWeight.w800,
@@ -881,23 +891,29 @@ class _DashboardErrorBanner extends StatelessWidget {
   }
 }
 
-String _moduleProgressLabel(EcoUnitySdgModule module, double ratio) {
+String _moduleProgressLabel(
+  BuildContext context,
+  EcoUnitySdgModule module,
+  double ratio,
+) {
   if (module.estimatedMinutes != null) {
     final int totalMinutes = module.estimatedMinutes!;
     if (ratio > 0 && ratio < 1) {
       final int remainingMinutes = (totalMinutes * (1 - ratio)).ceil();
       return remainingMinutes == 1
-          ? '1 min left'
-          : '$remainingMinutes min left';
+          ? context.l10n.dashboard_one_minute_left
+          : context.l10n.dashboard_minutes_left(remainingMinutes);
     }
     if (ratio >= 1) {
-      return 'Completed';
+      return context.l10n.completed;
     }
-    return '$totalMinutes min';
+    return totalMinutes == 1
+        ? context.l10n.dashboard_one_minute
+        : context.l10n.dashboard_minutes(totalMinutes);
   }
   final int activityCount = module.activities.length;
   if (activityCount == 1) {
-    return '1 activity';
+    return context.l10n.dashboard_one_activity;
   }
-  return '$activityCount activities';
+  return context.l10n.dashboard_activities(activityCount);
 }

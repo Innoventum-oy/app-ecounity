@@ -177,6 +177,69 @@
   "screenTitle_lessons": "Lessons",
   "screenTitle_modules": "Learn",
   "screenTitle_resources": "Resources",
+  "dashboard_no_modules_available": "No modules available",
+  "dashboard_welcome_back": "Welcome back",
+  "dashboard_ready_prompt": "Ready to take action today?",
+  "dashboard_start_learning": "Start learning",
+  "@dashboard_continue_sdg": {
+    "description": "Dashboard title for resuming a Sustainable Development Goal module",
+    "placeholders": {
+      "sdgNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboard_continue_sdg": "Continue SDG {sdgNumber}",
+  "@dashboard_start_sdg": {
+    "description": "Dashboard title for starting a Sustainable Development Goal module",
+    "placeholders": {
+      "sdgNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboard_start_sdg": "Start SDG {sdgNumber}",
+  "dashboard_explore_modules": "Explore EcoUnity learning modules",
+  "dashboard_browse_modules": "Browse modules",
+  "dashboard_resume_module": "Resume module",
+  "dashboard_start_module": "Start module",
+  "dashboard_stat_modules": "Modules",
+  "dashboard_stat_activities": "Activities",
+  "dashboard_stat_badges": "Badges",
+  "dashboard_module_status_done": "Done",
+  "dashboard_module_status_started": "Started",
+  "dashboard_module_status_new": "New",
+  "dashboard_latest_challenge": "Latest challenge",
+  "dashboard_one_minute_left": "1 min left",
+  "@dashboard_minutes_left": {
+    "description": "Dashboard remaining time label",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboard_minutes_left": "{minutes} min left",
+  "dashboard_one_minute": "1 min",
+  "@dashboard_minutes": {
+    "description": "Dashboard estimated time label",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboard_minutes": "{minutes} min",
+  "dashboard_one_activity": "1 activity",
+  "@dashboard_activities": {
+    "description": "Dashboard activity count label",
+    "placeholders": {
+      "activities": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboard_activities": "{activities} activities",
   "select": "Select",
   "selected": "Selected",
   "sendAnswer": "Save answer",
@@ -200,6 +263,181 @@
   "teacher_mode_active_title": "Teacher mode is active",
   "teacher_mode_active_description": "Instructional information is shown in learning activities. Learner progress and badges are hidden while this mode is active.",
   "teacher_mode_turn_off": "Turn off teacher mode",
+  "button_add": "Add",
+  "learning_module_title": "Module",
+  "@learning_module_load_error": {
+    "description": "Error shown when an SDG module cannot be loaded",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "learning_module_load_error": "Unable to load module: {error}",
+  "learning_module_not_found": "Module not found",
+  "learning_empty_activities": "Activities will appear here when this module is ready.",
+  "@learning_group_stats_for": {
+    "description": "Teacher-mode banner shown in Learn when a group report is selected",
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "learning_group_stats_for": "Showing group statistics for {group}",
+  "learning_group_stats_empty": "Add and select a teacher group in Teacher view to show statistics here.",
+  "@learning_sdg_modules_count": {
+    "description": "Heading showing the number of SDG learning modules",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "learning_sdg_modules_count": "SDG learning modules: {count}",
+  "@learning_module_filter": {
+    "description": "Filter labels in the Learn module list",
+    "placeholders": {
+      "filter": {
+        "type": "String"
+      }
+    }
+  },
+  "learning_module_filter": "{filter, select, all{All} started{Started} done{Done} challenges{Challenges} other{All}}",
+  "@learning_no_filtered_modules": {
+    "description": "Empty state for a selected Learn module filter",
+    "placeholders": {
+      "filter": {
+        "type": "String"
+      }
+    }
+  },
+  "learning_no_filtered_modules": "{filter, select, all{No modules are available yet.} started{No started modules yet.} done{No completed modules yet.} challenges{No challenge modules yet.} other{No modules yet.}}",
+  "@learning_module_status": {
+    "description": "Status chip for module progress",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "learning_module_status": "{status, select, new{New} started{Started} done{Done} other{New}}",
+  "learning_badge_earned": "Badge earned",
+  "learning_in_progress": "In progress",
+  "learning_one_minute_left": "1 min left",
+  "@learning_minutes_left": {
+    "description": "Remaining time label in Learn module cards",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "learning_minutes_left": "{minutes} min left",
+  "learning_one_minute": "1 min",
+  "@learning_minutes": {
+    "description": "Estimated time label in Learn module and activity cards",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "learning_minutes": "{minutes} min",
+  "learning_one_activity": "1 activity",
+  "@learning_activities": {
+    "description": "Activity count label in Learn module cards",
+    "placeholders": {
+      "activities": {
+        "type": "int"
+      }
+    }
+  },
+  "learning_activities": "{activities} activities",
+  "@learning_activity_type": {
+    "description": "Learning activity type label",
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "learning_activity_type": "{type, select, comic{Comic} mlr{Micro-learning} quiz{Quiz} reflection{Reflection} challenge{Challenge} unknown{Activity} other{Activity}}",
+  "teacher_group_statistics_title": "Group statistics",
+  "teacher_refresh_active_group": "Refresh active group",
+  "teacher_group_report_description": "Add teacher tokens to view aggregate group-level progress. The app stores only summary reports, not learner identities.",
+  "teacher_token_label": "Teacher token",
+  "teacher_token_hint": "ABCDEF",
+  "teacher_group": "Group",
+  "teacher_active_group": "Active group",
+  "teacher_select_group": "Select group",
+  "@teacher_token_value": {
+    "description": "Teacher-token label for a saved group report",
+    "placeholders": {
+      "token": {
+        "type": "String"
+      }
+    }
+  },
+  "teacher_token_value": "Token {token}",
+  "teacher_metric_enrolled": "Enrolled",
+  "teacher_metric_active": "Active",
+  "teacher_metric_completed": "Completed",
+  "teacher_refresh_group": "Refresh group",
+  "teacher_remove_group": "Remove group",
+  "teacher_empty_groups": "Add a group token to enable statistics in Learn views.",
+  "teacher_loading_saved_groups": "Loading saved groups...",
+  "@teacher_stats_opened": {
+    "description": "Teacher stats opened-users label",
+    "placeholders": {
+      "opened": {
+        "type": "int"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "teacher_stats_opened": "Opened {opened}/{total}",
+  "@teacher_stats_completed": {
+    "description": "Teacher stats completed percentage label",
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "teacher_stats_completed": "Completed {percent}",
+  "@teacher_stats_activity_completion": {
+    "description": "Teacher stats activity completion percentage label",
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "teacher_stats_activity_completion": "{percent} activity completion",
+  "@teacher_stats_avg_score": {
+    "description": "Teacher stats quiz average score label without maximum score",
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "teacher_stats_avg_score": "Avg score {score}",
+  "@teacher_stats_avg_score_with_max": {
+    "description": "Teacher stats quiz average score label with maximum score",
+    "placeholders": {
+      "score": {
+        "type": "String"
+      },
+      "maxScore": {
+        "type": "String"
+      }
+    }
+  },
+  "teacher_stats_avg_score_with_max": "Avg score {score}/{maxScore}",
   "learning_objective": "Learning objective",
   "group_code": "Group code",
   "group_code_title": "Join a learner group",
@@ -219,6 +457,7 @@
   "your_password": "Your password",
   "view_brochure": "View brochure",
   "welcome_title": "Welcome to the Ecounity App - your gateway to digital learning, inspiration, and entrepreneurial growth.",
+  "welcome_tagline": "Together for Planet!",
   "login_introduction_text": "Start exploring SDG learning modules, interactive comics, quizzes, and classroom challenges for planet-friendly action.",
   "srh_description": "Use these questions as a food for thought.",
   "srh_what_was_most_impactful_for_me": "What was most impactful for me?",

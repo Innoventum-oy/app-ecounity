@@ -291,6 +291,58 @@ class EcoUnityLearningRepository {
       });
   }
 
+  Future<void> warmComicActivityCache(
+    Iterable<EcoUnitySdgModule> modules, {
+    String language = 'en',
+    int concurrency = 1,
+  }) async {
+    final String normalizedLanguage = _normalizeLanguage(language);
+    final List<int> activityIds = await _comicActivityIdsForWarmup(
+      modules,
+      language: normalizedLanguage,
+    );
+    if (activityIds.isEmpty) {
+      return;
+    }
+
+    final int workerCount = concurrency < 1
+        ? 1
+        : concurrency > activityIds.length
+        ? activityIds.length
+        : concurrency;
+    int nextIndex = 0;
+    int failures = 0;
+
+    Future<void> worker() async {
+      while (true) {
+        final int index = nextIndex;
+        if (index >= activityIds.length) {
+          return;
+        }
+        nextIndex += 1;
+        final int activityId = activityIds[index];
+
+        await Future<void>.delayed(Duration.zero);
+        try {
+          await loadActivity(activityId, language: normalizedLanguage);
+        } catch (_) {
+          failures += 1;
+          // Cache warming is opportunistic. Opening the activity can still
+          // fetch from the backend if this background request fails.
+        }
+      }
+    }
+
+    await Future.wait(
+      List<Future<void>>.generate(workerCount, (_) => worker()),
+    );
+    if (failures > 0) {
+      throw StateError(
+        'Failed to warm $failures of ${activityIds.length} comic activities.',
+      );
+    }
+  }
+
   Future<EcoUnityLearningActivity?> loadActivity(
     int activityId, {
     String language = 'en',
@@ -547,6 +599,48 @@ class EcoUnityLearningRepository {
       'content_status': _contentStatusToWire(status),
     });
     return loadActivity(activityId, language: language, reload: true);
+  }
+
+  Future<List<int>> _comicActivityIdsForWarmup(
+    Iterable<EcoUnitySdgModule> modules, {
+    required String language,
+  }) async {
+    final Set<int> seen = <int>{};
+    final List<int> activityIds = <int>[];
+
+    for (final EcoUnitySdgModule module in modules) {
+      for (final EcoUnityLearningActivity activity in module.activities) {
+        final int? activityId = activity.id;
+        if (activityId != null && activity.isComic && seen.add(activityId)) {
+          activityIds.add(activityId);
+        }
+      }
+    }
+
+    if (activityIds.isNotEmpty) {
+      return activityIds;
+    }
+
+    try {
+      final List<Map<String, dynamic>> activityMaps = await _loadActivityMaps(
+        language: language,
+        type: EcoUnityActivityType.comic,
+        additionalParams: const <String, dynamic>{
+          'fields': 'id,objectid,activity_type,orderno,title,module,sdg_number',
+          'limit': 100,
+        },
+      );
+      for (final Map<String, dynamic> activityMap in activityMaps) {
+        final int? activityId = _relationId(activityMap);
+        if (activityId != null && seen.add(activityId)) {
+          activityIds.add(activityId);
+        }
+      }
+    } catch (_) {
+      return activityIds;
+    }
+
+    return activityIds;
   }
 
   Future<List<Map<String, dynamic>>> _loadActivityMaps({

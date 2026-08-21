@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core/core.dart' as core;
 import 'package:flutter/foundation.dart';
 
@@ -14,6 +16,9 @@ class EcoUnityLearningProvider with ChangeNotifier {
   String? error;
   List<EcoUnitySdgModule> modules = <EcoUnitySdgModule>[];
   List<EcoUnityProgressEntry> progressEntries = <EcoUnityProgressEntry>[];
+  final Set<String> _completedComicWarmupSignatures = <String>{};
+  Future<void>? _comicWarmupFuture;
+  String? _comicWarmupSignature;
 
   bool get isLoaded => loadingStatus == core.DataLoadingStatus.loaded;
 
@@ -51,6 +56,7 @@ class EcoUnityLearningProvider with ChangeNotifier {
       modules = await _repository.loadModules(language: language);
       loadingStatus = core.DataLoadingStatus.loaded;
       notifyListeners();
+      unawaited(warmComicActivityCache(language: language));
       return modules;
     } catch (exception) {
       loadingStatus = core.DataLoadingStatus.error;
@@ -103,8 +109,74 @@ class EcoUnityLearningProvider with ChangeNotifier {
             return (a.sdgNumber ?? 0).compareTo(b.sdgNumber ?? 0);
           });
       notifyListeners();
+      unawaited(
+        warmComicActivityCache(
+          language: language,
+          modules: <EcoUnitySdgModule>[module],
+        ),
+      );
     }
     return module;
+  }
+
+  Future<void> warmComicActivityCache({
+    String language = 'en',
+    Iterable<EcoUnitySdgModule>? modules,
+    int concurrency = 1,
+    bool force = false,
+  }) {
+    final String normalizedLanguage = language.trim().toLowerCase().isEmpty
+        ? 'en'
+        : language.trim().toLowerCase();
+    final List<EcoUnitySdgModule> sourceModules =
+        modules?.toList(growable: false) ?? this.modules;
+    final List<int> moduleIds =
+        sourceModules
+            .map((EcoUnitySdgModule module) => module.id)
+            .whereType<int>()
+            .toList()
+          ..sort();
+    final String signature =
+        '$normalizedLanguage:${moduleIds.join(',')}:$concurrency';
+
+    if (sourceModules.isEmpty) {
+      return Future<void>.value();
+    }
+    if (!force && _completedComicWarmupSignatures.contains(signature)) {
+      return Future<void>.value();
+    }
+    final Future<void>? currentWarmup = _comicWarmupFuture;
+    if (!force && currentWarmup != null && _comicWarmupSignature == signature) {
+      return currentWarmup;
+    }
+
+    final Future<void> future = _repository
+        .warmComicActivityCache(
+          sourceModules,
+          language: normalizedLanguage,
+          concurrency: concurrency,
+        )
+        .then((_) {
+          _completedComicWarmupSignatures.add(signature);
+        })
+        .catchError((Object exception, StackTrace stackTrace) {
+          if (kDebugMode) {
+            debugPrint(
+              'Unable to warm EcoUnity comic activity cache: $exception',
+            );
+            debugPrintStack(stackTrace: stackTrace);
+          }
+        });
+
+    late final Future<void> trackedFuture;
+    trackedFuture = future.whenComplete(() {
+      if (_comicWarmupFuture == trackedFuture) {
+        _comicWarmupFuture = null;
+      }
+    });
+    _comicWarmupSignature = signature;
+    _comicWarmupFuture = trackedFuture;
+    return _comicWarmupFuture!;
   }
 
   Future<List<EcoUnityProgressEntry>> loadProgress({

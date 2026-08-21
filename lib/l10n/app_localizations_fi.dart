@@ -377,6 +377,85 @@ class AppLocalizationsFi extends AppLocalizations {
   String get screenTitle_resources => 'Resurssit';
 
   @override
+  String get dashboard_no_modules_available => 'Ei moduuleja saatavilla';
+
+  @override
+  String get dashboard_welcome_back => 'Tervetuloa takaisin';
+
+  @override
+  String get dashboard_ready_prompt => 'Valmiina toimimaan tänään?';
+
+  @override
+  String get dashboard_start_learning => 'Aloita oppiminen';
+
+  @override
+  String dashboard_continue_sdg(int sdgNumber) {
+    return 'Jatka SDG $sdgNumber';
+  }
+
+  @override
+  String dashboard_start_sdg(int sdgNumber) {
+    return 'Aloita SDG $sdgNumber';
+  }
+
+  @override
+  String get dashboard_explore_modules => 'Tutustu EcoUnity-oppimoduuleihin';
+
+  @override
+  String get dashboard_browse_modules => 'Selaa moduuleja';
+
+  @override
+  String get dashboard_resume_module => 'Jatka moduulia';
+
+  @override
+  String get dashboard_start_module => 'Aloita moduuli';
+
+  @override
+  String get dashboard_stat_modules => 'Moduulit';
+
+  @override
+  String get dashboard_stat_activities => 'Aktiviteetit';
+
+  @override
+  String get dashboard_stat_badges => 'Merkit';
+
+  @override
+  String get dashboard_module_status_done => 'Valmis';
+
+  @override
+  String get dashboard_module_status_started => 'Aloitettu';
+
+  @override
+  String get dashboard_module_status_new => 'Uusi';
+
+  @override
+  String get dashboard_latest_challenge => 'Uusin haaste';
+
+  @override
+  String get dashboard_one_minute_left => '1 min jäljellä';
+
+  @override
+  String dashboard_minutes_left(int minutes) {
+    return '$minutes min jäljellä';
+  }
+
+  @override
+  String get dashboard_one_minute => '1 min';
+
+  @override
+  String dashboard_minutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get dashboard_one_activity => '1 aktiviteetti';
+
+  @override
+  String dashboard_activities(int activities) {
+    return '$activities aktiviteettia';
+  }
+
+  @override
   String get select => 'Valitse';
 
   @override
@@ -430,6 +509,194 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get teacher_mode_turn_off => 'Poista opettajatila käytöstä';
+
+  @override
+  String get button_add => 'Lisää';
+
+  @override
+  String get learning_module_title => 'Moduuli';
+
+  @override
+  String learning_module_load_error(String error) {
+    return 'Moduulin lataaminen epäonnistui: $error';
+  }
+
+  @override
+  String get learning_module_not_found => 'Moduulia ei löytynyt';
+
+  @override
+  String get learning_empty_activities =>
+      'Aktiviteetit tulevat näkyviin, kun tämä moduuli on valmis.';
+
+  @override
+  String learning_group_stats_for(String group) {
+    return 'Näytetään ryhmän $group tilastot';
+  }
+
+  @override
+  String get learning_group_stats_empty =>
+      'Lisää ja valitse opettajaryhmä Opettaja-näkymässä, jotta tilastot näkyvät täällä.';
+
+  @override
+  String learning_sdg_modules_count(int count) {
+    return 'SDG-oppimoduulit: $count';
+  }
+
+  @override
+  String learning_module_filter(String filter) {
+    String _temp0 = intl.Intl.selectLogic(filter, {
+      'all': 'Kaikki',
+      'started': 'Aloitetut',
+      'done': 'Valmiit',
+      'challenges': 'Haasteet',
+      'other': 'Kaikki',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String learning_no_filtered_modules(String filter) {
+    String _temp0 = intl.Intl.selectLogic(filter, {
+      'all': 'Moduuleja ei ole vielä saatavilla.',
+      'started': 'Aloitettuja moduuleja ei vielä ole.',
+      'done': 'Valmiita moduuleja ei vielä ole.',
+      'challenges': 'Haastemoduuleja ei vielä ole.',
+      'other': 'Moduuleja ei vielä ole.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String learning_module_status(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'new': 'Uusi',
+      'started': 'Aloitettu',
+      'done': 'Valmis',
+      'other': 'Uusi',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get learning_badge_earned => 'Merkki ansaittu';
+
+  @override
+  String get learning_in_progress => 'Kesken';
+
+  @override
+  String get learning_one_minute_left => '1 min jäljellä';
+
+  @override
+  String learning_minutes_left(int minutes) {
+    return '$minutes min jäljellä';
+  }
+
+  @override
+  String get learning_one_minute => '1 min';
+
+  @override
+  String learning_minutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get learning_one_activity => '1 aktiviteetti';
+
+  @override
+  String learning_activities(int activities) {
+    return '$activities aktiviteettia';
+  }
+
+  @override
+  String learning_activity_type(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'comic': 'Sarjakuva',
+      'mlr': 'Mikro-oppiminen',
+      'quiz': 'Tietovisa',
+      'reflection': 'Reflektio',
+      'challenge': 'Haaste',
+      'unknown': 'Aktiviteetti',
+      'other': 'Aktiviteetti',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get teacher_group_statistics_title => 'Ryhmän tilastot';
+
+  @override
+  String get teacher_refresh_active_group => 'Päivitä aktiivinen ryhmä';
+
+  @override
+  String get teacher_group_report_description =>
+      'Lisää opettajakoodeja nähdäksesi ryhmätason koontiedistymisen. Sovellus tallentaa vain yhteenvetoraportteja, ei oppijoiden henkilöllisyyksiä.';
+
+  @override
+  String get teacher_token_label => 'Opettajakoodi';
+
+  @override
+  String get teacher_token_hint => 'ABCDEF';
+
+  @override
+  String get teacher_group => 'Ryhmä';
+
+  @override
+  String get teacher_active_group => 'Aktiivinen ryhmä';
+
+  @override
+  String get teacher_select_group => 'Valitse ryhmä';
+
+  @override
+  String teacher_token_value(String token) {
+    return 'Koodi $token';
+  }
+
+  @override
+  String get teacher_metric_enrolled => 'Liitetyt';
+
+  @override
+  String get teacher_metric_active => 'Aktiiviset';
+
+  @override
+  String get teacher_metric_completed => 'Valmiit';
+
+  @override
+  String get teacher_refresh_group => 'Päivitä ryhmä';
+
+  @override
+  String get teacher_remove_group => 'Poista ryhmä';
+
+  @override
+  String get teacher_empty_groups =>
+      'Lisää ryhmäkoodi, jotta tilastot näkyvät Opi-näkymissä.';
+
+  @override
+  String get teacher_loading_saved_groups => 'Ladataan tallennettuja ryhmiä...';
+
+  @override
+  String teacher_stats_opened(int opened, String total) {
+    return 'Avattu $opened/$total';
+  }
+
+  @override
+  String teacher_stats_completed(String percent) {
+    return 'Valmis $percent';
+  }
+
+  @override
+  String teacher_stats_activity_completion(String percent) {
+    return '$percent aktiviteettien valmistuminen';
+  }
+
+  @override
+  String teacher_stats_avg_score(String score) {
+    return 'Keskim. pisteet $score';
+  }
+
+  @override
+  String teacher_stats_avg_score_with_max(String score, String maxScore) {
+    return 'Keskim. pisteet $score/$maxScore';
+  }
 
   @override
   String get learning_objective => 'Oppimistavoite';
@@ -491,6 +758,9 @@ class AppLocalizationsFi extends AppLocalizations {
   @override
   String get welcome_title =>
       'Tervetuloa Ecounity-sovellukseen - porttiisi digitaaliseen oppimiseen, inspiraatioon ja yrittäjähenkiseen kasvuun.';
+
+  @override
+  String get welcome_tagline => 'Yhdessä planeetan puolesta!';
 
   @override
   String get login_introduction_text =>

@@ -9,28 +9,28 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
-  String get about => 'About';
+  String get about => 'Acerca de';
 
   @override
-  String get age => 'Age';
+  String get age => 'Edad';
 
   @override
-  String get account => 'Account';
+  String get account => 'Cuenta';
 
   @override
-  String get achievements => 'Achievements';
+  String get achievements => 'Logros';
 
   @override
-  String get answer_saved => 'Answer saved';
+  String get answer_saved => 'Respuesta guardada';
 
   @override
   String get application_name => 'Ecounity';
 
   @override
-  String get attention => 'Attention';
+  String get attention => 'Atención';
 
   @override
-  String get authenticating => 'Authenticating...';
+  String get authenticating => 'Autenticando...';
 
   @override
   String get badge => 'Badge';
@@ -46,13 +46,13 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get button_accept => 'Accept';
+  String get button_accept => 'Aceptar';
 
   @override
-  String get button_approve => 'Approve';
+  String get button_approve => 'Aprobar';
 
   @override
-  String get badge_awarded => 'New badge awarded';
+  String get badge_awarded => 'Nueva insignia obtenida';
 
   @override
   String badge_awarded_congratulations(String badge) {
@@ -60,101 +60,102 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get button_back => 'Back';
+  String get button_back => 'Atrás';
 
   @override
-  String get button_cancel => 'Cancel';
+  String get button_cancel => 'Cancelar';
 
   @override
-  String get button_close => 'Close';
+  String get button_close => 'Cerrar';
 
   @override
-  String get button_confirm => 'Confirm';
+  String get button_confirm => 'Confirmar';
 
   @override
-  String get button_continue => 'Continue';
+  String get button_continue => 'Continuar';
 
   @override
-  String get button_continue_as_guest => 'Continue as guest';
+  String get button_continue_as_guest => 'Continuar como invitado';
 
   @override
-  String get button_create => 'Create';
+  String get button_create => 'Crear';
 
   @override
-  String get button_create_account => 'Create account';
+  String get button_create_account => 'Crear cuenta';
 
   @override
-  String get button_delete => 'Delete';
+  String get button_delete => 'Eliminar';
 
   @override
-  String get button_edit => 'Edit';
+  String get button_edit => 'Editar';
 
   @override
-  String get button_finish => 'Finish';
+  String get button_finish => 'Finalizar';
 
   @override
-  String get button_forgot_password => 'Forgot password?';
+  String get button_forgot_password => '¿Olvidaste tu contraseña?';
 
   @override
-  String get button_login => 'Login';
+  String get button_login => 'Iniciar sesión';
 
   @override
-  String get button_logout => 'Logout';
+  String get button_logout => 'Cerrar sesión';
 
   @override
-  String get button_next => 'Next';
+  String get button_next => 'Siguiente';
 
   @override
   String get button_ok => 'OK';
 
   @override
-  String get button_previous => 'Previous';
+  String get button_previous => 'Anterior';
 
   @override
-  String get button_register => 'Register';
+  String get button_register => 'Registrarse';
 
   @override
-  String get button_reject => 'Reject';
+  String get button_reject => 'Rechazar';
 
   @override
-  String get button_save => 'Save';
+  String get button_save => 'Guardar';
 
   @override
-  String get button_send => 'Send';
+  String get button_send => 'Enviar';
 
   @override
-  String get button_submit => 'Submit';
+  String get button_submit => 'Enviar';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Cancelar';
 
   @override
-  String get choose_language => 'Choose language';
+  String get choose_language => 'Elige un idioma';
 
   @override
-  String get collected_badges => 'Collected badges';
+  String get collected_badges => 'Insignias obtenidas';
 
   @override
-  String get completed => 'Completed';
+  String get completed => 'Completado';
 
   @override
   String get confirm_deleting_account =>
-      'Are you sure you want to delete your account?';
+      '¿Seguro que quieres eliminar tu cuenta?';
 
   @override
-  String get contact => 'Contact';
+  String get contact => 'Contacto';
 
   @override
-  String get delete_account => 'Delete account';
+  String get delete_account => 'Eliminar cuenta';
 
   @override
-  String get email => 'Email';
+  String get email => 'Correo electrónico';
 
   @override
-  String get email_not_valid => 'The given email address is not valid';
+  String get email_not_valid =>
+      'La dirección de correo electrónico no es válida';
 
   @override
-  String get email_or_phone_number => 'Email or phone number';
+  String get email_or_phone_number => 'Correo electrónico o número de teléfono';
 
   @override
   String error(String error) {
@@ -162,10 +163,10 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get error_default => 'Unable to complete the request';
+  String get error_default => 'No se pudo completar la solicitud';
 
   @override
-  String get error_occurred => 'An error occurred';
+  String get error_occurred => 'Se produjo un error';
 
   @override
   String errorViewNotFound(String view) {
@@ -173,7 +174,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get errors_in_form => 'Errors in form';
+  String get errors_in_form => 'Errores en el formulario';
 
   @override
   String field_required(String field) {
@@ -181,26 +182,26 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get firstName => 'First name';
+  String get firstName => 'Nombre';
 
   @override
   String get funding_disclaimer =>
-      'Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Education and Culture Executive Agency (EACEA). Neither the European Union nor EACEA can be held responsible for them.';
+      'Financiado por la Unión Europea. Las opiniones y puntos de vista expresados son, sin embargo, responsabilidad exclusiva de su(s) autor(es) y no reflejan necesariamente los de la Unión Europea ni los de la Agencia Ejecutiva Europea de Educación y Cultura (EACEA). Ni la Unión Europea ni la EACEA pueden ser consideradas responsables de ellos.';
 
   @override
-  String get great => 'Great';
+  String get great => 'Genial';
 
   @override
-  String get home => 'Home';
+  String get home => 'Inicio';
 
   @override
-  String get introduction => 'Introduction';
+  String get introduction => 'Introducción';
 
   @override
   String get language => 'Idioma';
 
   @override
-  String get select_language => 'Select language';
+  String get select_language => 'Seleccionar idioma';
 
   @override
   String locale(String language) {
@@ -212,188 +213,269 @@ class AppLocalizationsEs extends AppLocalizations {
       'pl': 'Polaco',
       'de': 'Alemán',
       'uk': 'Ucraniano',
-      'it': 'Italian',
-      'pt': 'Portuguese',
+      'it': 'Italiano',
+      'pt': 'Portugués',
       'other': 'Idioma:$language',
     });
     return '$_temp0';
   }
 
   @override
-  String get lastName => 'Last name';
+  String get lastName => 'Apellidos';
 
   @override
-  String get loading => 'Loading...';
+  String get loading => 'Cargando...';
 
   @override
-  String get login => 'Login';
+  String get login => 'Iniciar sesión';
 
   @override
-  String get login_failed => 'Login failed';
+  String get login_failed => 'Error al iniciar sesión';
 
   @override
-  String get logout => 'Logout';
+  String get logout => 'Cerrar sesión';
 
   @override
-  String get logout_confirmation => 'Are you sure you want to logout?';
+  String get logout_confirmation => '¿Seguro que quieres cerrar sesión?';
 
   @override
-  String get markAsCompleted => 'Mark as completed';
+  String get markAsCompleted => 'Marcar como completado';
 
   @override
   String navigation_item(String item) {
     String _temp0 = intl.Intl.selectLogic(item, {
-      'home': 'Home',
-      'pathways': 'Pathways',
-      'challenges': 'Challenges',
-      'videolist': 'Videos',
-      'selfReflectionHub': 'Self-reflection Hub',
-      'lessons': 'Lessons',
+      'home': 'Inicio',
+      'pathways': 'Rutas',
+      'challenges': 'Retos',
+      'videolist': 'Vídeos',
+      'selfReflectionHub': 'Auto-reflexión',
+      'lessons': 'Lecciones',
       'modules': 'Aprender',
-      'resources': 'Resources',
+      'resources': 'Recursos',
       'progress': 'Progreso',
       'teacher': 'Docente',
-      'other': 'Menu:$item',
+      'other': 'Menú:$item',
     });
     return '$_temp0';
   }
 
   @override
-  String get next => 'Next';
+  String get next => 'Siguiente';
 
   @override
-  String get noBadgesFound => 'No badges found';
+  String get noBadgesFound => 'No se encontraron insignias';
 
   @override
-  String get noChallengesFound => 'No challenges were found';
+  String get noChallengesFound => 'No se encontraron retos';
 
   @override
-  String get noContentFound => 'No content found';
+  String get noContentFound => 'No se encontró contenido';
 
   @override
-  String get noPathwaysFound => 'No learning contents were found';
+  String get noPathwaysFound => 'No se encontraron contenidos de aprendizaje';
 
   @override
-  String get noTranscriptAvailable => 'No transcript available';
+  String get noTranscriptAvailable => 'No hay transcripción disponible';
 
   @override
-  String get noVideosFound => 'No videos were found';
+  String get noVideosFound => 'No se encontraron vídeos';
 
   @override
-  String get noLessonsFound => 'No lessons were found';
+  String get noLessonsFound => 'No se encontraron lecciones';
 
   @override
-  String get page_content => 'Page content';
+  String get page_content => 'Contenido de la página';
 
   @override
-  String get password => 'Password';
+  String get password => 'Contraseña';
 
   @override
-  String get pathway => 'Learning content';
+  String get pathway => 'Contenido de aprendizaje';
 
   @override
-  String get pathway_already_completed => 'Learning content is completed';
+  String get pathway_already_completed =>
+      'El contenido de aprendizaje está completado';
 
   @override
-  String get pathway_completed => 'Learning content completed';
+  String get pathway_completed => 'Contenido de aprendizaje completado';
 
   @override
-  String get phone => 'Phone';
+  String get phone => 'Teléfono';
 
   @override
-  String get phone_or_email => 'Phone number or email address';
+  String get phone_or_email => 'Número de teléfono o correo electrónico';
 
   @override
   String get please_complete_form_properly =>
-      'Please complete the form properly';
+      'Completa el formulario correctamente';
 
   @override
-  String get please_enter_password => 'Please enter a password';
+  String get please_enter_password => 'Introduce una contraseña';
 
   @override
   String get please_enter_phone_or_email =>
-      'Please enter a phone number or email address';
+      'Introduce un número de teléfono o correo electrónico';
 
   @override
   String get please_provide_valid_phone_or_email =>
-      'Please provide a valid phone number or email address';
+      'Introduce un número de teléfono o correo electrónico válido';
 
   @override
-  String get previous => 'Previous';
+  String get previous => 'Anterior';
 
   @override
-  String get privacy => 'Privacy';
+  String get privacy => 'Privacidad';
 
   @override
-  String get privacy_policy => 'Privacy Policy';
+  String get privacy_policy => 'Política de privacidad';
 
   @override
-  String get profile => 'Profile';
+  String get profile => 'Perfil';
 
   @override
-  String get register => 'Register';
+  String get register => 'Registrarse';
 
   @override
-  String get registration_failed => 'Registration failed';
+  String get registration_failed => 'Registro fallido';
 
   @override
-  String get registration_successful => 'Registration successful';
+  String get registration_successful => 'Registro completado';
 
   @override
   String registration_successful_message(String firstName) {
-    return 'Welcome to Ecounity $firstName!';
+    return '¡Te damos la bienvenida a Ecounity, $firstName!';
   }
 
   @override
-  String get references => 'References';
+  String get references => 'Referencias';
 
   @override
-  String get saving_data_failed => 'Saving data failed';
+  String get saving_data_failed => 'No se pudieron guardar los datos';
 
   @override
-  String get quiz_not_passed => 'Quiz not passed';
+  String get quiz_not_passed => 'Cuestionario no superado';
 
   @override
-  String get screenTitle_challenges => 'Challenges';
+  String get screenTitle_challenges => 'Retos';
 
   @override
-  String get screenTitle_home => 'Home';
+  String get screenTitle_home => 'Inicio';
 
   @override
-  String get screenTitle_pathways => 'Pathways';
+  String get screenTitle_pathways => 'Rutas';
 
   @override
-  String get screenTitle_selfReflectionHub => 'Self-reflection Hub';
+  String get screenTitle_selfReflectionHub => 'Auto-reflexión';
 
   @override
-  String get screenTitle_videos => 'Videos';
+  String get screenTitle_videos => 'Vídeos';
 
   @override
-  String get screenTitle_lessons => 'Lessons';
+  String get screenTitle_lessons => 'Lecciones';
 
   @override
   String get screenTitle_modules => 'Aprender';
 
   @override
-  String get screenTitle_resources => 'Resources';
+  String get screenTitle_resources => 'Recursos';
 
   @override
-  String get select => 'Select';
+  String get dashboard_no_modules_available => 'No hay módulos disponibles';
 
   @override
-  String get selected => 'Selected';
+  String get dashboard_welcome_back => 'Te damos la bienvenida de nuevo';
 
   @override
-  String get sendAnswer => 'Save answer';
+  String get dashboard_ready_prompt => '¿Listo para actuar hoy?';
 
   @override
-  String get server => 'Server';
+  String get dashboard_start_learning => 'Empieza a aprender';
 
   @override
-  String get settings => 'Settings';
+  String dashboard_continue_sdg(int sdgNumber) {
+    return 'Continuar ODS $sdgNumber';
+  }
 
   @override
-  String get stage => 'Stage';
+  String dashboard_start_sdg(int sdgNumber) {
+    return 'Empezar ODS $sdgNumber';
+  }
+
+  @override
+  String get dashboard_explore_modules =>
+      'Explora los módulos de aprendizaje de EcoUnity';
+
+  @override
+  String get dashboard_browse_modules => 'Ver módulos';
+
+  @override
+  String get dashboard_resume_module => 'Continuar módulo';
+
+  @override
+  String get dashboard_start_module => 'Empezar módulo';
+
+  @override
+  String get dashboard_stat_modules => 'Módulos';
+
+  @override
+  String get dashboard_stat_activities => 'Actividades';
+
+  @override
+  String get dashboard_stat_badges => 'Insignias';
+
+  @override
+  String get dashboard_module_status_done => 'Hecho';
+
+  @override
+  String get dashboard_module_status_started => 'Iniciado';
+
+  @override
+  String get dashboard_module_status_new => 'Nuevo';
+
+  @override
+  String get dashboard_latest_challenge => 'Último reto';
+
+  @override
+  String get dashboard_one_minute_left => 'Queda 1 min';
+
+  @override
+  String dashboard_minutes_left(int minutes) {
+    return 'Quedan $minutes min';
+  }
+
+  @override
+  String get dashboard_one_minute => '1 min';
+
+  @override
+  String dashboard_minutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get dashboard_one_activity => '1 actividad';
+
+  @override
+  String dashboard_activities(int activities) {
+    return '$activities actividades';
+  }
+
+  @override
+  String get select => 'Seleccionar';
+
+  @override
+  String get selected => 'Seleccionado';
+
+  @override
+  String get sendAnswer => 'Guardar respuesta';
+
+  @override
+  String get server => 'Servidor';
+
+  @override
+  String get settings => 'Configuración';
+
+  @override
+  String get stage => 'Etapa';
 
   @override
   String stageValue(String item) {
@@ -407,7 +489,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get start => 'Start';
+  String get start => 'Comenzar';
 
   @override
   String get teacher_mode => 'Modo docente';
@@ -431,6 +513,194 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get teacher_mode_turn_off => 'Desactivar modo docente';
+
+  @override
+  String get button_add => 'Añadir';
+
+  @override
+  String get learning_module_title => 'Módulo';
+
+  @override
+  String learning_module_load_error(String error) {
+    return 'No se pudo cargar el módulo: $error';
+  }
+
+  @override
+  String get learning_module_not_found => 'Módulo no encontrado';
+
+  @override
+  String get learning_empty_activities =>
+      'Las actividades aparecerán aquí cuando este módulo esté listo.';
+
+  @override
+  String learning_group_stats_for(String group) {
+    return 'Mostrando estadísticas del grupo $group';
+  }
+
+  @override
+  String get learning_group_stats_empty =>
+      'Añade y selecciona un grupo docente en la vista Docente para mostrar estadísticas aquí.';
+
+  @override
+  String learning_sdg_modules_count(int count) {
+    return 'Módulos de aprendizaje ODS: $count';
+  }
+
+  @override
+  String learning_module_filter(String filter) {
+    String _temp0 = intl.Intl.selectLogic(filter, {
+      'all': 'Todos',
+      'started': 'Iniciados',
+      'done': 'Hechos',
+      'challenges': 'Retos',
+      'other': 'Todos',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String learning_no_filtered_modules(String filter) {
+    String _temp0 = intl.Intl.selectLogic(filter, {
+      'all': 'Todavía no hay módulos disponibles.',
+      'started': 'Todavía no hay módulos iniciados.',
+      'done': 'Todavía no hay módulos completados.',
+      'challenges': 'Todavía no hay módulos de retos.',
+      'other': 'Todavía no hay módulos.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String learning_module_status(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'new': 'Nuevo',
+      'started': 'Iniciado',
+      'done': 'Hecho',
+      'other': 'Nuevo',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get learning_badge_earned => 'Insignia obtenida';
+
+  @override
+  String get learning_in_progress => 'En curso';
+
+  @override
+  String get learning_one_minute_left => 'Queda 1 min';
+
+  @override
+  String learning_minutes_left(int minutes) {
+    return 'Quedan $minutes min';
+  }
+
+  @override
+  String get learning_one_minute => '1 min';
+
+  @override
+  String learning_minutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get learning_one_activity => '1 actividad';
+
+  @override
+  String learning_activities(int activities) {
+    return '$activities actividades';
+  }
+
+  @override
+  String learning_activity_type(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'comic': 'Cómic',
+      'mlr': 'Microaprendizaje',
+      'quiz': 'Cuestionario',
+      'reflection': 'Reflexión',
+      'challenge': 'Reto',
+      'unknown': 'Actividad',
+      'other': 'Actividad',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get teacher_group_statistics_title => 'Estadísticas de grupo';
+
+  @override
+  String get teacher_refresh_active_group => 'Actualizar grupo activo';
+
+  @override
+  String get teacher_group_report_description =>
+      'Añade tokens docentes para ver el progreso agregado por grupo. La app solo guarda informes resumidos, no identidades del alumnado.';
+
+  @override
+  String get teacher_token_label => 'Token docente';
+
+  @override
+  String get teacher_token_hint => 'ABCDEF';
+
+  @override
+  String get teacher_group => 'Grupo';
+
+  @override
+  String get teacher_active_group => 'Grupo activo';
+
+  @override
+  String get teacher_select_group => 'Seleccionar grupo';
+
+  @override
+  String teacher_token_value(String token) {
+    return 'Token $token';
+  }
+
+  @override
+  String get teacher_metric_enrolled => 'Inscritos';
+
+  @override
+  String get teacher_metric_active => 'Activos';
+
+  @override
+  String get teacher_metric_completed => 'Completado';
+
+  @override
+  String get teacher_refresh_group => 'Actualizar grupo';
+
+  @override
+  String get teacher_remove_group => 'Eliminar grupo';
+
+  @override
+  String get teacher_empty_groups =>
+      'Añade un token de grupo para activar estadísticas en las vistas de aprendizaje.';
+
+  @override
+  String get teacher_loading_saved_groups => 'Cargando grupos guardados...';
+
+  @override
+  String teacher_stats_opened(int opened, String total) {
+    return 'Abierto $opened/$total';
+  }
+
+  @override
+  String teacher_stats_completed(String percent) {
+    return 'Completado $percent';
+  }
+
+  @override
+  String teacher_stats_activity_completion(String percent) {
+    return '$percent de actividades completadas';
+  }
+
+  @override
+  String teacher_stats_avg_score(String score) {
+    return 'Puntuación media $score';
+  }
+
+  @override
+  String teacher_stats_avg_score_with_max(String score, String maxScore) {
+    return 'Puntuación media $score/$maxScore';
+  }
 
   @override
   String get learning_objective => 'Objetivo de aprendizaje';
@@ -472,26 +742,29 @@ class AppLocalizationsEs extends AppLocalizations {
       'El código de grupo no se encontró o no está activo.';
 
   @override
-  String get terms => 'Terms';
+  String get terms => 'Términos';
 
   @override
-  String get unnamed => 'Unnamed';
+  String get unnamed => 'Sin nombre';
 
   @override
-  String get view_introduction => 'Introduction';
+  String get view_introduction => 'Introducción';
 
   @override
-  String get you_have_this_badge => 'You have this badge';
+  String get you_have_this_badge => 'Tienes esta insignia';
 
   @override
-  String get your_password => 'Your password';
+  String get your_password => 'Tu contraseña';
 
   @override
-  String get view_brochure => 'View brochure';
+  String get view_brochure => 'Ver folleto';
 
   @override
   String get welcome_title =>
-      'Welcome to the Ecounity App - your gateway to digital learning, inspiration, and entrepreneurial growth.';
+      'Bienvenido a la app EcoUnity: tu puerta de entrada al aprendizaje digital, la inspiración y el crecimiento emprendedor.';
+
+  @override
+  String get welcome_tagline => '¡Juntos por el planeta!';
 
   @override
   String get login_introduction_text =>
@@ -531,10 +804,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get links => 'Links';
 
   @override
-  String get refresh => 'Refresh';
+  String get refresh => 'Actualizar';
 
   @override
-  String get cache_cleared => 'Cache cleared. Please reload the page.';
+  String get cache_cleared => 'Caché borrada. Vuelve a cargar la página.';
 
   @override
   String get module_completed => 'Module completed';
@@ -567,7 +840,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get unknown => 'Unknown';
 
   @override
-  String get error_loading_button => 'Error loading button';
+  String get error_loading_button => 'Error al cargar el botón';
 
   @override
   String get seek => 'Seek';

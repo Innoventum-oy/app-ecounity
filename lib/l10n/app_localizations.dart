@@ -754,6 +754,144 @@ abstract class AppLocalizations {
   /// **'Resources'**
   String get screenTitle_resources;
 
+  /// No description provided for @dashboard_no_modules_available.
+  ///
+  /// In en, this message translates to:
+  /// **'No modules available'**
+  String get dashboard_no_modules_available;
+
+  /// No description provided for @dashboard_welcome_back.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get dashboard_welcome_back;
+
+  /// No description provided for @dashboard_ready_prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to take action today?'**
+  String get dashboard_ready_prompt;
+
+  /// No description provided for @dashboard_start_learning.
+  ///
+  /// In en, this message translates to:
+  /// **'Start learning'**
+  String get dashboard_start_learning;
+
+  /// Dashboard title for resuming a Sustainable Development Goal module
+  ///
+  /// In en, this message translates to:
+  /// **'Continue SDG {sdgNumber}'**
+  String dashboard_continue_sdg(int sdgNumber);
+
+  /// Dashboard title for starting a Sustainable Development Goal module
+  ///
+  /// In en, this message translates to:
+  /// **'Start SDG {sdgNumber}'**
+  String dashboard_start_sdg(int sdgNumber);
+
+  /// No description provided for @dashboard_explore_modules.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore EcoUnity learning modules'**
+  String get dashboard_explore_modules;
+
+  /// No description provided for @dashboard_browse_modules.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse modules'**
+  String get dashboard_browse_modules;
+
+  /// No description provided for @dashboard_resume_module.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume module'**
+  String get dashboard_resume_module;
+
+  /// No description provided for @dashboard_start_module.
+  ///
+  /// In en, this message translates to:
+  /// **'Start module'**
+  String get dashboard_start_module;
+
+  /// No description provided for @dashboard_stat_modules.
+  ///
+  /// In en, this message translates to:
+  /// **'Modules'**
+  String get dashboard_stat_modules;
+
+  /// No description provided for @dashboard_stat_activities.
+  ///
+  /// In en, this message translates to:
+  /// **'Activities'**
+  String get dashboard_stat_activities;
+
+  /// No description provided for @dashboard_stat_badges.
+  ///
+  /// In en, this message translates to:
+  /// **'Badges'**
+  String get dashboard_stat_badges;
+
+  /// No description provided for @dashboard_module_status_done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get dashboard_module_status_done;
+
+  /// No description provided for @dashboard_module_status_started.
+  ///
+  /// In en, this message translates to:
+  /// **'Started'**
+  String get dashboard_module_status_started;
+
+  /// No description provided for @dashboard_module_status_new.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get dashboard_module_status_new;
+
+  /// No description provided for @dashboard_latest_challenge.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest challenge'**
+  String get dashboard_latest_challenge;
+
+  /// No description provided for @dashboard_one_minute_left.
+  ///
+  /// In en, this message translates to:
+  /// **'1 min left'**
+  String get dashboard_one_minute_left;
+
+  /// Dashboard remaining time label
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min left'**
+  String dashboard_minutes_left(int minutes);
+
+  /// No description provided for @dashboard_one_minute.
+  ///
+  /// In en, this message translates to:
+  /// **'1 min'**
+  String get dashboard_one_minute;
+
+  /// Dashboard estimated time label
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String dashboard_minutes(int minutes);
+
+  /// No description provided for @dashboard_one_activity.
+  ///
+  /// In en, this message translates to:
+  /// **'1 activity'**
+  String get dashboard_one_activity;
+
+  /// Dashboard activity count label
+  ///
+  /// In en, this message translates to:
+  /// **'{activities} activities'**
+  String dashboard_activities(int activities);
+
   /// No description provided for @select.
   ///
   /// In en, this message translates to:
@@ -843,6 +981,252 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Turn off teacher mode'**
   String get teacher_mode_turn_off;
+
+  /// No description provided for @button_add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get button_add;
+
+  /// No description provided for @learning_module_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Module'**
+  String get learning_module_title;
+
+  /// Error shown when an SDG module cannot be loaded
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load module: {error}'**
+  String learning_module_load_error(String error);
+
+  /// No description provided for @learning_module_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'Module not found'**
+  String get learning_module_not_found;
+
+  /// No description provided for @learning_empty_activities.
+  ///
+  /// In en, this message translates to:
+  /// **'Activities will appear here when this module is ready.'**
+  String get learning_empty_activities;
+
+  /// Teacher-mode banner shown in Learn when a group report is selected
+  ///
+  /// In en, this message translates to:
+  /// **'Showing group statistics for {group}'**
+  String learning_group_stats_for(String group);
+
+  /// No description provided for @learning_group_stats_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Add and select a teacher group in Teacher view to show statistics here.'**
+  String get learning_group_stats_empty;
+
+  /// Heading showing the number of SDG learning modules
+  ///
+  /// In en, this message translates to:
+  /// **'SDG learning modules: {count}'**
+  String learning_sdg_modules_count(int count);
+
+  /// Filter labels in the Learn module list
+  ///
+  /// In en, this message translates to:
+  /// **'{filter, select, all{All} started{Started} done{Done} challenges{Challenges} other{All}}'**
+  String learning_module_filter(String filter);
+
+  /// Empty state for a selected Learn module filter
+  ///
+  /// In en, this message translates to:
+  /// **'{filter, select, all{No modules are available yet.} started{No started modules yet.} done{No completed modules yet.} challenges{No challenge modules yet.} other{No modules yet.}}'**
+  String learning_no_filtered_modules(String filter);
+
+  /// Status chip for module progress
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, new{New} started{Started} done{Done} other{New}}'**
+  String learning_module_status(String status);
+
+  /// No description provided for @learning_badge_earned.
+  ///
+  /// In en, this message translates to:
+  /// **'Badge earned'**
+  String get learning_badge_earned;
+
+  /// No description provided for @learning_in_progress.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get learning_in_progress;
+
+  /// No description provided for @learning_one_minute_left.
+  ///
+  /// In en, this message translates to:
+  /// **'1 min left'**
+  String get learning_one_minute_left;
+
+  /// Remaining time label in Learn module cards
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min left'**
+  String learning_minutes_left(int minutes);
+
+  /// No description provided for @learning_one_minute.
+  ///
+  /// In en, this message translates to:
+  /// **'1 min'**
+  String get learning_one_minute;
+
+  /// Estimated time label in Learn module and activity cards
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String learning_minutes(int minutes);
+
+  /// No description provided for @learning_one_activity.
+  ///
+  /// In en, this message translates to:
+  /// **'1 activity'**
+  String get learning_one_activity;
+
+  /// Activity count label in Learn module cards
+  ///
+  /// In en, this message translates to:
+  /// **'{activities} activities'**
+  String learning_activities(int activities);
+
+  /// Learning activity type label
+  ///
+  /// In en, this message translates to:
+  /// **'{type, select, comic{Comic} mlr{Micro-learning} quiz{Quiz} reflection{Reflection} challenge{Challenge} unknown{Activity} other{Activity}}'**
+  String learning_activity_type(String type);
+
+  /// No description provided for @teacher_group_statistics_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Group statistics'**
+  String get teacher_group_statistics_title;
+
+  /// No description provided for @teacher_refresh_active_group.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh active group'**
+  String get teacher_refresh_active_group;
+
+  /// No description provided for @teacher_group_report_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Add teacher tokens to view aggregate group-level progress. The app stores only summary reports, not learner identities.'**
+  String get teacher_group_report_description;
+
+  /// No description provided for @teacher_token_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher token'**
+  String get teacher_token_label;
+
+  /// No description provided for @teacher_token_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'ABCDEF'**
+  String get teacher_token_hint;
+
+  /// No description provided for @teacher_group.
+  ///
+  /// In en, this message translates to:
+  /// **'Group'**
+  String get teacher_group;
+
+  /// No description provided for @teacher_active_group.
+  ///
+  /// In en, this message translates to:
+  /// **'Active group'**
+  String get teacher_active_group;
+
+  /// No description provided for @teacher_select_group.
+  ///
+  /// In en, this message translates to:
+  /// **'Select group'**
+  String get teacher_select_group;
+
+  /// Teacher-token label for a saved group report
+  ///
+  /// In en, this message translates to:
+  /// **'Token {token}'**
+  String teacher_token_value(String token);
+
+  /// No description provided for @teacher_metric_enrolled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enrolled'**
+  String get teacher_metric_enrolled;
+
+  /// No description provided for @teacher_metric_active.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get teacher_metric_active;
+
+  /// No description provided for @teacher_metric_completed.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get teacher_metric_completed;
+
+  /// No description provided for @teacher_refresh_group.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh group'**
+  String get teacher_refresh_group;
+
+  /// No description provided for @teacher_remove_group.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove group'**
+  String get teacher_remove_group;
+
+  /// No description provided for @teacher_empty_groups.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a group token to enable statistics in Learn views.'**
+  String get teacher_empty_groups;
+
+  /// No description provided for @teacher_loading_saved_groups.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading saved groups...'**
+  String get teacher_loading_saved_groups;
+
+  /// Teacher stats opened-users label
+  ///
+  /// In en, this message translates to:
+  /// **'Opened {opened}/{total}'**
+  String teacher_stats_opened(int opened, String total);
+
+  /// Teacher stats completed percentage label
+  ///
+  /// In en, this message translates to:
+  /// **'Completed {percent}'**
+  String teacher_stats_completed(String percent);
+
+  /// Teacher stats activity completion percentage label
+  ///
+  /// In en, this message translates to:
+  /// **'{percent} activity completion'**
+  String teacher_stats_activity_completion(String percent);
+
+  /// Teacher stats quiz average score label without maximum score
+  ///
+  /// In en, this message translates to:
+  /// **'Avg score {score}'**
+  String teacher_stats_avg_score(String score);
+
+  /// Teacher stats quiz average score label with maximum score
+  ///
+  /// In en, this message translates to:
+  /// **'Avg score {score}/{maxScore}'**
+  String teacher_stats_avg_score_with_max(String score, String maxScore);
 
   /// No description provided for @learning_objective.
   ///
@@ -957,6 +1341,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Welcome to the Ecounity App - your gateway to digital learning, inspiration, and entrepreneurial growth.'**
   String get welcome_title;
+
+  /// No description provided for @welcome_tagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Together for Planet!'**
+  String get welcome_tagline;
 
   /// No description provided for @login_introduction_text.
   ///

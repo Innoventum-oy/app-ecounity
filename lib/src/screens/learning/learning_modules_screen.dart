@@ -1,8 +1,10 @@
 import 'package:core/core.dart' as core;
 import 'package:ecounity/l10n/app_localizations_extension.dart';
+import 'package:ecounity/src/analytics/ecounity_teacher_report_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_media_image.dart';
+import 'package:ecounity/src/providers/ecounity_teacher_report_provider.dart';
 import 'package:ecounity/src/providers/teacher_mode_provider.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/util/router.dart';
@@ -90,6 +92,12 @@ class _EcoUnityLearningModulesScreenState
               final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
                 context,
               ).isTeacherMode;
+              final EcoUnityTeacherGroupReport? teacherReport =
+                  teacherModeEnabled
+                  ? Provider.of<EcoUnityTeacherReportProvider>(
+                      context,
+                    ).activeReport
+                  : null;
               if (provider.loadingStatus == core.DataLoadingStatus.loading &&
                   provider.modules.isEmpty) {
                 return const Center(child: CircularProgressIndicator());
@@ -97,7 +105,7 @@ class _EcoUnityLearningModulesScreenState
 
               if (provider.modules.isEmpty) {
                 return Center(
-                  child: Text(provider.error ?? 'No modules available'),
+                  child: Text(provider.error ?? context.l10n.no_modules_found),
                 );
               }
 
@@ -107,6 +115,7 @@ class _EcoUnityLearningModulesScreenState
                     ? const <EcoUnityProgressEntry>[]
                     : provider.progressEntries,
                 teacherModeEnabled: teacherModeEnabled,
+                teacherReport: teacherReport,
                 loading:
                     provider.loadingStatus == core.DataLoadingStatus.loading,
                 selectedFilter: _selectedFilter,
@@ -268,6 +277,7 @@ class _LearningModulesBody extends StatelessWidget {
     required this.modules,
     required this.progressEntries,
     required this.teacherModeEnabled,
+    required this.teacherReport,
     required this.loading,
     required this.selectedFilter,
     required this.onFilterChanged,
@@ -278,6 +288,7 @@ class _LearningModulesBody extends StatelessWidget {
   final List<EcoUnitySdgModule> modules;
   final List<EcoUnityProgressEntry> progressEntries;
   final bool teacherModeEnabled;
+  final EcoUnityTeacherGroupReport? teacherReport;
   final bool loading;
   final _ModuleFilter selectedFilter;
   final ValueChanged<_ModuleFilter> onFilterChanged;
@@ -324,8 +335,10 @@ class _LearningModulesBody extends StatelessWidget {
                       onFilterChanged: onFilterChanged,
                     ),
                     const SizedBox(height: 18),
-                  ] else
-                    const SizedBox(height: 6),
+                  ] else ...<Widget>[
+                    _TeacherGroupStatsBanner(report: teacherReport),
+                    const SizedBox(height: 18),
+                  ],
                   if (cardData.isEmpty)
                     _FilteredEmptyState(filter: effectiveFilter)
                   else
@@ -337,13 +350,19 @@ class _LearningModulesBody extends StatelessWidget {
                         crossAxisCount: columns,
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
-                        childAspectRatio: columns == 2 ? 1.17 : 1.28,
+                        childAspectRatio: teacherModeEnabled
+                            ? (columns == 2 ? 0.95 : 1.08)
+                            : (columns == 2 ? 1.17 : 1.28),
                       ),
                       itemBuilder: (BuildContext context, int index) {
                         final _ModuleCardData data = cardData[index];
                         return _ModuleCard(
                           data: data,
                           showProgress: !teacherModeEnabled,
+                          teacherStats: teacherReport?.sdgStatsForNumber(
+                            data.module.sdgNumber,
+                          ),
+                          groupSize: teacherReport?.enrolledUsers,
                           onTap: () => onModuleTap(data.module),
                         );
                       },
@@ -358,6 +377,44 @@ class _LearningModulesBody extends StatelessWidget {
   }
 }
 
+class _TeacherGroupStatsBanner extends StatelessWidget {
+  const _TeacherGroupStatsBanner({required this.report});
+
+  final EcoUnityTeacherGroupReport? report;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool hasReport = report != null;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: EcoUnityColors.teacherSurface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: EcoUnityColors.teacherBorder),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: <Widget>[
+            const Icon(Icons.insights_rounded, color: EcoUnityColors.deepTeal),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                hasReport
+                    ? context.l10n.learning_group_stats_for(report!.displayName)
+                    : context.l10n.learning_group_stats_empty,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: EcoUnityColors.deepTeal,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ModuleListHeader extends StatelessWidget {
   const _ModuleListHeader({required this.moduleCount});
 
@@ -365,9 +422,8 @@ class _ModuleListHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String moduleLabel = moduleCount == 1 ? 'module' : 'modules';
     return Text(
-      '$moduleCount SDG learning $moduleLabel',
+      context.l10n.learning_sdg_modules_count(moduleCount),
       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
         color: EcoUnityColors.deepTeal,
         fontWeight: FontWeight.w800,
@@ -427,7 +483,7 @@ class _ModuleFilterPill extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: filter.label,
+      label: filter.label(context),
       child: Material(
         color: selected ? EcoUnityColors.deepTeal : Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -445,7 +501,7 @@ class _ModuleFilterPill extends StatelessWidget {
               ),
             ),
             child: Text(
-              filter.label,
+              filter.label(context),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -464,11 +520,15 @@ class _ModuleCard extends StatelessWidget {
   const _ModuleCard({
     required this.data,
     required this.showProgress,
+    required this.teacherStats,
+    required this.groupSize,
     required this.onTap,
   });
 
   final _ModuleCardData data;
   final bool showProgress;
+  final EcoUnityTeacherSdgStats? teacherStats;
+  final int? groupSize;
   final VoidCallback onTap;
 
   @override
@@ -476,14 +536,21 @@ class _ModuleCard extends StatelessWidget {
     final EcoUnitySdgModule module = data.module;
     final _ModuleCardStatus status = data.status;
     final bool started = showProgress && status == _ModuleCardStatus.started;
+    final bool hasTeacherStats = !showProgress && teacherStats != null;
 
     return Card(
       margin: EdgeInsets.zero,
-      color: started ? const Color(0xFFFFF8F1) : Colors.white,
+      color: hasTeacherStats
+          ? const Color(0xFFFFFCF8)
+          : started
+          ? const Color(0xFFFFF8F1)
+          : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(
-          color: started
+          color: hasTeacherStats
+              ? EcoUnityColors.teacherBorder
+              : started
               ? EcoUnityColors.warmOrange
               : EcoUnityColors.outlineVariant,
         ),
@@ -502,6 +569,9 @@ class _ModuleCard extends StatelessWidget {
                   if (showProgress) ...<Widget>[
                     const SizedBox(width: 8),
                     Expanded(child: _ModuleStatusChip(status: status)),
+                  ] else if (hasTeacherStats) ...<Widget>[
+                    const SizedBox(width: 8),
+                    const _TeacherCardChip(),
                   ] else
                     const Spacer(),
                 ],
@@ -529,18 +599,100 @@ class _ModuleCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
               ],
-              Text(
-                data.progressLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: EcoUnityColors.textSecondary,
+              if (hasTeacherStats)
+                _TeacherModuleStats(stats: teacherStats!, groupSize: groupSize)
+              else
+                Text(
+                  data.progressLabel(context),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: EcoUnityColors.textSecondary,
+                  ),
                 ),
-              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _TeacherCardChip extends StatelessWidget {
+  const _TeacherCardChip();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: EcoUnityColors.teacherSurfaceHigh,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+        child: Text(
+          context.l10n.teacher_group,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: EcoUnityColors.deepTeal,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TeacherModuleStats extends StatelessWidget {
+  const _TeacherModuleStats({required this.stats, required this.groupSize});
+
+  final EcoUnityTeacherSdgStats stats;
+  final int? groupSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final double? completionRate = stats.activityCompletionRate;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          context.l10n.teacher_stats_opened(
+            stats.moduleOpenedUsers,
+            groupSize?.toString() ?? '-',
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: EcoUnityColors.textSecondary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        LinearProgressIndicator(
+          value: completionRate == null
+              ? 0
+              : (completionRate / 100).clamp(0, 1).toDouble(),
+          minHeight: 6,
+          borderRadius: BorderRadius.circular(999),
+          backgroundColor: EcoUnityColors.outlineVariant,
+          valueColor: const AlwaysStoppedAnimation<Color>(
+            EcoUnityColors.turquoise,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          context.l10n.teacher_stats_activity_completion(
+            _percentLabel(completionRate),
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: EcoUnityColors.textSecondary),
+        ),
+      ],
     );
   }
 }
@@ -561,7 +713,7 @@ class _ModuleStatusChip extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
         child: Text(
-          status.label,
+          status.label(context),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
@@ -669,7 +821,7 @@ class _FilteredEmptyState extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Text(
-          'No ${filter.emptyLabel} modules yet.',
+          context.l10n.learning_no_filtered_modules(filter.key),
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: EcoUnityColors.textSecondary),
@@ -711,65 +863,66 @@ class _ModuleCardData {
     return 0.04;
   }
 
-  String get progressLabel {
+  String progressLabel(BuildContext context) {
     if (status == _ModuleCardStatus.done) {
-      return module.badges.isEmpty ? 'Completed' : 'Badge earned';
+      return module.badges.isEmpty
+          ? context.l10n.completed
+          : context.l10n.learning_badge_earned;
     }
 
     final int? estimatedMinutes = _estimatedMinutes(module);
     if (status == _ModuleCardStatus.started) {
       if (estimatedMinutes == null) {
-        return 'In progress';
+        return context.l10n.learning_in_progress;
       }
       final int remainingMinutes = (estimatedMinutes * (1 - completionRatio))
           .ceil();
       return remainingMinutes == 1
-          ? '1 min left'
-          : '$remainingMinutes min left';
+          ? context.l10n.learning_one_minute_left
+          : context.l10n.learning_minutes_left(remainingMinutes);
     }
 
     if (estimatedMinutes != null) {
-      return '$estimatedMinutes min';
+      return estimatedMinutes == 1
+          ? context.l10n.learning_one_minute
+          : context.l10n.learning_minutes(estimatedMinutes);
     }
 
     final int activityCount = module.activities.length;
     if (activityCount == 1) {
-      return '1 activity';
+      return context.l10n.learning_one_activity;
     }
-    return '$activityCount activities';
+    return context.l10n.learning_activities(activityCount);
   }
 }
 
 enum _ModuleCardStatus { newModule, started, done }
 
 extension on _ModuleCardStatus {
-  String get label {
+  String get key {
     return switch (this) {
-      _ModuleCardStatus.newModule => 'New',
-      _ModuleCardStatus.started => 'Started',
-      _ModuleCardStatus.done => 'Done',
+      _ModuleCardStatus.newModule => 'new',
+      _ModuleCardStatus.started => 'started',
+      _ModuleCardStatus.done => 'done',
     };
   }
+
+  String label(BuildContext context) =>
+      context.l10n.learning_module_status(key);
 }
 
 extension on _ModuleFilter {
-  String get label {
+  String get key {
     return switch (this) {
-      _ModuleFilter.all => 'All',
-      _ModuleFilter.started => 'Started',
-      _ModuleFilter.done => 'Done',
-      _ModuleFilter.challenges => 'Challenges',
+      _ModuleFilter.all => 'all',
+      _ModuleFilter.started => 'started',
+      _ModuleFilter.done => 'done',
+      _ModuleFilter.challenges => 'challenges',
     };
   }
 
-  String get emptyLabel {
-    return switch (this) {
-      _ModuleFilter.all => 'available',
-      _ModuleFilter.started => 'started',
-      _ModuleFilter.done => 'completed',
-      _ModuleFilter.challenges => 'challenge',
-    };
-  }
+  String label(BuildContext context) =>
+      context.l10n.learning_module_filter(key);
 
   bool matches(_ModuleCardData data) {
     return switch (this) {
@@ -790,4 +943,12 @@ int? _estimatedMinutes(EcoUnitySdgModule module) {
     (sum, activity) => sum + (activity.estimatedMinutes ?? 0),
   );
   return activityMinutes > 0 ? activityMinutes : null;
+}
+
+String _percentLabel(double? value) {
+  if (value == null) {
+    return '-';
+  }
+  final bool wholeNumber = value == value.roundToDouble();
+  return '${value.toStringAsFixed(wholeNumber ? 0 : 1)}%';
 }
