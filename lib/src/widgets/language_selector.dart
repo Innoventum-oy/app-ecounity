@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:core/core.dart';
 import 'package:ecounity/src/analytics/ecounity_analytics_service.dart';
+import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:ecounity/l10n/app_localizations_extension.dart';
 import 'package:provider/provider.dart';
-import 'package:ecounity/src/util/utils.dart';
 
 import '../providers/locale_provider.dart';
 
@@ -38,6 +38,15 @@ class LanguageSelector extends StatelessWidget {
                   listen: false,
                 ).setLocale(locale);
                 await Settings().setLanguage(locale.languageCode);
+                if (!context.mounted) {
+                  return;
+                }
+                if (previousLanguage != locale.languageCode) {
+                  Provider.of<EcoUnityLearningProvider>(
+                    context,
+                    listen: false,
+                  ).clearLoadedContent();
+                }
                 if (analytics != null) {
                   unawaited(
                     analytics.trackLanguageChanged(
@@ -46,10 +55,7 @@ class LanguageSelector extends StatelessWidget {
                     ),
                   );
                 }
-                if (context.mounted) {
-                  loadAppData(context);
-                  Navigator.of(context).pop();
-                }
+                Navigator.of(context).pop();
               },
               icon: Text(_localeFlag(locale.languageCode)),
               label: Text(context.l10n.locale(locale.toString())),

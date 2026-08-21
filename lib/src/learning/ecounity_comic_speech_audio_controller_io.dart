@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
+import 'package:ecounity/src/util/ecounity_media_cache.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 
 class EcoUnityComicSpeechAudioController {
+  final EcoUnityMediaCache _mediaCache = EcoUnityMediaCache();
   final Map<String, AudioPlayer> _preparedPlayers = <String, AudioPlayer>{};
   final List<AudioPlayer> _activePlayers = <AudioPlayer>[];
 
@@ -24,7 +26,7 @@ class EcoUnityComicSpeechAudioController {
     final AudioPlayer audioPlayer = AudioPlayer();
     _preparedPlayers[url] = audioPlayer;
     try {
-      await audioPlayer.setUrl(url);
+      await _setPlayerSource(audioPlayer, await _mediaCache.prepareAudio(url));
     } catch (exception, stackTrace) {
       _preparedPlayers.remove(url);
       await audioPlayer.dispose();
@@ -61,7 +63,10 @@ class EcoUnityComicSpeechAudioController {
           _preparedPlayers.remove(url) ?? AudioPlayer();
       _activePlayers.add(audioPlayer);
       if (audioPlayer.audioSource == null) {
-        await audioPlayer.setUrl(url);
+        await _setPlayerSource(
+          audioPlayer,
+          await _mediaCache.prepareAudio(url),
+        );
       } else {
         await audioPlayer.seek(Duration.zero);
       }
@@ -111,6 +116,18 @@ class EcoUnityComicSpeechAudioController {
       return;
     }
     await audioPlayer.dispose();
+  }
+
+  Future<void> _setPlayerSource(
+    AudioPlayer audioPlayer,
+    EcoUnityCachedMedia media,
+  ) async {
+    final String? localPath = media.localPath;
+    if (localPath != null && localPath.isNotEmpty) {
+      await audioPlayer.setFilePath(localPath);
+      return;
+    }
+    await audioPlayer.setUrl(media.playableUrl);
   }
 }
 

@@ -204,8 +204,12 @@ class EcounityState extends State<Ecounity> with WidgetsBindingObserver {
       );
     }
     core.Settings().setLanguage(locales!.first.languageCode);
-    // Reload the app data when the system language changes
-    loadAppData(context);
+    if (mounted) {
+      Provider.of<EcoUnityLearningProvider>(
+        context,
+        listen: false,
+      ).clearLoadedContent();
+    }
   }
 
   void _handleProcessing() {
@@ -290,16 +294,8 @@ class _AppLocalizationState extends State<AppLocalizationState>
       return;
     }
 
-    try {
-      await updateAppVersionDate(context, forceRefresh: true);
-    } catch (e, stackTrace) {
-      if (kDebugMode || kProfileMode) {
-        log(
-          'Could not refresh cached app data on startup: $e',
-          stackTrace: stackTrace,
-        );
-      }
-    }
+    // Learning data loads lazily after the user has chosen a language and
+    // entered the app. Startup should not block the welcome screen.
   }
 
   Future<void> _handleInitialGroupEnrollmentLink() async {

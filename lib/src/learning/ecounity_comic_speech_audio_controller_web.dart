@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:js_interop';
 
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
+import 'package:ecounity/src/util/ecounity_media_cache.dart';
 import 'package:flutter/foundation.dart';
 import 'package:web/web.dart' as web;
 
 class EcoUnityComicSpeechAudioController {
+  final EcoUnityMediaCache _mediaCache = EcoUnityMediaCache();
   final Map<String, web.HTMLAudioElement> _audioCache =
       <String, web.HTMLAudioElement>{};
   final List<web.HTMLAudioElement> _activeAudio = <web.HTMLAudioElement>[];
@@ -16,7 +18,7 @@ class EcoUnityComicSpeechAudioController {
       return;
     }
 
-    await Future.wait(urls.map(_prepareUrl));
+    await _mediaCache.prepareAudioUrls(urls);
   }
 
   Future<void> playCue(EcoUnityComicSpeechItem? speech) async {
@@ -42,7 +44,8 @@ class EcoUnityComicSpeechAudioController {
 
     web.HTMLAudioElement? audio;
     try {
-      audio = _audioCache.remove(url) ?? _createAudio(url);
+      final EcoUnityCachedMedia cached = await _mediaCache.prepareAudio(url);
+      audio = _audioCache.remove(url) ?? _createAudio(cached.playableUrl);
       audio.currentTime = 0;
       _activeAudio.add(audio);
 
@@ -101,26 +104,6 @@ class EcoUnityComicSpeechAudioController {
     _audioCache.clear();
   }
 
-  web.HTMLAudioElement _audioForUrl(String url) {
-    return _audioCache.putIfAbsent(url, () {
-      final web.HTMLAudioElement audio = _createAudio(url);
-      audio.addEventListener(
-        'ended',
-        ((web.Event _) {
-          _activeAudio.remove(audio);
-        }).toJS,
-      );
-      audio.addEventListener(
-        'error',
-        ((web.Event _) {
-          _activeAudio.remove(audio);
-        }).toJS,
-      );
-      audio.load();
-      return audio;
-    });
-  }
-
   web.HTMLAudioElement _createAudio(String url) {
     final web.HTMLAudioElement audio =
         web.document.createElement('audio') as web.HTMLAudioElement;
@@ -128,34 +111,6 @@ class EcoUnityComicSpeechAudioController {
     audio.src = url;
     audio.load();
     return audio;
-  }
-
-  Future<void> _prepareUrl(String url) async {
-    final web.HTMLAudioElement audio = _audioForUrl(url);
-    if (audio.readyState >= 3) {
-      return;
-    }
-
-    final Completer<void> completer = Completer<void>();
-    void complete() {
-      if (!completer.isCompleted) {
-        completer.complete();
-      }
-    }
-
-    audio.addEventListener(
-      'canplaythrough',
-      ((web.Event _) => complete()).toJS,
-    );
-    audio.addEventListener('canplay', ((web.Event _) => complete()).toJS);
-    audio.addEventListener('loadeddata', ((web.Event _) => complete()).toJS);
-    audio.addEventListener('error', ((web.Event _) => complete()).toJS);
-    audio.load();
-
-    await completer.future.timeout(
-      const Duration(seconds: 3),
-      onTimeout: () {},
-    );
   }
 }
 

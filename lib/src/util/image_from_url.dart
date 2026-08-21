@@ -1,14 +1,12 @@
-import 'dart:developer';
+import 'dart:typed_data';
 
-import 'package:core/core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../l10n/app_localizations_extension.dart';
+import 'ecounity_media_cache.dart';
 
 final Map<String, Future<_LoadedImageBytes>> _imageFutureCache = {};
+final EcoUnityMediaCache _mediaCache = EcoUnityMediaCache();
 
 extension ImageFromUrl on Image {
   static Widget get(
@@ -65,66 +63,12 @@ extension ImageFromUrl on Image {
     String url, {
     required String cacheKey,
   }) async {
-    FileStorage fileStorage = FileStorage();
-    String? imageName = url.split('/').last;
-    if (imageName.contains('?')) {
-      imageName = imageName.split('?')[0];
-    }
-    var imageData = await fileStorage.getObject(imageName, boxName: 'images');
-    if (imageData != null) {
-      if (kDebugMode) {
-        log('Image found in local storage for $imageName');
-      }
-      return _LoadedImageBytes(_asUint8List(imageData));
-    }
-    String? token =
-        (await UserPreferences.user).token ??
-        await Settings().getAnonymousApiKey();
-    Map softwareInfo = {
-      'appName': '',
-      'packageName': '',
-      'version': '',
-      'buildNumber': '',
-    };
-    await PackageInfo.fromPlatform().then((PackageInfo packageInfo) {
-      softwareInfo['appName'] = packageInfo.appName;
-      softwareInfo['packageName'] = packageInfo.packageName;
-      softwareInfo['version'] = packageInfo.version;
-      softwareInfo['buildNumber'] = packageInfo.buildNumber;
-    });
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {
-        'X-Mobile-App':
-            '${softwareInfo['appName']} / ${softwareInfo['version']} ${softwareInfo['buildNumber']}',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      if (kDebugMode) {
-        log('Saving image to local storage: $imageName');
-      }
-      await fileStorage.setObject(
-        imageName,
-        response.bodyBytes,
-        boxName: 'images',
-      );
-      return _LoadedImageBytes(response.bodyBytes);
-    } else {
+    try {
+      return _LoadedImageBytes(await _mediaCache.loadImageBytes(url));
+    } catch (_) {
       _imageFutureCache.remove(cacheKey);
-      throw Exception('Failed to load image');
+      rethrow;
     }
-  }
-
-  static Uint8List _asUint8List(dynamic value) {
-    if (value is Uint8List) {
-      return value;
-    }
-    if (value is List<int>) {
-      return Uint8List.fromList(value);
-    }
-    throw Exception('Stored image data is not bytes');
   }
 }
 

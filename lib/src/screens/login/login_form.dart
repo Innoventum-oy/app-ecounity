@@ -14,6 +14,7 @@ import 'package:core/core.dart' as core;
 import 'package:ecounity/l10n/app_localizations_extension.dart';
 import 'package:ecounity/src/analytics/ecounity_group_context.dart';
 import 'package:ecounity/src/analytics/ecounity_group_enrollment_service.dart';
+import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/providers/ecounity_group_context_provider.dart';
 import 'package:ecounity/src/providers/locale_provider.dart';
 import 'package:ecounity/src/providers/teacher_mode_provider.dart';
@@ -286,7 +287,10 @@ class LoginState extends State<Login> {
     ).setLocale(Locale(normalized));
     await core.Settings().setLanguage(normalized);
     if (mounted) {
-      await loadAppData(context);
+      Provider.of<EcoUnityLearningProvider>(
+        context,
+        listen: false,
+      ).clearLoadedContent();
     }
     return normalized;
   }
@@ -1142,6 +1146,15 @@ class _WelcomeLanguageOption extends StatelessWidget {
     final EcoUnityAnalyticsService? analytics = _analyticsOf(context);
     Provider.of<LocaleProvider>(context, listen: false).setLocale(locale);
     await core.Settings().setLanguage(locale.languageCode);
+    if (!context.mounted) {
+      return;
+    }
+    if (previousLanguage != locale.languageCode) {
+      Provider.of<EcoUnityLearningProvider>(
+        context,
+        listen: false,
+      ).clearLoadedContent();
+    }
     if (analytics != null) {
       unawaited(
         analytics.trackLanguageChanged(
@@ -1149,9 +1162,6 @@ class _WelcomeLanguageOption extends StatelessWidget {
           newLanguage: locale.languageCode,
         ),
       );
-    }
-    if (context.mounted) {
-      await loadAppData(context);
     }
   }
 }

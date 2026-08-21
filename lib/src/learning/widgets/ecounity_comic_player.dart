@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_media_image.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
+import 'package:ecounity/src/util/ecounity_media_cache.dart';
 import 'package:flutter/material.dart';
 
 typedef EcoUnityComicImageBuilder =
@@ -72,6 +73,7 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
   final List<Timer> _timelineTimers = <Timer>[];
   Timer? _sceneAutoplayTimer;
   int _timelineRunId = 0;
+  final EcoUnityMediaCache _mediaCache = EcoUnityMediaCache();
 
   @override
   void initState() {
@@ -141,6 +143,9 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
     _syncSceneAssets(
       scene.sceneKey,
       _expectedComicSceneAssetKeys(scene, viewportKind),
+      widget.imageBuilder == null
+          ? _comicSceneImageUrls(scene, viewportKind)
+          : const <String>[],
     );
 
     _cueSpeech(currentEntry);
@@ -450,7 +455,11 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
     _tryRevealScene(sceneKey, allowImmediate: false);
   }
 
-  void _syncSceneAssets(String? sceneKey, Set<String> expectedAssetKeys) {
+  void _syncSceneAssets(
+    String? sceneKey,
+    Set<String> expectedAssetKeys,
+    Iterable<String> imageUrls,
+  ) {
     final String signature = _sceneAssetSignatureFor(
       sceneKey,
       expectedAssetKeys,
@@ -462,6 +471,7 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
         (String assetKey) => !expectedAssetKeys.contains(assetKey),
       );
       _sceneRevealQueued = false;
+      unawaited(_mediaCache.prepareImageUrls(imageUrls));
     }
     _tryRevealScene(sceneKey, allowImmediate: false);
   }
@@ -602,9 +612,7 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
     }
 
     try {
-      await prepareSpeech(
-        speechItems,
-      ).timeout(const Duration(seconds: 4), onTimeout: () {});
+      await prepareSpeech(speechItems);
     } catch (_) {
       // Audio preparation is an optimization; text playback must continue.
     }
@@ -1838,6 +1846,41 @@ Set<String> _expectedComicSceneAssetKeys(
     }
   }
   return assetKeys;
+}
+
+Set<String> _comicSceneImageUrls(
+  EcoUnityComicScene scene,
+  EcoUnityComicViewportKind viewportKind,
+) {
+  final Set<String> urls = <String>{};
+  void addMedia(EcoUnityMedia? media) {
+    final String? url = _nonEmpty(media?.url);
+    if (url != null) {
+      urls.add(url);
+    }
+  }
+
+  addMedia(scene.viewportFor(viewportKind)?.backgroundImage);
+  for (final EcoUnityComicDrawableLayer layer in scene.drawableLayersFor(
+    viewportKind,
+  )) {
+    addMedia(layer.media);
+    final String? imageUrl = _nonEmpty(layer.imageUrl);
+    if (imageUrl != null) {
+      urls.add(imageUrl);
+    }
+  }
+  for (final EcoUnityComicDecision decision in scene.decisions) {
+    final EcoUnityComicDrawableLayer layer = decision.toDrawableLayer(
+      viewportKind,
+    );
+    addMedia(layer.media);
+    final String? imageUrl = _nonEmpty(layer.imageUrl);
+    if (imageUrl != null) {
+      urls.add(imageUrl);
+    }
+  }
+  return urls;
 }
 
 List<_DecisionLayerData> _decisionLayerDataFor(

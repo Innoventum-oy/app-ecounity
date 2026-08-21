@@ -697,6 +697,7 @@ class EcoUnityLearningRepository {
       activityMaps = await _hydrateRelationList(
         hydrated['activities'],
         activityObjectType,
+        language: language,
       );
     }
 
@@ -719,6 +720,7 @@ class EcoUnityLearningRepository {
       hydrated['questions'] = await _hydrateRelationList(
         hydrated['questions'],
         questionObjectType,
+        language: language,
         reload: reload,
       );
     }
@@ -757,6 +759,7 @@ class EcoUnityLearningRepository {
       sceneMaps = await _hydrateRelationList(
         activityData['comic_scenes'],
         comicSceneObjectType,
+        language: language,
         reload: reload,
       );
     }
@@ -781,6 +784,7 @@ class EcoUnityLearningRepository {
       scenesToHydrate.map((Map<String, dynamic> scene) {
         return _hydrateComicScene(
           scene,
+          language: language,
           sceneKeyById: sceneKeyById,
           reload: reload,
         );
@@ -853,6 +857,7 @@ class EcoUnityLearningRepository {
 
   Future<Map<String, dynamic>> _hydrateComicScene(
     Map<String, dynamic> scene, {
+    required String language,
     required Map<int, String> sceneKeyById,
     bool reload = false,
   }) async {
@@ -862,18 +867,25 @@ class EcoUnityLearningRepository {
           _hydrateRelationList(
             hydrated['backgrounds'],
             sceneBackgroundObjectType,
+            language: language,
             keepStubsOnFailure: true,
             reload: reload,
           ),
-          _hydrateCastLayers(hydrated['cast'], reload: reload),
+          _hydrateCastLayers(
+            hydrated['cast'],
+            language: language,
+            reload: reload,
+          ),
           _hydrateRelationList(
             hydrated['props'],
             scenePropObjectType,
+            language: language,
             keepStubsOnFailure: true,
             reload: reload,
           ),
           _hydrateDecisions(
             hydrated['decisions'],
+            language: language,
             sceneKeyById: sceneKeyById,
             reload: reload,
           ),
@@ -888,11 +900,13 @@ class EcoUnityLearningRepository {
 
   Future<List<Map<String, dynamic>>> _hydrateCastLayers(
     dynamic rawCast, {
+    required String language,
     bool reload = false,
   }) async {
     final List<Map<String, dynamic>> castLayers = await _hydrateRelationList(
       rawCast,
       sceneCastObjectType,
+      language: language,
       keepStubsOnFailure: true,
       reload: reload,
     );
@@ -904,6 +918,7 @@ class EcoUnityLearningRepository {
         );
         hydrated['dialogue_entries'] = await _hydrateDialogueEntries(
           hydrated['dialogue_entries'],
+          language: language,
           reload: reload,
         );
         return hydrated;
@@ -913,12 +928,14 @@ class EcoUnityLearningRepository {
 
   Future<List<Map<String, dynamic>>> _hydrateDialogueEntries(
     dynamic rawDialogueEntries, {
+    required String language,
     bool reload = false,
   }) async {
     final List<Map<String, dynamic>> dialogueEntries =
         await _hydrateRelationList(
           rawDialogueEntries,
           sceneDialogueObjectType,
+          language: language,
           keepStubsOnFailure: true,
           reload: reload,
         );
@@ -931,6 +948,7 @@ class EcoUnityLearningRepository {
         hydrated['speech_items'] = await _hydrateRelationList(
           hydrated['speech_items'],
           sceneSpeechObjectType,
+          language: language,
           keepStubsOnFailure: true,
           reload: reload,
         );
@@ -941,12 +959,14 @@ class EcoUnityLearningRepository {
 
   Future<List<Map<String, dynamic>>> _hydrateDecisions(
     dynamic rawDecisions, {
+    required String language,
     required Map<int, String> sceneKeyById,
     bool reload = false,
   }) async {
     final List<Map<String, dynamic>> decisions = await _hydrateRelationList(
       rawDecisions,
       comicDecisionObjectType,
+      language: language,
       keepStubsOnFailure: true,
       reload: reload,
     );
@@ -967,6 +987,7 @@ class EcoUnityLearningRepository {
   Future<List<Map<String, dynamic>>> _hydrateRelationList(
     dynamic rawRelations,
     String objectType, {
+    required String language,
     bool keepStubsOnFailure = false,
     bool reload = false,
   }) async {
@@ -980,6 +1001,7 @@ class EcoUnityLearningRepository {
         final Map<String, dynamic>? detail = await _loadDetailMap(
           objectType,
           objectId,
+          language: language,
           reload: reload,
         );
         if (detail != null) {
@@ -994,9 +1016,14 @@ class EcoUnityLearningRepository {
   Future<Map<String, dynamic>?> _loadDetailMap(
     String objectType,
     int objectId, {
+    required String language,
     bool reload = false,
   }) async {
-    final _DetailCacheKey cacheKey = _DetailCacheKey(objectType, objectId);
+    final _DetailCacheKey cacheKey = _DetailCacheKey(
+      objectType,
+      objectId,
+      _normalizeLanguage(language),
+    );
     if (!reload) {
       final Map<String, dynamic>? cached = _detailCache[cacheKey];
       if (cached != null) {
@@ -1292,17 +1319,21 @@ List<Map<String, dynamic>> _cloneMapList(List<Map<String, dynamic>> value) {
       .toList();
 }
 
+const String _learningContentCachePrefix = 'learning-content-v2';
+
 String _activityCacheStorageKey(_ActivityCacheKey key) {
-  return 'activity:${key.activityId}:${key.language}:'
+  return '$_learningContentCachePrefix:activity:${key.activityId}:${key.language}:'
       '${key.comicSceneLimit ?? 'full'}';
 }
 
 String _detailCacheStorageKey(_DetailCacheKey key) {
-  return 'detail:${key.objectType}:${key.objectId}';
+  return '$_learningContentCachePrefix:detail:${key.objectType}:'
+      '${key.objectId}:${key.language}';
 }
 
 String _comicSceneListCacheStorageKey(_ComicSceneListCacheKey key) {
-  return 'comic-scenes:${key.activityId}:${key.language}';
+  return '$_learningContentCachePrefix:comic-scenes:'
+      '${key.activityId}:${key.language}';
 }
 
 const String _localProgressStorageKey = 'local-progress';
@@ -1343,20 +1374,22 @@ class _ActivityCacheKey {
 }
 
 class _DetailCacheKey {
-  const _DetailCacheKey(this.objectType, this.objectId);
+  const _DetailCacheKey(this.objectType, this.objectId, this.language);
 
   final String objectType;
   final int objectId;
+  final String language;
 
   @override
   bool operator ==(Object other) {
     return other is _DetailCacheKey &&
         other.objectType == objectType &&
-        other.objectId == objectId;
+        other.objectId == objectId &&
+        other.language == language;
   }
 
   @override
-  int get hashCode => Object.hash(objectType, objectId);
+  int get hashCode => Object.hash(objectType, objectId, language);
 }
 
 class _ComicSceneListCacheKey {

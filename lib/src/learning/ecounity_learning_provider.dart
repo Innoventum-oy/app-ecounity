@@ -14,11 +14,13 @@ class EcoUnityLearningProvider with ChangeNotifier {
 
   core.DataLoadingStatus loadingStatus = core.DataLoadingStatus.notLoaded;
   String? error;
+  String? modulesLanguage;
   List<EcoUnitySdgModule> modules = <EcoUnitySdgModule>[];
   List<EcoUnityProgressEntry> progressEntries = <EcoUnityProgressEntry>[];
   final Set<String> _completedComicWarmupSignatures = <String>{};
   Future<void>? _comicWarmupFuture;
   String? _comicWarmupSignature;
+  int _moduleLoadGeneration = 0;
 
   bool get isLoaded => loadingStatus == core.DataLoadingStatus.loaded;
 
@@ -40,28 +42,52 @@ class EcoUnityLearningProvider with ChangeNotifier {
     return null;
   }
 
+  void clearLoadedContent() {
+    _moduleLoadGeneration += 1;
+    modules = <EcoUnitySdgModule>[];
+    modulesLanguage = null;
+    progressEntries = <EcoUnityProgressEntry>[];
+    loadingStatus = core.DataLoadingStatus.notLoaded;
+    error = null;
+    notifyListeners();
+  }
+
   Future<List<EcoUnitySdgModule>> loadModules({
     String language = 'en',
     bool reload = false,
   }) async {
-    if (!reload && modules.isNotEmpty) {
+    final String normalizedLanguage = _normalizeLanguage(language);
+    if (!reload &&
+        modules.isNotEmpty &&
+        modulesLanguage == normalizedLanguage) {
       return modules;
     }
 
+    final int loadGeneration = ++_moduleLoadGeneration;
+    if (modulesLanguage != null && modulesLanguage != normalizedLanguage) {
+      modules = <EcoUnitySdgModule>[];
+    }
     loadingStatus = core.DataLoadingStatus.loading;
     error = null;
     notifyListeners();
 
     try {
-      modules = await _repository.loadModules(language: language);
+      final List<EcoUnitySdgModule> loadedModules = await _repository
+          .loadModules(language: normalizedLanguage);
+      if (loadGeneration != _moduleLoadGeneration) {
+        return loadedModules;
+      }
+      modules = loadedModules;
+      modulesLanguage = normalizedLanguage;
       loadingStatus = core.DataLoadingStatus.loaded;
       notifyListeners();
-      unawaited(warmComicActivityCache(language: language));
       return modules;
     } catch (exception) {
-      loadingStatus = core.DataLoadingStatus.error;
-      error = exception.toString();
-      notifyListeners();
+      if (loadGeneration == _moduleLoadGeneration) {
+        loadingStatus = core.DataLoadingStatus.error;
+        error = exception.toString();
+        notifyListeners();
+      }
       rethrow;
     }
   }
@@ -96,11 +122,14 @@ class EcoUnityLearningProvider with ChangeNotifier {
     int moduleId, {
     String language = 'en',
   }) async {
+    final String normalizedLanguage = _normalizeLanguage(language);
     final EcoUnitySdgModule? module = await _repository.loadModule(
       moduleId,
-      language: language,
+      language: normalizedLanguage,
     );
-    if (module != null) {
+    if (module != null &&
+        (modules.isEmpty || modulesLanguage == normalizedLanguage)) {
+      modulesLanguage = normalizedLanguage;
       modules =
           <EcoUnitySdgModule>[
             ...modules.where((EcoUnitySdgModule item) => item.id != module.id),
@@ -109,12 +138,6 @@ class EcoUnityLearningProvider with ChangeNotifier {
             return (a.sdgNumber ?? 0).compareTo(b.sdgNumber ?? 0);
           });
       notifyListeners();
-      unawaited(
-        warmComicActivityCache(
-          language: language,
-          modules: <EcoUnitySdgModule>[module],
-        ),
-      );
     }
     return module;
   }
@@ -125,9 +148,7 @@ class EcoUnityLearningProvider with ChangeNotifier {
     int concurrency = 1,
     bool force = false,
   }) {
-    final String normalizedLanguage = language.trim().toLowerCase().isEmpty
-        ? 'en'
-        : language.trim().toLowerCase();
+    final String normalizedLanguage = _normalizeLanguage(language);
     final List<EcoUnitySdgModule> sourceModules =
         modules?.toList(growable: false) ?? this.modules;
     final List<int> moduleIds =
@@ -177,6 +198,11 @@ class EcoUnityLearningProvider with ChangeNotifier {
     _comicWarmupSignature = signature;
     _comicWarmupFuture = trackedFuture;
     return _comicWarmupFuture!;
+  }
+
+  String _normalizeLanguage(String language) {
+    final String normalized = language.trim().toLowerCase();
+    return normalized.isEmpty ? 'en' : normalized;
   }
 
   Future<List<EcoUnityProgressEntry>> loadProgress({
