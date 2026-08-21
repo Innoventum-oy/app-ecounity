@@ -146,12 +146,18 @@ flutter_native_splash:
     color: "#E7FFDE"
     image: assets/images/ecounity-logo.png
 
-#if you make Android icon changes, regenerate with flutter pub run flutter_launcher_icons
+#if you make app icon changes, regenerate with flutter pub run flutter_launcher_icons
 flutter_launcher_icons:
   android: true
-  ios: false
+  ios: true
+  remove_alpha_ios: true
   image_path: "assets/images/ecounity-logo.png"
   adaptive_icon_background: "#ffffff"
   adaptive_icon_foreground: "assets/images/ecounity-logo.png"
+  web:
+    generate: true
+    image_path: "assets/images/ecounity-logo.png"
+    background_color: "#E7FFDE"
+    theme_color: "#0D404E"
 scripts:
   gen_l10n: ./generate.sh
