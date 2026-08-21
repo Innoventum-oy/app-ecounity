@@ -10,6 +10,36 @@ enum EcoUnityContentStatus {
   unknown,
 }
 
+EcoUnityContentStatus ecoUnityContentStatusFromWire(Object? value) {
+  final String status = value?.toString().trim().toLowerCase() ?? '';
+  return switch (status) {
+    'draft' => EcoUnityContentStatus.draft,
+    'not_ready' => EcoUnityContentStatus.draft,
+    'needs_change' => EcoUnityContentStatus.draft,
+    'needs_changes' => EcoUnityContentStatus.draft,
+    'needs_work' => EcoUnityContentStatus.draft,
+    'review' => EcoUnityContentStatus.review,
+    'in_review' => EcoUnityContentStatus.review,
+    'needs_review' => EcoUnityContentStatus.review,
+    'approved' => EcoUnityContentStatus.approved,
+    'reviewed' => EcoUnityContentStatus.approved,
+    'published' => EcoUnityContentStatus.published,
+    'archived' => EcoUnityContentStatus.archived,
+    _ => EcoUnityContentStatus.unknown,
+  };
+}
+
+String ecoUnityContentStatusToWire(EcoUnityContentStatus status) {
+  return switch (status) {
+    EcoUnityContentStatus.draft => 'draft',
+    EcoUnityContentStatus.review => 'review',
+    EcoUnityContentStatus.approved => 'approved',
+    EcoUnityContentStatus.published => 'published',
+    EcoUnityContentStatus.archived => 'archived',
+    EcoUnityContentStatus.unknown => 'review',
+  };
+}
+
 enum EcoUnityActivityType { comic, mlr, quiz, reflection, challenge, unknown }
 
 enum EcoUnityFlowStage {
@@ -2530,14 +2560,7 @@ bool _setEquals(Set<String> a, Set<String> b) {
 }
 
 EcoUnityContentStatus _contentStatusFromWire(String value) {
-  return switch (value) {
-    'draft' => EcoUnityContentStatus.draft,
-    'review' => EcoUnityContentStatus.review,
-    'approved' => EcoUnityContentStatus.approved,
-    'published' => EcoUnityContentStatus.published,
-    'archived' => EcoUnityContentStatus.archived,
-    _ => EcoUnityContentStatus.unknown,
-  };
+  return ecoUnityContentStatusFromWire(value);
 }
 
 EcoUnityActivityType _activityTypeFromWire(String value) {

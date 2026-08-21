@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:core/core.dart' as core;
 import 'package:ecounity/src/analytics/ecounity_analytics_service.dart';
 import 'package:ecounity/src/learning/ecounity_comic_speech_audio_controller.dart';
+import 'package:ecounity/src/learning/ecounity_content_review_service.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/learning/ecounity_learning_text_utils.dart';
@@ -237,45 +238,16 @@ class _EcoUnityLearningActivityScreenState
   }
 
   Widget _reviewPanel(EcoUnityLearningActivity activity, String language) {
-    return EcoUnityContentReviewPanel(
-      status: activity.contentStatus,
-      onStatusChanged: (EcoUnityContentStatus status) {
-        return _updateActivityContentStatus(activity, status, language);
-      },
-    );
-  }
-
-  Future<void> _updateActivityContentStatus(
-    EcoUnityLearningActivity activity,
-    EcoUnityContentStatus status,
-    String language,
-  ) async {
     final int? activityId = activity.id;
     if (activityId == null) {
-      throw StateError('Activity id is missing');
+      return const SizedBox.shrink();
     }
-
-    final EcoUnityLearningActivity? updatedActivity =
-        await Provider.of<EcoUnityLearningProvider>(
-          context,
-          listen: false,
-        ).updateActivityContentStatus(
-          activityId: activityId,
-          status: status,
-          language: language,
-        );
-
-    if (mounted && updatedActivity != null) {
-      final _ActivityScreenData data = _ActivityScreenData(
-        activity: updatedActivity,
-        language: language,
-        loadingAdditionalScenes: false,
-      );
-      setState(() {
-        _latestData = data;
-        _future = Future<_ActivityScreenData>.value(data);
-      });
-    }
+    return EcoUnityContentReviewPanel(
+      scope: EcoUnityReviewScope.activity,
+      objectId: activityId,
+      language: language,
+      fallbackStatus: activity.contentStatus,
+    );
   }
 
   Future<_ActivityScreenData> _loadActivityData() async {

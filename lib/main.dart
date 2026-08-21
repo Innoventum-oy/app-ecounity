@@ -8,6 +8,7 @@ import 'package:ecounity/src/analytics/ecounity_group_context.dart';
 import 'package:ecounity/src/analytics/ecounity_group_enrollment_service.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/providers/ecounity_badge_provider.dart';
+import 'package:ecounity/src/providers/ecounity_content_review_provider.dart';
 import 'package:ecounity/src/providers/ecounity_group_context_provider.dart';
 import 'package:ecounity/src/providers/ecounity_teacher_report_provider.dart';
 import 'package:ecounity/src/providers/locale_provider.dart';
@@ -92,6 +93,9 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => EcoUnityLearningProvider(),
         ), // EcoUnityLearningProvider
+        ChangeNotifierProvider(
+          create: (_) => EcoUnityContentReviewProvider(),
+        ), // EcoUnityContentReviewProvider
         ChangeNotifierProvider(
           create: (_) => EcoUnityGroupContextProvider(),
         ), // EcoUnityGroupContextProvider

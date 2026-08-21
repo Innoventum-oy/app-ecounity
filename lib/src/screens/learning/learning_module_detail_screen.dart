@@ -4,6 +4,7 @@ import 'package:core/core.dart' as core;
 import 'package:ecounity/l10n/app_localizations_extension.dart';
 import 'package:ecounity/src/analytics/ecounity_analytics_service.dart';
 import 'package:ecounity/src/analytics/ecounity_teacher_report_models.dart';
+import 'package:ecounity/src/learning/ecounity_content_review_service.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/learning/ecounity_learning_text_utils.dart';
@@ -39,6 +40,7 @@ class _EcoUnityLearningModuleDetailScreenState
     extends State<EcoUnityLearningModuleDetailScreen> {
   Future<EcoUnitySdgModule?>? _future;
   final Set<String> _trackedModuleOpenKeys = <String>{};
+  String? _loadedLanguage;
 
   @override
   void didChangeDependencies() {
@@ -109,12 +111,15 @@ class _EcoUnityLearningModuleDetailScreenState
         padding: const EdgeInsets.all(16),
         children: <Widget>[
           _ModuleHeader(module: module),
-          EcoUnityContentReviewPanel(
-            status: module.contentStatus,
-            onStatusChanged: (EcoUnityContentStatus status) {
-              return _updateModuleContentStatus(module, status);
-            },
-          ),
+          if (module.id != null)
+            EcoUnityContentReviewPanel(
+              scope: EcoUnityReviewScope.module,
+              objectId: module.id!,
+              language:
+                  _loadedLanguage ??
+                  Localizations.localeOf(context).languageCode,
+              fallbackStatus: module.contentStatus,
+            ),
           const SizedBox(height: 16),
           if (module.activities.isEmpty)
             const _EmptyActivitiesMessage()
@@ -160,6 +165,7 @@ class _EcoUnityLearningModuleDetailScreenState
       listen: false,
     ).isTeacherMode;
     final String language = await core.Settings().getLanguage() ?? 'en';
+    _loadedLanguage = language;
     final Future<EcoUnitySdgModule?> moduleFuture = provider.loadModule(
       moduleId,
       language: language,
@@ -194,32 +200,6 @@ class _EcoUnityLearningModuleDetailScreenState
       return;
     }
     unawaited(analytics.trackModuleOpened(module, language: language));
-  }
-
-  Future<void> _updateModuleContentStatus(
-    EcoUnitySdgModule module,
-    EcoUnityContentStatus status,
-  ) async {
-    final int? moduleId = module.id;
-    if (moduleId == null) {
-      throw StateError('Module id is missing');
-    }
-
-    final EcoUnityLearningProvider provider =
-        Provider.of<EcoUnityLearningProvider>(context, listen: false);
-    final String language = await core.Settings().getLanguage() ?? 'en';
-    final EcoUnitySdgModule? updatedModule = await provider
-        .updateModuleContentStatus(
-          moduleId: moduleId,
-          status: status,
-          language: language,
-        );
-
-    if (mounted && updatedModule != null) {
-      setState(() {
-        _future = Future<EcoUnitySdgModule?>.value(updatedModule);
-      });
-    }
   }
 }
 

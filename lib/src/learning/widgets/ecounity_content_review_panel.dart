@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:core/core.dart' as core;
+import 'package:ecounity/src/learning/ecounity_content_review_service.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
-import 'package:ecounity/src/learning/ecounity_review_permissions.dart';
+import 'package:ecounity/src/providers/ecounity_content_review_provider.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -8,12 +11,16 @@ import 'package:provider/provider.dart';
 class EcoUnityContentReviewPanel extends StatefulWidget {
   const EcoUnityContentReviewPanel({
     super.key,
-    required this.status,
-    required this.onStatusChanged,
+    required this.scope,
+    required this.objectId,
+    required this.language,
+    required this.fallbackStatus,
   });
 
-  final EcoUnityContentStatus status;
-  final Future<void> Function(EcoUnityContentStatus status) onStatusChanged;
+  final EcoUnityReviewScope scope;
+  final int objectId;
+  final String language;
+  final EcoUnityContentStatus fallbackStatus;
 
   @override
   State<EcoUnityContentReviewPanel> createState() =>
@@ -22,16 +29,57 @@ class EcoUnityContentReviewPanel extends StatefulWidget {
 
 class _EcoUnityContentReviewPanelState
     extends State<EcoUnityContentReviewPanel> {
-  EcoUnityContentStatus? _savingStatus;
+  EcoUnityReviewStatus? _savingStatus;
+  String? _requestedKey;
+
+  @override
+  void didUpdateWidget(covariant EcoUnityContentReviewPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.scope != widget.scope ||
+        oldWidget.objectId != widget.objectId ||
+        oldWidget.language != widget.language) {
+      _requestedKey = null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final core.User user = Provider.of<core.UserProvider>(context).user;
-    if (!ecoUnityCanReviewContent(user)) {
+    if (!_hasPotentialReviewUser(user)) {
+      return const SizedBox.shrink();
+    }
+    final EcoUnityContentReviewProvider reviewProvider =
+        Provider.of<EcoUnityContentReviewProvider>(context);
+    _scheduleLoad(context, user);
+
+    if (!reviewProvider.canReviewFor(user)) {
       return const SizedBox.shrink();
     }
 
-    final bool saving = _savingStatus != null;
+    final EcoUnityContentReviewRecord? record = reviewProvider.recordFor(
+      scope: widget.scope,
+      objectId: widget.objectId,
+      language: widget.language,
+    );
+    final EcoUnityReviewStatus status =
+        record?.reviewStatus ??
+        ecoUnityReviewStatusFromContentStatus(widget.fallbackStatus);
+    final bool saving = reviewProvider.isSaving(
+      scope: widget.scope,
+      objectId: widget.objectId,
+      language: widget.language,
+    );
+    final bool loading = reviewProvider.isLoading(
+      scope: widget.scope,
+      objectId: widget.objectId,
+      language: widget.language,
+    );
+    final String? error = reviewProvider.errorFor(
+      scope: widget.scope,
+      objectId: widget.objectId,
+      language: widget.language,
+    );
+
     return Padding(
       padding: const EdgeInsets.only(top: 12),
       child: DecoratedBox(
@@ -58,9 +106,18 @@ class _EcoUnityContentReviewPanelState
                       ),
                     ),
                   ),
-                  _ReviewStatusChip(status: widget.status),
+                  _ReviewStatusChip(status: status, loading: loading),
                 ],
               ),
+              if (error != null && error.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 8),
+                Text(
+                  error,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
@@ -69,8 +126,8 @@ class _EcoUnityContentReviewPanelState
                   FilledButton.icon(
                     onPressed: saving
                         ? null
-                        : () => _saveStatus(EcoUnityContentStatus.approved),
-                    icon: _savingStatus == EcoUnityContentStatus.approved
+                        : () => _saveStatus(EcoUnityReviewStatus.approved),
+                    icon: _savingStatus == EcoUnityReviewStatus.approved
                         ? const SizedBox(
                             width: 16,
                             height: 16,
@@ -82,8 +139,8 @@ class _EcoUnityContentReviewPanelState
                   OutlinedButton.icon(
                     onPressed: saving
                         ? null
-                        : () => _saveStatus(EcoUnityContentStatus.draft),
-                    icon: _savingStatus == EcoUnityContentStatus.draft
+                        : () => _saveStatus(EcoUnityReviewStatus.needsChanges),
+                    icon: _savingStatus == EcoUnityReviewStatus.needsChanges
                         ? const SizedBox(
                             width: 16,
                             height: 16,
@@ -101,13 +158,25 @@ class _EcoUnityContentReviewPanelState
     );
   }
 
-  Future<void> _saveStatus(EcoUnityContentStatus status) async {
+  Future<void> _saveStatus(EcoUnityReviewStatus status) async {
+    final core.User user = Provider.of<core.UserProvider>(
+      context,
+      listen: false,
+    ).user;
+    final EcoUnityContentReviewProvider reviewProvider =
+        Provider.of<EcoUnityContentReviewProvider>(context, listen: false);
     setState(() {
       _savingStatus = status;
     });
 
     try {
-      await widget.onStatusChanged(status);
+      await reviewProvider.updateReview(
+        user: user,
+        scope: widget.scope,
+        objectId: widget.objectId,
+        language: widget.language,
+        reviewStatus: status,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -129,22 +198,56 @@ class _EcoUnityContentReviewPanelState
       }
     }
   }
+
+  void _scheduleLoad(BuildContext context, core.User user) {
+    final String key =
+        '${widget.scope.wireName}:${widget.objectId}:'
+        '${widget.language}:${user.id}:${user.token}';
+    if (_requestedKey == key) {
+      return;
+    }
+    _requestedKey = key;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final EcoUnityContentReviewProvider reviewProvider =
+          Provider.of<EcoUnityContentReviewProvider>(context, listen: false);
+      unawaited(
+        reviewProvider.ensureReviewAccess(user).then<void>((bool canReview) {
+          if (!canReview || !mounted) {
+            return;
+          }
+          unawaited(
+            reviewProvider.loadReview(
+              user: user,
+              scope: widget.scope,
+              objectId: widget.objectId,
+              language: widget.language,
+              fallbackStatus: widget.fallbackStatus,
+            ),
+          );
+        }),
+      );
+    });
+  }
 }
 
 class _ReviewStatusChip extends StatelessWidget {
-  const _ReviewStatusChip({required this.status});
+  const _ReviewStatusChip({required this.status, required this.loading});
 
-  final EcoUnityContentStatus status;
+  final EcoUnityReviewStatus status;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
     final Color color = switch (status) {
-      EcoUnityContentStatus.approved => EcoUnityColors.success,
-      EcoUnityContentStatus.published => EcoUnityColors.success,
-      EcoUnityContentStatus.review => EcoUnityColors.warning,
-      EcoUnityContentStatus.draft => EcoUnityColors.textSecondary,
-      EcoUnityContentStatus.archived => EcoUnityColors.textSecondary,
-      EcoUnityContentStatus.unknown => EcoUnityColors.textSecondary,
+      EcoUnityReviewStatus.approved => EcoUnityColors.success,
+      EcoUnityReviewStatus.published => EcoUnityColors.success,
+      EcoUnityReviewStatus.needsReview => EcoUnityColors.warning,
+      EcoUnityReviewStatus.needsChanges => EcoUnityColors.warmOrange,
+      EcoUnityReviewStatus.notReady => EcoUnityColors.textSecondary,
+      EcoUnityReviewStatus.unknown => EcoUnityColors.textSecondary,
     };
 
     return DecoratedBox(
@@ -155,25 +258,44 @@ class _ReviewStatusChip extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Text(
-          _statusLabel(status),
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: color,
-            fontWeight: FontWeight.w800,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            if (loading) ...<Widget>[
+              SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(color: color, strokeWidth: 2),
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              _statusLabel(status),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-String _statusLabel(EcoUnityContentStatus status) {
+String _statusLabel(EcoUnityReviewStatus status) {
   return switch (status) {
-    EcoUnityContentStatus.draft => 'Needs changes',
-    EcoUnityContentStatus.review => 'In review',
-    EcoUnityContentStatus.approved => 'Reviewed',
-    EcoUnityContentStatus.published => 'Published',
-    EcoUnityContentStatus.archived => 'Archived',
-    EcoUnityContentStatus.unknown => 'Unknown',
+    EcoUnityReviewStatus.notReady => 'Not ready',
+    EcoUnityReviewStatus.needsReview => 'Needs review',
+    EcoUnityReviewStatus.needsChanges => 'Needs changes',
+    EcoUnityReviewStatus.approved => 'Approved',
+    EcoUnityReviewStatus.published => 'Published',
+    EcoUnityReviewStatus.unknown => 'Unknown',
   };
+}
+
+bool _hasPotentialReviewUser(core.User user) {
+  return user.id != null &&
+      !user.isGuestUser &&
+      (user.token?.trim().isNotEmpty ?? false);
 }
