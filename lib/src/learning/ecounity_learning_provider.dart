@@ -23,6 +23,13 @@ class EcoUnityLearningProvider with ChangeNotifier {
   int _moduleLoadGeneration = 0;
 
   bool get isLoaded => loadingStatus == core.DataLoadingStatus.loaded;
+  bool get isInitialModuleLoadPending =>
+      modules.isEmpty &&
+      (loadingStatus == core.DataLoadingStatus.notLoaded ||
+          loadingStatus == core.DataLoadingStatus.loading);
+  bool get hasCompletedModuleLoad =>
+      loadingStatus == core.DataLoadingStatus.loaded;
+  bool get hasModuleLoadError => loadingStatus == core.DataLoadingStatus.error;
 
   EcoUnitySdgModule? moduleBySdgNumber(int sdgNumber) {
     for (final EcoUnitySdgModule module in modules) {

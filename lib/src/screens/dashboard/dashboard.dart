@@ -255,12 +255,16 @@ class _DashboardBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool initialLoading = loading && provider.modules.isEmpty;
-    if (initialLoading) {
+    if (provider.isInitialModuleLoadPending ||
+        (loading && provider.modules.isEmpty)) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (provider.modules.isEmpty) {
+    if (provider.hasModuleLoadError && provider.modules.isEmpty) {
+      return Center(child: Text(error ?? context.l10n.error('')));
+    }
+
+    if (provider.hasCompletedModuleLoad && provider.modules.isEmpty) {
       return Center(
         child: Text(error ?? context.l10n.dashboard_no_modules_available),
       );

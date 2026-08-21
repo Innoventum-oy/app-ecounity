@@ -98,12 +98,17 @@ class _EcoUnityLearningModulesScreenState
                       context,
                     ).activeReport
                   : null;
-              if (provider.loadingStatus == core.DataLoadingStatus.loading &&
-                  provider.modules.isEmpty) {
+              if (provider.isInitialModuleLoadPending) {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              if (provider.modules.isEmpty) {
+              if (provider.hasModuleLoadError && provider.modules.isEmpty) {
+                return Center(
+                  child: Text(provider.error ?? context.l10n.error('')),
+                );
+              }
+
+              if (provider.hasCompletedModuleLoad && provider.modules.isEmpty) {
                 return Center(
                   child: Text(provider.error ?? context.l10n.no_modules_found),
                 );
