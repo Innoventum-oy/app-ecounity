@@ -183,6 +183,33 @@ void main() {
       );
     });
 
+    test('uses package startSceneKey before ordered scene fallback', () {
+      final EcoUnityComic comic = EcoUnityComic.fromJson(<String, dynamic>{
+        'activity': <String, dynamic>{
+          'id': 36,
+          'activity_type': 'comic',
+          'title': 'Package comic',
+        },
+        'startSceneKey': 'opening',
+        'scenes': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 1,
+            'sceneKey': 'setup',
+            'orderno': 1,
+            'title': 'Setup',
+          },
+          <String, dynamic>{
+            'id': 2,
+            'sceneKey': 'opening',
+            'orderno': 2,
+            'title': 'Opening',
+          },
+        ],
+      });
+
+      expect(comic.startScene?.sceneKey, 'opening');
+    });
+
     test('sorts drawable layers using layout z-index overrides', () {
       final EcoUnityComicScene startScene = EcoUnityComic.fromJson(
         _comicActivityFixture(),

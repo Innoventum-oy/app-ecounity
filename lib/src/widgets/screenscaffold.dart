@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../util/router.dart';
-import '../widgets/bottom_navigation.dart';
+import 'app_bar_user_identity.dart';
+import 'bottom_navigation.dart';
 
 class ScreenScaffold extends StatefulWidget {
   final String title; // Page title
@@ -90,6 +91,7 @@ class _ScreenScaffoldState extends State<ScreenScaffold> {
               icon: const Icon(Icons.refresh),
             ),
           ...?widget.appBarButtons,
+          AppBarUserIdentity(user: user),
           // Settings button
           IconButton(
             icon: const Icon(Icons.settings),

@@ -831,6 +831,37 @@ class AppLocalizationsRo extends AppLocalizations {
   String get play_again => 'Play again';
 
   @override
+  String get comic_no_scenes_available =>
+      'Nu există scene de benzi desenate disponibile';
+
+  @override
+  String get comic_loading_scene => 'Se încarcă scena...';
+
+  @override
+  String get comic_playing => 'Se redă...';
+
+  @override
+  String get comic_complete_action => 'Finalizează';
+
+  @override
+  String get comic_loading_next_scenes => 'Se încarcă scenele următoare...';
+
+  @override
+  String get comic_dialogue_title => 'Dialog';
+
+  @override
+  String get comic_character_fallback => 'Personaj';
+
+  @override
+  String get comic_play_tooltip => 'Redă';
+
+  @override
+  String get comic_stop_tooltip => 'Oprește';
+
+  @override
+  String get comic_view_dialogue_tooltip => 'Vezi dialogul';
+
+  @override
   String get not_enough_images_to_match => 'Not enough images to match';
 
   @override

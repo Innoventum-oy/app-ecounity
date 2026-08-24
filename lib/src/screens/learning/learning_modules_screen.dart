@@ -8,6 +8,7 @@ import 'package:ecounity/src/providers/ecounity_teacher_report_provider.dart';
 import 'package:ecounity/src/providers/teacher_mode_provider.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/util/router.dart';
+import 'package:ecounity/src/widgets/app_bar_user_identity.dart';
 import 'package:ecounity/src/widgets/bottom_navigation.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -64,6 +65,10 @@ class _EcoUnityLearningModulesScreenState
             onPressed: _loadModules,
           ),
           const SizedBox(width: 4),
+          if (user.id != null && !user.isGuestUser) ...<Widget>[
+            AppBarUserIdentity(user: user),
+            const SizedBox(width: 4),
+          ],
           _LearningModulesAppBarAction(
             tooltip: context.l10n.settings,
             icon: const Icon(Icons.settings_rounded),

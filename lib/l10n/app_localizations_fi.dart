@@ -831,6 +831,37 @@ class AppLocalizationsFi extends AppLocalizations {
   String get play_again => 'Pelaa uudelleen';
 
   @override
+  String get comic_no_scenes_available =>
+      'Sarjakuvakohtauksia ei ole saatavilla';
+
+  @override
+  String get comic_loading_scene => 'Kohtausta ladataan...';
+
+  @override
+  String get comic_playing => 'Toistetaan...';
+
+  @override
+  String get comic_complete_action => 'Suorita';
+
+  @override
+  String get comic_loading_next_scenes => 'Seuraavia kohtauksia ladataan...';
+
+  @override
+  String get comic_dialogue_title => 'Dialogi';
+
+  @override
+  String get comic_character_fallback => 'Hahmo';
+
+  @override
+  String get comic_play_tooltip => 'Toista';
+
+  @override
+  String get comic_stop_tooltip => 'Pysäytä';
+
+  @override
+  String get comic_view_dialogue_tooltip => 'Näytä dialogi';
+
+  @override
   String get not_enough_images_to_match => 'Ei tarpeeksi yhdistettäviä kuvia';
 
   @override

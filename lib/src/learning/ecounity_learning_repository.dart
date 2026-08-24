@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:core/core.dart' as core;
+import 'package:http/http.dart' as http;
 
+import '../util/ecounity_media_cache.dart';
 import 'ecounity_learning_models.dart';
 
 abstract class EcoUnityLearningBackend {
@@ -14,6 +17,97 @@ abstract class EcoUnityLearningBackend {
     String objectType,
     Map<String, dynamic> objectData,
   );
+}
+
+abstract class EcoUnityComicPackageClient {
+  Future<Map<String, dynamic>?> loadJson(
+    String urlOrPath, {
+    String language = 'en',
+  });
+
+  Future<String> resolveUrl(String urlOrPath);
+}
+
+class EcoUnityHttpComicPackageClient implements EcoUnityComicPackageClient {
+  EcoUnityHttpComicPackageClient({
+    http.Client? httpClient,
+    core.Settings? settings,
+  }) : _httpClient = httpClient ?? http.Client(),
+       _settings = settings ?? core.Settings();
+
+  final http.Client _httpClient;
+  final core.Settings _settings;
+
+  @override
+  Future<Map<String, dynamic>?> loadJson(
+    String urlOrPath, {
+    String language = 'en',
+  }) async {
+    final String trimmed = urlOrPath.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+    try {
+      final http.Response response = await _httpClient.get(
+        await _uriFor(trimmed),
+        headers: <String, String>{
+          'Accept': 'application/json',
+          if (language.trim().isNotEmpty)
+            'Accept-Language': language.trim().toLowerCase(),
+        },
+      );
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return null;
+      }
+      final dynamic decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      return _asMap(decoded);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<String> resolveUrl(String urlOrPath) async {
+    final String trimmed = urlOrPath.trim();
+    if (trimmed.isEmpty) {
+      return '';
+    }
+    return (await _uriFor(trimmed)).toString();
+  }
+
+  Future<Uri> _uriFor(String urlOrPath) async {
+    final Uri parsed = Uri.parse(urlOrPath);
+    if (parsed.hasScheme) {
+      return parsed;
+    }
+
+    String baseUrl = (await _settings.getServer()).trim();
+    if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://$baseUrl';
+    }
+    Uri base = Uri.parse(baseUrl);
+    if (!base.path.endsWith('/')) {
+      base = base.replace(path: '${base.path}/');
+    }
+    return base.resolveUri(parsed);
+  }
+}
+
+typedef EcoUnityComicAssetPreparer =
+    Future<void> Function({
+      required Iterable<String> imageUrls,
+      required Iterable<String> audioUrls,
+    });
+
+Future<void> _defaultComicAssetPreparer({
+  required Iterable<String> imageUrls,
+  required Iterable<String> audioUrls,
+}) async {
+  final EcoUnityMediaCache mediaCache = EcoUnityMediaCache();
+  await Future.wait(<Future<void>>[
+    mediaCache.prepareImageUrls(imageUrls),
+    mediaCache.prepareAudioUrls(audioUrls),
+  ]);
 }
 
 class EcoUnityCoreLearningBackend implements EcoUnityLearningBackend {
@@ -45,9 +139,15 @@ class EcoUnityCoreLearningBackend implements EcoUnityLearningBackend {
 class EcoUnityLearningRepository {
   EcoUnityLearningRepository({
     EcoUnityLearningBackend? backend,
+    EcoUnityComicPackageClient? comicPackageClient,
+    EcoUnityComicAssetPreparer? comicAssetPreparer,
     core.FileStorage? fileStorage,
     bool? usePersistentCache,
   }) : _backend = backend ?? EcoUnityCoreLearningBackend(),
+       _comicPackageClient =
+           comicPackageClient ??
+           (backend == null ? EcoUnityHttpComicPackageClient() : null),
+       _comicAssetPreparer = comicAssetPreparer ?? _defaultComicAssetPreparer,
        _fileStorage = fileStorage ?? core.FileStorage(),
        _usePersistentCache = usePersistentCache ?? backend == null;
 
@@ -106,6 +206,10 @@ class EcoUnityLearningRepository {
     'passing_logic',
     'minimum_score',
     'content_status',
+    'comic_package_base_url',
+    'comic_package_manifest_url',
+    'comic_package_status',
+    'comic_package_version',
     'hero_image',
     'media_images',
     'files',
@@ -145,6 +249,8 @@ class EcoUnityLearningRepository {
   ];
 
   final EcoUnityLearningBackend _backend;
+  final EcoUnityComicPackageClient? _comicPackageClient;
+  final EcoUnityComicAssetPreparer _comicAssetPreparer;
   final core.FileStorage _fileStorage;
   final bool _usePersistentCache;
   final Map<_ActivityCacheKey, EcoUnityLearningActivity> _activityCache =
@@ -412,6 +518,39 @@ class EcoUnityLearningRepository {
     if (data == null) {
       return null;
     }
+    if (_activityDataIsComic(data)) {
+      final Map<String, dynamic>? packaged = await _loadPackagedComicActivity(
+        data,
+        activityId: activityId,
+        language: language,
+      );
+      if (packaged != null) {
+        final EcoUnityLearningActivity activity =
+            EcoUnityLearningActivity.fromJson(packaged, language: language);
+        _activityCache[_ActivityCacheKey(
+              activityId,
+              language,
+              comicSceneLimit,
+            )] =
+            activity;
+        await _writePersistentMap(
+          _activityCacheStorageKey(
+            _ActivityCacheKey(activityId, language, comicSceneLimit),
+          ),
+          packaged,
+        );
+        _activityCache[_ActivityCacheKey(activityId, language, null)] =
+            activity;
+        await _writePersistentMap(
+          _activityCacheStorageKey(
+            _ActivityCacheKey(activityId, language, null),
+          ),
+          packaged,
+        );
+        return activity;
+      }
+    }
+
     final Map<String, dynamic> hydrated = await _hydrateActivityDetails(
       data,
       language: language,
@@ -703,6 +842,245 @@ class EcoUnityLearningRepository {
 
     hydrated['activities'] = activityMaps;
     return hydrated;
+  }
+
+  Future<Map<String, dynamic>?> _loadPackagedComicActivity(
+    Map<String, dynamic> activityData, {
+    required int activityId,
+    required String language,
+  }) async {
+    final EcoUnityComicPackageClient? packageClient = _comicPackageClient;
+    if (packageClient == null) {
+      return null;
+    }
+
+    final List<String> manifestCandidates = _comicPackageManifestCandidates(
+      activityData,
+      activityId,
+    );
+    final String normalizedLanguage = _normalizeLanguage(language);
+    for (final String manifestUrl in manifestCandidates) {
+      final Map<String, dynamic>? manifest = await packageClient.loadJson(
+        manifestUrl,
+        language: normalizedLanguage,
+      );
+      if (!_isComicPackageManifest(manifest)) {
+        continue;
+      }
+
+      final _ComicPackageLanguage? packageLanguage =
+          _selectComicPackageLanguage(
+            manifest!,
+            requestedLanguage: normalizedLanguage,
+          );
+      if (packageLanguage == null) {
+        continue;
+      }
+
+      final String? packageUrl = _comicPackageUrlFromManifest(
+        packageLanguage.url,
+        manifestUrl: manifestUrl,
+        activityData: activityData,
+        language: packageLanguage.language,
+      );
+      if (packageUrl == null || packageUrl.trim().isEmpty) {
+        continue;
+      }
+
+      final Map<String, dynamic>? packageData = await packageClient.loadJson(
+        packageUrl,
+        language: packageLanguage.language,
+      );
+      final Map<String, dynamic>? hydrated =
+          await _activityDataFromComicPackage(
+            activityData,
+            packageData,
+            language: packageLanguage.language,
+            manifest: manifest,
+            contentHash: packageLanguage.contentHash,
+          );
+      if (hydrated != null) {
+        return hydrated;
+      }
+    }
+
+    for (final String packageUrl in _comicPackageLanguageCandidates(
+      activityData,
+      activityId,
+      normalizedLanguage,
+    )) {
+      final Map<String, dynamic>? packageData = await packageClient.loadJson(
+        packageUrl,
+        language: normalizedLanguage,
+      );
+      final Map<String, dynamic>? hydrated =
+          await _activityDataFromComicPackage(
+            activityData,
+            packageData,
+            language: normalizedLanguage,
+          );
+      if (hydrated != null) {
+        return hydrated;
+      }
+    }
+
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> _activityDataFromComicPackage(
+    Map<String, dynamic> activityData,
+    Map<String, dynamic>? packageData, {
+    required String language,
+    Map<String, dynamic>? manifest,
+    String? contentHash,
+  }) async {
+    if (!_isComicLanguagePackage(packageData)) {
+      return null;
+    }
+
+    final Map<String, dynamic> resolvedPackage = await _resolveComicPackageUrls(
+      packageData!,
+    );
+    final List<Map<String, dynamic>> scenes = _asMapList(
+      resolvedPackage['scenes'],
+    ).map(_normalizePackageComicScene).toList();
+    if (scenes.isEmpty) {
+      return null;
+    }
+
+    final Map<String, dynamic> hydrated = Map<String, dynamic>.from(
+      activityData,
+    );
+    final Map<String, dynamic> packageActivity =
+        _asMap(resolvedPackage['activity']) ?? const <String, dynamic>{};
+
+    _copyFirstPresent(hydrated, packageActivity, const ['id'], 'id');
+    _copyFirstPresent(hydrated, packageActivity, const ['slug'], 'slug');
+    _copyFirstPresent(hydrated, packageActivity, const [
+      'sdg_number',
+      'sdgNumber',
+    ], 'sdg_number');
+    _copyFirstPresent(hydrated, packageActivity, const ['title'], 'title');
+    _copyFirstPresent(hydrated, packageActivity, const [
+      'short_description',
+      'shortDescription',
+    ], 'short_description');
+    _copyFirstPresent(hydrated, packageActivity, const [
+      'content_status',
+      'contentStatus',
+    ], 'content_status');
+    _copyFirstPresent(hydrated, packageActivity, const [
+      'hero_image_url',
+      'heroImageUrl',
+    ], 'hero_image_url');
+    _copyFirstPresent(hydrated, packageActivity, const [
+      'media_image_urls',
+      'mediaImageUrls',
+    ], 'media_image_urls');
+
+    hydrated['activity_type'] = 'comic';
+    hydrated['comic_scenes'] = scenes;
+    hydrated['scenes'] = scenes;
+    _copyFirstPresent(hydrated, resolvedPackage, const [
+      'start_scene_key',
+      'startSceneKey',
+    ], 'start_scene_key');
+    _copyFirstPresent(hydrated, resolvedPackage, const [
+      'scene_index',
+      'sceneIndex',
+    ], 'scene_index');
+    _copyFirstPresent(hydrated, resolvedPackage, const [
+      'package_version',
+      'packageVersion',
+    ], 'comic_package_version');
+    _copyFirstPresent(hydrated, resolvedPackage, const [
+      'content_language',
+      'contentLanguage',
+    ], 'comic_package_language');
+    if (contentHash != null && contentHash.trim().isNotEmpty) {
+      hydrated['comic_package_content_hash'] = contentHash.trim();
+    }
+    if (manifest != null) {
+      _copyFirstPresent(hydrated, manifest, const [
+        'package_version',
+        'packageVersion',
+      ], 'comic_package_manifest_version');
+    }
+    hydrated['comic_package_assets'] = resolvedPackage['assets'];
+    hydrated['comic_package_hydration_source'] = 'package';
+    hydrated['comic_package_requested_language'] = _normalizeLanguage(language);
+
+    _preparePackagedComicAssets(resolvedPackage);
+    return hydrated;
+  }
+
+  Future<Map<String, dynamic>> _resolveComicPackageUrls(
+    Map<String, dynamic> packageData,
+  ) async {
+    final dynamic resolved = await _resolveComicPackageValue(
+      'package',
+      packageData,
+    );
+    return Map<String, dynamic>.from(resolved as Map);
+  }
+
+  Future<dynamic> _resolveComicPackageValue(String key, dynamic value) async {
+    final EcoUnityComicPackageClient? packageClient = _comicPackageClient;
+    if (packageClient == null) {
+      return value;
+    }
+
+    if (value is String && _isPackageUrlField(key)) {
+      return packageClient.resolveUrl(value);
+    }
+    if (value is Iterable && _isPackageUrlListField(key)) {
+      return Future.wait(
+        value.map((dynamic item) async {
+          if (item is String) {
+            return packageClient.resolveUrl(item);
+          }
+          return _resolveComicPackageValue(key, item);
+        }),
+      );
+    }
+    if (value is Map) {
+      final Map<String, dynamic> resolved = <String, dynamic>{};
+      for (final MapEntry<dynamic, dynamic> entry in value.entries) {
+        final String childKey = entry.key.toString();
+        resolved[childKey] = await _resolveComicPackageValue(
+          childKey,
+          entry.value,
+        );
+      }
+      return resolved;
+    }
+    if (value is Iterable) {
+      return Future.wait(
+        value.map((dynamic item) => _resolveComicPackageValue(key, item)),
+      );
+    }
+    return value;
+  }
+
+  void _preparePackagedComicAssets(Map<String, dynamic> packageData) {
+    final Iterable<String> imageUrls = _comicPackageAssetUrls(
+      packageData,
+      'images',
+    );
+    final Iterable<String> audioUrls = _comicPackageAssetUrls(
+      packageData,
+      'audio',
+    );
+    if (imageUrls.isEmpty && audioUrls.isEmpty) {
+      return;
+    }
+
+    unawaited(
+      _comicAssetPreparer(
+        imageUrls: imageUrls,
+        audioUrls: audioUrls,
+      ).catchError((_) {}),
+    );
   }
 
   Future<Map<String, dynamic>> _hydrateActivityDetails(
@@ -1308,9 +1686,514 @@ String _readStringValue(dynamic value) {
   return '';
 }
 
+bool _activityDataIsComic(Map<String, dynamic> activityData) {
+  return _readStringValue(
+        activityData['activity_type'] ?? activityData['activityType'],
+      ).trim().toLowerCase() ==
+      'comic';
+}
+
+List<String> _comicPackageManifestCandidates(
+  Map<String, dynamic> activityData,
+  int activityId,
+) {
+  final List<String> candidates = <String>[];
+  _addUniqueString(
+    candidates,
+    _readStringValue(
+      activityData['comic_package_manifest_url'] ??
+          activityData['comicPackageManifestUrl'],
+    ),
+  );
+  final String baseUrl = _readStringValue(
+    activityData['comic_package_base_url'] ??
+        activityData['comicPackageBaseUrl'],
+  );
+  if (baseUrl.trim().isNotEmpty) {
+    _addUniqueString(candidates, _joinPackagePath(baseUrl, 'manifest.json'));
+  }
+  _addUniqueString(
+    candidates,
+    '/ecounitylearning/comics/$activityId/manifest.json',
+  );
+  return candidates;
+}
+
+List<String> _comicPackageLanguageCandidates(
+  Map<String, dynamic> activityData,
+  int activityId,
+  String language,
+) {
+  final String baseUrl = _readStringValue(
+    activityData['comic_package_base_url'] ??
+        activityData['comicPackageBaseUrl'],
+  );
+  final List<String> languages = _preferredPackageLanguages(language);
+  final List<String> candidates = <String>[];
+  for (final String preferredLanguage in languages) {
+    if (baseUrl.trim().isNotEmpty) {
+      _addUniqueString(
+        candidates,
+        _joinPackagePath(baseUrl, '$preferredLanguage.json'),
+      );
+    }
+    _addUniqueString(
+      candidates,
+      '/ecounitylearning/comics/$activityId/$preferredLanguage.json',
+    );
+  }
+  return candidates;
+}
+
+bool _isComicPackageManifest(Map<String, dynamic>? manifest) {
+  if (manifest == null) {
+    return false;
+  }
+  final String packageType = _readStringValue(
+    manifest['packageType'] ?? manifest['package_type'],
+  );
+  return packageType == 'ecounity_comic_manifest' ||
+      _asMapList(manifest['languages']).isNotEmpty;
+}
+
+bool _isComicLanguagePackage(Map<String, dynamic>? packageData) {
+  if (packageData == null) {
+    return false;
+  }
+  final String packageType = _readStringValue(
+    packageData['packageType'] ?? packageData['package_type'],
+  );
+  return packageType == 'ecounity_comic' ||
+      _asMapList(packageData['scenes']).isNotEmpty;
+}
+
+_ComicPackageLanguage? _selectComicPackageLanguage(
+  Map<String, dynamic> manifest, {
+  required String requestedLanguage,
+}) {
+  final List<Map<String, dynamic>> languages = _asMapList(
+    manifest['languages'],
+  );
+  if (languages.isEmpty) {
+    return null;
+  }
+
+  for (final String preferredLanguage in _preferredPackageLanguages(
+    requestedLanguage,
+  )) {
+    for (final Map<String, dynamic> item in languages) {
+      final String language = _normalizeLanguage(
+        _readStringValue(item['language']),
+      );
+      if (language == preferredLanguage) {
+        return _ComicPackageLanguage.fromJson(item, language: language);
+      }
+    }
+  }
+
+  return _ComicPackageLanguage.fromJson(
+    languages.first,
+    language: _normalizeLanguage(_readStringValue(languages.first['language'])),
+  );
+}
+
+List<String> _preferredPackageLanguages(String language) {
+  final String normalizedLanguage = _normalizeLanguage(language);
+  return <String>[normalizedLanguage, if (normalizedLanguage != 'en') 'en'];
+}
+
+String? _comicPackageUrlFromManifest(
+  String packageUrl, {
+  required String manifestUrl,
+  required Map<String, dynamic> activityData,
+  required String language,
+}) {
+  final String trimmed = packageUrl.trim();
+  if (trimmed.isEmpty) {
+    final String baseUrl = _readStringValue(
+      activityData['comic_package_base_url'] ??
+          activityData['comicPackageBaseUrl'],
+    );
+    if (baseUrl.trim().isNotEmpty) {
+      return _joinPackagePath(baseUrl, '$language.json');
+    }
+    final String manifestDirectory = _packageDirectoryPath(manifestUrl);
+    return manifestDirectory.isEmpty
+        ? null
+        : _joinPackagePath(manifestDirectory, '$language.json');
+  }
+  final Uri parsed = Uri.parse(trimmed);
+  if (parsed.hasScheme || trimmed.startsWith('/')) {
+    return trimmed;
+  }
+
+  final String baseUrl = _readStringValue(
+    activityData['comic_package_base_url'] ??
+        activityData['comicPackageBaseUrl'],
+  );
+  if (baseUrl.trim().isNotEmpty) {
+    return _joinPackagePath(baseUrl, trimmed);
+  }
+  return _joinPackagePath(_packageDirectoryPath(manifestUrl), trimmed);
+}
+
+String _packageDirectoryPath(String urlOrPath) {
+  final String trimmed = urlOrPath.trim();
+  final int slashIndex = trimmed.lastIndexOf('/');
+  if (slashIndex < 0) {
+    return '';
+  }
+  return trimmed.substring(0, slashIndex);
+}
+
+String _joinPackagePath(String base, String child) {
+  final String trimmedBase = base.trim();
+  final String trimmedChild = child.trim();
+  if (trimmedBase.isEmpty) {
+    return trimmedChild;
+  }
+  if (trimmedChild.isEmpty) {
+    return trimmedBase;
+  }
+  final String cleanBase = trimmedBase.endsWith('/')
+      ? trimmedBase.substring(0, trimmedBase.length - 1)
+      : trimmedBase;
+  final String cleanChild = trimmedChild.startsWith('/')
+      ? trimmedChild.substring(1)
+      : trimmedChild;
+  return '$cleanBase/$cleanChild';
+}
+
+Map<String, dynamic> _normalizePackageComicScene(Map<String, dynamic> scene) {
+  final Map<String, dynamic> normalized = Map<String, dynamic>.from(scene);
+  _copyFirstPresent(normalized, normalized, const ['sceneKey'], 'scene_key');
+  _copyFirstPresent(normalized, normalized, const ['orderNo'], 'orderno');
+  _copyFirstPresent(normalized, normalized, const ['altText'], 'alt_text');
+  _copyFirstPresent(normalized, normalized, const [
+    'contentStatus',
+  ], 'content_status');
+
+  final List<Map<String, dynamic>> backgrounds = _asMapList(
+    normalized['backgrounds'],
+  ).map(_normalizePackageComicBackground).toList();
+  if (backgrounds.isNotEmpty) {
+    normalized['backgrounds'] = backgrounds;
+  } else {
+    final Map<String, dynamic>? viewportBackgrounds = _asMap(
+      normalized['viewportBackgrounds'] ?? normalized['viewport_backgrounds'],
+    );
+    if (viewportBackgrounds != null && viewportBackgrounds.isNotEmpty) {
+      normalized['backgrounds'] = <Map<String, dynamic>>[
+        <String, dynamic>{
+          'viewports': viewportBackgrounds.values
+              .map(_asMap)
+              .whereType<Map<String, dynamic>>()
+              .map(_normalizePackageComicViewport)
+              .toList(),
+        },
+      ];
+    }
+  }
+
+  normalized['cast'] = _asMapList(
+    normalized['cast'],
+  ).map(_normalizePackageComicCastLayer).toList();
+  normalized['props'] = _asMapList(
+    normalized['props'],
+  ).map(_normalizePackageComicPropLayer).toList();
+  normalized['decisions'] = _asMapList(
+    normalized['decisions'],
+  ).map(_normalizePackageComicDecision).toList();
+  return normalized;
+}
+
+Map<String, dynamic> _normalizePackageComicBackground(
+  Map<String, dynamic> background,
+) {
+  final Map<String, dynamic> normalized = Map<String, dynamic>.from(background);
+  _copyFirstPresent(normalized, normalized, const [
+    'altText',
+  ], 'background_alt_text');
+  _copyFirstPresent(normalized, normalized, const [
+    'contentStatus',
+  ], 'content_status');
+  _copyFirstPresent(normalized, normalized, const [
+    'referenceImageUrl',
+  ], 'reference_image_url');
+  normalized['viewports'] = _asMapList(
+    normalized['viewports'],
+  ).map(_normalizePackageComicViewport).toList();
+  return normalized;
+}
+
+Map<String, dynamic> _normalizePackageComicViewport(
+  Map<String, dynamic> viewport,
+) {
+  final Map<String, dynamic> normalized = Map<String, dynamic>.from(viewport);
+  _copyFirstPresent(normalized, normalized, const [
+    'canvasWidth',
+  ], 'canvas_width');
+  _copyFirstPresent(normalized, normalized, const [
+    'canvasHeight',
+  ], 'canvas_height');
+  _copyFirstPresent(normalized, normalized, const ['imageUrl'], 'image_url');
+  _copyFirstPresent(normalized, normalized, const [
+    'generationStatus',
+  ], 'generation_status');
+  _copyFirstPresent(normalized, normalized, const [
+    'contentStatus',
+  ], 'content_status');
+  return normalized;
+}
+
+Map<String, dynamic> _normalizePackageComicCastLayer(
+  Map<String, dynamic> layer,
+) {
+  final Map<String, dynamic> normalized = _normalizePackageComicLayer(layer);
+  _copyFirstPresent(normalized, normalized, const ['poseLayer'], 'pose_layer');
+  final Map<String, dynamic>? poseLayer = _asMap(normalized['pose_layer']);
+  if (poseLayer != null) {
+    final Map<String, dynamic> normalizedPoseLayer = Map<String, dynamic>.from(
+      poseLayer,
+    );
+    _copyFirstPresent(normalizedPoseLayer, normalizedPoseLayer, const [
+      'imageUrl',
+    ], 'image_url');
+    _copyFirstPresent(normalizedPoseLayer, normalizedPoseLayer, const [
+      'generationStatus',
+    ], 'generation_status');
+    _copyFirstPresent(normalizedPoseLayer, normalizedPoseLayer, const [
+      'altText',
+    ], 'alt_text');
+    normalized['pose_layer'] = normalizedPoseLayer;
+  }
+
+  normalized['dialogue_entries'] = _asMapList(
+    normalized['dialogue_entries'] ?? normalized['dialogueEntries'],
+  ).map(_normalizePackageComicDialogueEntry).toList();
+  return normalized;
+}
+
+Map<String, dynamic> _normalizePackageComicPropLayer(
+  Map<String, dynamic> layer,
+) {
+  final Map<String, dynamic> normalized = _normalizePackageComicLayer(layer);
+  final Map<String, dynamic>? prop = _asMap(normalized['prop']);
+  if (prop != null) {
+    final Map<String, dynamic> normalizedProp = Map<String, dynamic>.from(prop);
+    _copyFirstPresent(normalizedProp, normalizedProp, const [
+      'imageUrl',
+    ], 'image_url');
+    _copyFirstPresent(normalizedProp, normalizedProp, const [
+      'altText',
+    ], 'alt_text');
+    normalized['prop'] = normalizedProp;
+  }
+  return normalized;
+}
+
+Map<String, dynamic> _normalizePackageComicDecision(
+  Map<String, dynamic> decision,
+) {
+  final Map<String, dynamic> normalized = _normalizePackageComicLayer(decision);
+  _copyFirstPresent(normalized, normalized, const [
+    'targetSceneKey',
+  ], 'target_scene_key');
+  _copyFirstPresent(normalized, normalized, const [
+    'targetSceneId',
+  ], 'target_scene_id');
+  _copyFirstPresent(normalized, normalized, const [
+    'consequenceSummary',
+  ], 'consequence_summary');
+  _copyFirstPresent(normalized, normalized, const [
+    'choiceImageUrl',
+  ], 'choice_image_url');
+  return normalized;
+}
+
+Map<String, dynamic> _normalizePackageComicLayer(Map<String, dynamic> layer) {
+  final Map<String, dynamic> normalized = Map<String, dynamic>.from(layer);
+  _copyFirstPresent(normalized, normalized, const ['orderNo'], 'orderno');
+  _copyFirstPresent(normalized, normalized, const ['zIndex'], 'z_index');
+  _copyFirstPresent(normalized, normalized, const ['altText'], 'alt_text');
+  _copyFirstPresent(normalized, normalized, const [
+    'contentStatus',
+  ], 'content_status');
+
+  final Map<String, dynamic>? layout = _asMap(normalized['layout']);
+  if (layout != null) {
+    final Map<String, dynamic> sharedLayout = _sharedPackageLayout(layout);
+    final Map<String, dynamic> portraitLayout = <String, dynamic>{
+      ...sharedLayout,
+      ...?_asMap(layout['portrait']),
+    };
+    final Map<String, dynamic> landscapeLayout = <String, dynamic>{
+      ...sharedLayout,
+      ...?_asMap(layout['landscape']),
+    };
+    if (portraitLayout.isNotEmpty &&
+        !normalized.containsKey('portraitLayout') &&
+        !normalized.containsKey('portrait_layout_json')) {
+      normalized['portraitLayout'] = portraitLayout;
+    }
+    if (landscapeLayout.isNotEmpty &&
+        !normalized.containsKey('landscapeLayout') &&
+        !normalized.containsKey('landscape_layout_json')) {
+      normalized['landscapeLayout'] = landscapeLayout;
+    }
+    if (!normalized.containsKey('z_index')) {
+      final int? sharedZIndex = _readIntValue(
+        sharedLayout['z_index'] ?? sharedLayout['zIndex'],
+      );
+      if (sharedZIndex != null) {
+        normalized['z_index'] = sharedZIndex;
+      }
+    }
+  }
+
+  return normalized;
+}
+
+Map<String, dynamic> _sharedPackageLayout(Map<String, dynamic> layout) {
+  final Map<String, dynamic> shared = <String, dynamic>{};
+  for (final MapEntry<String, dynamic> entry in layout.entries) {
+    if (entry.key == 'portrait' ||
+        entry.key == 'landscape' ||
+        entry.key == 'shared' ||
+        entry.key == 'default' ||
+        entry.key == 'fallback' ||
+        entry.key == 'all') {
+      continue;
+    }
+    shared[entry.key] = entry.value;
+  }
+  final Map<String, dynamic>? sharedLayout =
+      _asMap(layout['shared']) ??
+      _asMap(layout['default']) ??
+      _asMap(layout['fallback']) ??
+      _asMap(layout['all']);
+  if (sharedLayout != null) {
+    shared.addAll(sharedLayout);
+  }
+  return shared;
+}
+
+Map<String, dynamic> _normalizePackageComicDialogueEntry(
+  Map<String, dynamic> dialogueEntry,
+) {
+  final Map<String, dynamic> normalized = Map<String, dynamic>.from(
+    dialogueEntry,
+  );
+  _copyFirstPresent(normalized, normalized, const ['orderNo'], 'orderno');
+  _copyFirstPresent(normalized, normalized, const [
+    'speechFeeling',
+  ], 'speech_feeling');
+  normalized['speech_items'] = _asMapList(
+    normalized['speech_items'] ?? normalized['speechItems'],
+  ).map(_normalizePackageComicSpeechItem).toList();
+  return normalized;
+}
+
+Map<String, dynamic> _normalizePackageComicSpeechItem(
+  Map<String, dynamic> speechItem,
+) {
+  final Map<String, dynamic> normalized = Map<String, dynamic>.from(speechItem);
+  _copyFirstPresent(normalized, normalized, const ['orderNo'], 'orderno');
+  _copyFirstPresent(normalized, normalized, const [
+    'dialogueEntryId',
+  ], 'dialogue_id');
+  _copyFirstPresent(normalized, normalized, const ['audioUrl'], 'audio_url');
+  _copyFirstPresent(normalized, normalized, const [
+    'audioFileUrl',
+  ], 'audio_file_url');
+  _copyFirstPresent(normalized, normalized, const [
+    'generationStatus',
+  ], 'generation_status');
+  _copyFirstPresent(normalized, normalized, const ['startMs'], 'start_ms');
+  _copyFirstPresent(normalized, normalized, const [
+    'durationMs',
+  ], 'duration_ms');
+  _copyFirstPresent(normalized, normalized, const [
+    'responseFormat',
+  ], 'response_format');
+  return normalized;
+}
+
+Iterable<String> _comicPackageAssetUrls(
+  Map<String, dynamic> packageData,
+  String assetGroup,
+) {
+  final Map<String, dynamic>? assets = _asMap(packageData['assets']);
+  if (assets == null) {
+    return const <String>[];
+  }
+  return _asMapList(assets[assetGroup])
+      .map((Map<String, dynamic> asset) => _readStringValue(asset['url']))
+      .where((String url) => url.trim().isNotEmpty)
+      .toSet();
+}
+
+bool _isPackageUrlField(String key) {
+  final String lowerKey = key.toLowerCase();
+  return lowerKey == 'url' ||
+      lowerKey.endsWith('url') ||
+      lowerKey.endsWith('_url');
+}
+
+bool _isPackageUrlListField(String key) {
+  final String lowerKey = key.toLowerCase();
+  return lowerKey.endsWith('urls') || lowerKey.endsWith('_urls');
+}
+
+void _copyFirstPresent(
+  Map<String, dynamic> target,
+  Map<String, dynamic> source,
+  List<String> sourceKeys,
+  String targetKey,
+) {
+  for (final String sourceKey in sourceKeys) {
+    if (source.containsKey(sourceKey) && source[sourceKey] != null) {
+      target[targetKey] = source[sourceKey];
+      return;
+    }
+  }
+}
+
+void _addUniqueString(List<String> values, String value) {
+  final String trimmed = value.trim();
+  if (trimmed.isNotEmpty && !values.contains(trimmed)) {
+    values.add(trimmed);
+  }
+}
+
 String _normalizeLanguage(String language) {
   final String normalized = language.trim().toLowerCase();
   return normalized.isEmpty ? 'en' : normalized;
+}
+
+class _ComicPackageLanguage {
+  const _ComicPackageLanguage({
+    required this.language,
+    required this.url,
+    required this.contentHash,
+  });
+
+  final String language;
+  final String url;
+  final String contentHash;
+
+  factory _ComicPackageLanguage.fromJson(
+    Map<String, dynamic> data, {
+    required String language,
+  }) {
+    return _ComicPackageLanguage(
+      language: language,
+      url: _readStringValue(data['url']),
+      contentHash: _readStringValue(
+        data['contentHash'] ?? data['content_hash'],
+      ),
+    );
+  }
 }
 
 List<Map<String, dynamic>> _cloneMapList(List<Map<String, dynamic>> value) {

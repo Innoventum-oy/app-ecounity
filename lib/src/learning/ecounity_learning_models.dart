@@ -268,16 +268,22 @@ class EcoUnityLearningActivity {
     return EcoUnityLearningActivity(
       id: _readAnyInt(data, const ['id', 'objectid']),
       moduleId: _readRelationId(data['module']),
-      sdgNumber: _readInt(data['sdg_number']),
+      sdgNumber: _readInt(data['sdg_number'] ?? data['sdgNumber']),
       slug: _readString(data['slug']),
-      type: _activityTypeFromWire(_readString(data['activity_type'])),
-      flowStage: _flowStageFromWire(_readString(data['flow_stage'])),
+      type: _activityTypeFromWire(
+        _readString(data['activity_type'] ?? data['activityType']),
+      ),
+      flowStage: _flowStageFromWire(
+        _readString(data['flow_stage'] ?? data['flowStage']),
+      ),
       orderNo: _readInt(data['orderno']) ?? 0,
       mlrNumber: _readInt(data['mlr_number']),
       title: _readLocalizedString(data, 'title', language),
       shortDescription: _readLocalizedString(
         data,
-        'short_description',
+        data.containsKey('short_description')
+            ? 'short_description'
+            : 'shortDescription',
         language,
       ),
       body: _readLocalizedString(data, 'body', language),
@@ -303,7 +309,7 @@ class EcoUnityLearningActivity {
       passingLogic: _passingLogicFromWire(_readString(data['passing_logic'])),
       minimumScore: _readInt(data['minimum_score']),
       contentStatus: _contentStatusFromWire(
-        _readString(data['content_status']),
+        _readString(data['content_status'] ?? data['contentStatus']),
       ),
       heroImage: _readMediaFromFields(
         data,
@@ -503,15 +509,32 @@ class EcoUnityComic {
     required this.activity,
     required this.scenes,
     required this.rawData,
+    this.startSceneKey = '',
   });
 
   final EcoUnityLearningActivity activity;
   final List<EcoUnityComicScene> scenes;
   final Map<String, dynamic> rawData;
+  final String startSceneKey;
 
   EcoUnityComicScene? get startScene {
     if (scenes.isEmpty) {
       return null;
+    }
+    final String effectiveStartSceneKey = startSceneKey.trim().isNotEmpty
+        ? startSceneKey.trim()
+        : _readString(
+            rawData['start_scene_key'] ??
+                rawData['startSceneKey'] ??
+                activity.rawData['start_scene_key'] ??
+                activity.rawData['startSceneKey'],
+          );
+    if (effectiveStartSceneKey.isNotEmpty) {
+      for (final EcoUnityComicScene scene in scenes) {
+        if (scene.sceneKey == effectiveStartSceneKey) {
+          return scene;
+        }
+      }
     }
     final List<EcoUnityComicScene> ordered = [...scenes]
       ..sort((a, b) => a.orderNo.compareTo(b.orderNo));
@@ -545,7 +568,17 @@ class EcoUnityComic {
             .toList()
           ..sort((a, b) => a.orderNo.compareTo(b.orderNo));
 
-    return EcoUnityComic(activity: activity, scenes: scenes, rawData: data);
+    return EcoUnityComic(
+      activity: activity,
+      scenes: scenes,
+      rawData: data,
+      startSceneKey: _readString(
+        data['start_scene_key'] ??
+            data['startSceneKey'] ??
+            activityData['start_scene_key'] ??
+            activityData['startSceneKey'],
+      ),
+    );
   }
 
   EcoUnityComicScene? sceneByKey(String? sceneKey) {
@@ -606,9 +639,13 @@ class EcoUnityComicScene {
           _readInt(data['orderno'] ?? data['orderNo'] ?? data['order_no']) ?? 0,
       title: _readLocalizedString(data, 'title', language),
       narration: _readLocalizedString(data, 'narration', language),
-      altText: _readLocalizedString(data, 'alt_text', language),
+      altText: _readLocalizedString(
+        data,
+        data.containsKey('alt_text') ? 'alt_text' : 'altText',
+        language,
+      ),
       contentStatus: _contentStatusFromWire(
-        _readString(data['content_status']),
+        _readString(data['content_status'] ?? data['contentStatus']),
       ),
       backgrounds: _readMapList(data['backgrounds'])
           .map(
@@ -752,11 +789,13 @@ class EcoUnityComicBackground {
       title: _readString(data['title']),
       backgroundAltText: _readLocalizedString(
         data,
-        'background_alt_text',
+        data.containsKey('background_alt_text')
+            ? 'background_alt_text'
+            : 'altText',
         language,
       ),
       contentStatus: _contentStatusFromWire(
-        _readString(data['content_status']),
+        _readString(data['content_status'] ?? data['contentStatus']),
       ),
       viewports: _backgroundViewportsWithFallbackMedia(
         data,
@@ -843,10 +882,10 @@ class EcoUnityComicViewport {
           ) ??
           _defaultCanvasHeight(kind),
       generationStatus: _speechGenerationStatusFromWire(
-        _readString(data['generation_status']),
+        _readString(data['generation_status'] ?? data['generationStatus']),
       ),
       contentStatus: _contentStatusFromWire(
-        _readString(data['content_status']),
+        _readString(data['content_status'] ?? data['contentStatus']),
       ),
       rawData: data,
     );
@@ -938,12 +977,16 @@ class EcoUnityComicCastLayer {
           'landscape_layout',
         ]),
       ),
-      altText: _readLocalizedString(data, 'alt_text', language),
+      altText: _readLocalizedString(
+        data,
+        data.containsKey('alt_text') ? 'alt_text' : 'altText',
+        language,
+      ),
       contentStatus: _contentStatusFromWire(
-        _readString(data['content_status']),
+        _readString(data['content_status'] ?? data['contentStatus']),
       ),
       dialogueEntries:
-          _readMapList(data['dialogue_entries'])
+          _readMapList(data['dialogue_entries'] ?? data['dialogueEntries'])
               .map(
                 (item) => EcoUnityComicDialogueEntry.fromJson(
                   item,
@@ -1050,7 +1093,11 @@ class EcoUnityComicPropLayer {
           'landscape_layout',
         ]),
       ),
-      altText: _readLocalizedString(data, 'alt_text', language),
+      altText: _readLocalizedString(
+        data,
+        data.containsKey('alt_text') ? 'alt_text' : 'altText',
+        language,
+      ),
       rawData: data,
     );
   }
@@ -1130,7 +1177,9 @@ class EcoUnityComicDecision {
             ),
       consequenceSummary: _readLocalizedString(
         data,
-        'consequence_summary',
+        data.containsKey('consequence_summary')
+            ? 'consequence_summary'
+            : 'consequenceSummary',
         language,
       ),
       choiceImage: _readMediaFromFields(
@@ -1162,9 +1211,13 @@ class EcoUnityComicDecision {
         ]),
       ),
       zIndex: _readInt(data['z_index'] ?? data['zIndex']) ?? 80,
-      altText: _readLocalizedString(data, 'alt_text', language),
+      altText: _readLocalizedString(
+        data,
+        data.containsKey('alt_text') ? 'alt_text' : 'altText',
+        language,
+      ),
       contentStatus: _contentStatusFromWire(
-        _readString(data['content_status']),
+        _readString(data['content_status'] ?? data['contentStatus']),
       ),
       rawData: data,
     );
@@ -1216,12 +1269,15 @@ class EcoUnityComicDialogueEntry {
     final Map<String, dynamic> data = _unwrapData(response);
     return EcoUnityComicDialogueEntry(
       id: _readAnyInt(data, const ['id', 'objectid']),
-      orderNo: _readInt(data['orderno']) ?? 0,
+      orderNo:
+          _readInt(data['orderno'] ?? data['orderNo'] ?? data['order_no']) ?? 0,
       dialogue: _readLocalizedString(data, 'dialogue', language),
-      speechFeeling: _readString(data['speech_feeling']),
+      speechFeeling: _readString(
+        data['speech_feeling'] ?? data['speechFeeling'],
+      ),
       speechItems:
           _readMapList(
-              data['speech_items'],
+              data['speech_items'] ?? data['speechItems'],
             ).map((item) => EcoUnityComicSpeechItem.fromJson(item)).toList()
             ..sort((a, b) {
               final int byOrder = a.orderNo.compareTo(b.orderNo);
@@ -1551,13 +1607,24 @@ class EcoUnityComicPoseLayer {
       generatedImage: _readMediaFromFields(
         data,
         objectKeys: const ['generated_image', 'image'],
-        urlKeys: const ['generated_image_url', 'image_url', 'imageurl', 'url'],
+        urlKeys: const [
+          'generated_image_url',
+          'generatedImageUrl',
+          'image_url',
+          'imageUrl',
+          'imageurl',
+          'url',
+        ],
         idKeys: const ['generated_image_id', 'image_id', 'imageid', 'fileid'],
         language: language,
       ),
-      altText: _readLocalizedString(data, 'alt_text', language),
+      altText: _readLocalizedString(
+        data,
+        data.containsKey('alt_text') ? 'alt_text' : 'altText',
+        language,
+      ),
       generationStatus: _speechGenerationStatusFromWire(
-        _readString(data['generation_status']),
+        _readString(data['generation_status'] ?? data['generationStatus']),
       ),
       rawData: data,
     );
@@ -1596,11 +1663,15 @@ class EcoUnityComicProp {
       image: _readMediaFromFields(
         data,
         objectKeys: const ['image'],
-        urlKeys: const ['image_url', 'imageurl', 'url'],
+        urlKeys: const ['image_url', 'imageUrl', 'imageurl', 'url'],
         idKeys: const ['image_id', 'imageid', 'fileid'],
         language: language,
       ),
-      altText: _readLocalizedString(data, 'alt_text', language),
+      altText: _readLocalizedString(
+        data,
+        data.containsKey('alt_text') ? 'alt_text' : 'altText',
+        language,
+      ),
       rawData: data,
     );
   }
@@ -1760,14 +1831,20 @@ class EcoUnityMedia {
     final String? url = _readFirstNonEmptyString(data, const [
       'url',
       'image_url',
+      'imageUrl',
       'imageurl',
       'file_url',
+      'fileUrl',
       'fileurl',
       'download_url',
+      'downloadUrl',
       'badgeimageurl',
       'generated_image_url',
+      'generatedImageUrl',
       'background_image_url',
+      'backgroundImageUrl',
       'choice_image_url',
+      'choiceImageUrl',
       'audio_file_url',
       'audio_url',
       'audioFileUrl',
@@ -2124,17 +2201,18 @@ List<String> _readUrlList(dynamic raw) {
     final List<String> urls = <String>[];
     for (final dynamic item in value) {
       if (item is Map) {
-        final String? url = _readFirstNonEmptyString(
-          Map<String, dynamic>.from(item),
-          const [
-            'url',
-            'image_url',
-            'imageurl',
-            'file_url',
-            'fileurl',
-            'download_url',
-          ],
-        );
+        final String? url =
+            _readFirstNonEmptyString(Map<String, dynamic>.from(item), const [
+              'url',
+              'image_url',
+              'imageUrl',
+              'imageurl',
+              'file_url',
+              'fileUrl',
+              'fileurl',
+              'download_url',
+              'downloadUrl',
+            ]);
         if (url != null) {
           urls.add(url);
         }

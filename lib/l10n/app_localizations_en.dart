@@ -831,6 +831,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get play_again => 'Play again';
 
   @override
+  String get comic_no_scenes_available => 'No comic scenes available';
+
+  @override
+  String get comic_loading_scene => 'Loading scene...';
+
+  @override
+  String get comic_playing => 'Playing...';
+
+  @override
+  String get comic_complete_action => 'Complete';
+
+  @override
+  String get comic_loading_next_scenes => 'Loading next scenes...';
+
+  @override
+  String get comic_dialogue_title => 'Dialogue';
+
+  @override
+  String get comic_character_fallback => 'Character';
+
+  @override
+  String get comic_play_tooltip => 'Play';
+
+  @override
+  String get comic_stop_tooltip => 'Stop';
+
+  @override
+  String get comic_view_dialogue_tooltip => 'View dialogue';
+
+  @override
   String get not_enough_images_to_match => 'Not enough images to match';
 
   @override

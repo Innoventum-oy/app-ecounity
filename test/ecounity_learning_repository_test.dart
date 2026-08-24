@@ -279,6 +279,113 @@ void main() {
       );
     });
 
+    test(
+      'loads packaged comic before hydrating per-object relation endpoints',
+      () async {
+        final Map<String, dynamic> comicActivity =
+            _activityResponse(id: 36, orderNo: 10, type: 'comic')
+              ..['comic_package_manifest_url'] =
+                  '/ecounitylearning/comics/36/manifest.json'
+              ..['comic_scenes'] = <Map<String, dynamic>>[
+                <String, dynamic>{'objectid': 2},
+                <String, dynamic>{'objectid': 3},
+              ];
+        final _FakeLearningBackend backend = _FakeLearningBackend()
+          ..detailResponses['${EcoUnityLearningRepository.activityObjectType}:36'] =
+              comicActivity
+          ..listResponses[EcoUnityLearningRepository.comicSceneObjectType] =
+              <dynamic>[
+                _sceneResponse(id: 2, sceneKey: 'old-start', orderNo: 10),
+              ];
+        final _FakeComicPackageClient packageClient = _FakeComicPackageClient()
+          ..responses['/ecounitylearning/comics/36/manifest.json'] =
+              <String, dynamic>{
+                'packageType': 'ecounity_comic_manifest',
+                'activityId': 36,
+                'packageVersion': 'manifest-v1',
+                'languages': <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'language': 'es',
+                    'url': '/ecounitylearning/comics/36/es.json',
+                    'contentHash': 'es-hash',
+                  },
+                ],
+              }
+          ..responses['/ecounitylearning/comics/36/es.json'] =
+              _comicPackageResponse();
+        final _RecordingAssetPreparer assetPreparer = _RecordingAssetPreparer();
+        final EcoUnityLearningRepository repository =
+            EcoUnityLearningRepository(
+              backend: backend,
+              comicPackageClient: packageClient,
+              comicAssetPreparer: assetPreparer.call,
+            );
+
+        final EcoUnityLearningActivity? activity = await repository
+            .loadActivity(36, language: 'es', comicSceneLimit: 1);
+
+        expect(activity?.comicScenes, hasLength(2));
+        expect(
+          activity?.comicScenes.map(
+            (EcoUnityComicScene scene) => scene.sceneKey,
+          ),
+          <String>['intro', 'branch'],
+        );
+        final EcoUnityComic comic = EcoUnityComic(
+          activity: activity!,
+          scenes: activity.comicScenes,
+          rawData: activity.rawData,
+        );
+        expect(comic.startScene?.sceneKey, 'intro');
+        expect(
+          activity.comicScenes.first
+              .viewportFor(EcoUnityComicViewportKind.portrait)
+              ?.backgroundImage
+              ?.url,
+          'https://example.test/images/bg.png',
+        );
+        expect(
+          activity.comicScenes.first.cast.single.poseLayer?.generatedImage?.url,
+          'https://example.test/images/sofia.png',
+        );
+        expect(
+          activity.comicScenes.first
+              .dialogueTimeline('es')
+              .single
+              .speech
+              ?.audioFile
+              ?.url,
+          'https://example.test/audio/hola.mp3',
+        );
+        expect(
+          activity.comicScenes.first.cast.single.portraitLayout.zIndex,
+          30,
+        );
+        expect(
+          activity.comicScenes.first.decisions.single.targetSceneKey,
+          'branch',
+        );
+        expect(backend.detailRequestKeys, <String>[
+          '${EcoUnityLearningRepository.activityObjectType}:36',
+        ]);
+        expect(backend.listRequests, isEmpty);
+        expect(
+          packageClient.requests.map((_PackageRequest request) => request.url),
+          <String>[
+            '/ecounitylearning/comics/36/manifest.json',
+            '/ecounitylearning/comics/36/es.json',
+          ],
+        );
+        expect(
+          assetPreparer.imageUrls,
+          contains('https://example.test/images/bg.png'),
+        );
+        expect(assetPreparer.audioUrls, <String>[
+          'https://example.test/audio/hola.mp3',
+        ]);
+      },
+    );
+
     test('hydrates comic scene relation details in parallel', () async {
       final Map<String, dynamic> comicActivity = _activityResponse(
         id: 36,
@@ -749,6 +856,195 @@ Map<String, dynamic> _decisionResponse({required int id}) {
     'label': <String, dynamic>{'en': 'Choice $id'},
     'target_scene_key': 'start',
   };
+}
+
+Map<String, dynamic> _comicPackageResponse() {
+  return <String, dynamic>{
+    'schemaVersion': '1.0.0',
+    'packageType': 'ecounity_comic',
+    'contentLanguage': 'es',
+    'packageVersion': 'es-hash',
+    'startSceneKey': 'intro',
+    'activity': <String, dynamic>{
+      'id': 36,
+      'slug': 'comic-36',
+      'sdgNumber': 5,
+      'title': 'Comic package',
+      'shortDescription': 'Packaged comic',
+      'contentStatus': 'published',
+      'heroImageUrl': '/images/hero.png',
+      'mediaImageUrls': <String>['/images/media.png'],
+    },
+    'scenes': <Map<String, dynamic>>[
+      <String, dynamic>{
+        'id': 2,
+        'sceneKey': 'intro',
+        'orderno': 20,
+        'title': 'Intro',
+        'narration': 'The team arrives.',
+        'backgrounds': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 101,
+            'title': 'Classroom',
+            'altText': 'A classroom.',
+            'viewports': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 102,
+                'viewport': 'portrait',
+                'canvasWidth': 1024,
+                'canvasHeight': 1365,
+                'imageUrl': '/images/bg.png',
+                'generationStatus': 'ready',
+              },
+            ],
+          },
+        ],
+        'cast': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 201,
+            'orderNo': 1,
+            'zIndex': 10,
+            'layout': <String, dynamic>{
+              'portrait': <String, dynamic>{
+                'x': 0.2,
+                'y': 0.7,
+                'scale': 1.15,
+                'z_index': 30,
+              },
+              'landscape': <String, dynamic>{
+                'x': 0.4,
+                'y': 0.6,
+                'scale': 1.05,
+                'z_index': 31,
+              },
+            },
+            'character': <String, dynamic>{
+              'id': 301,
+              'slug': 'sofia',
+              'name': 'Sofia',
+            },
+            'poseLayer': <String, dynamic>{
+              'id': 401,
+              'slug': 'sofia-neutral',
+              'imageUrl': '/images/sofia.png',
+              'generationStatus': 'ready',
+            },
+            'dialogueEntries': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 501,
+                'orderNo': 1,
+                'dialogue': 'Hola',
+                'speechFeeling': 'calm',
+                'speechItems': <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'id': 601,
+                    'dialogueEntryId': 501,
+                    'language': 'es',
+                    'audioUrl': '/audio/hola.mp3',
+                    'generationStatus': 'ready',
+                    'startMs': 0,
+                    'durationMs': 1200,
+                    'orderNo': 1,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        'decisions': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 701,
+            'orderNo': 1,
+            'label': 'Continue',
+            'targetSceneKey': 'branch',
+            'consequenceSummary': 'Moves to the next branch.',
+            'layout': <String, dynamic>{
+              'portrait': <String, dynamic>{'x': 0.5, 'y': 0.82, 'scale': 1},
+            },
+          },
+        ],
+      },
+      <String, dynamic>{
+        'id': 3,
+        'sceneKey': 'branch',
+        'orderno': 30,
+        'title': 'Branch',
+        'props': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 801,
+            'orderNo': 1,
+            'layout': <String, dynamic>{
+              'portrait': <String, dynamic>{'x': 0.5, 'y': 0.8, 'scale': 2},
+            },
+            'prop': <String, dynamic>{
+              'id': 901,
+              'slug': 'table',
+              'name': 'Table',
+              'imageUrl': '/images/table.png',
+            },
+          },
+        ],
+      },
+    ],
+    'assets': <String, dynamic>{
+      'images': <Map<String, dynamic>>[
+        <String, dynamic>{'url': '/images/bg.png'},
+        <String, dynamic>{'url': '/images/sofia.png'},
+        <String, dynamic>{'url': '/images/table.png'},
+      ],
+      'audio': <Map<String, dynamic>>[
+        <String, dynamic>{'url': '/audio/hola.mp3'},
+      ],
+    },
+  };
+}
+
+class _FakeComicPackageClient implements EcoUnityComicPackageClient {
+  final Map<String, Map<String, dynamic>?> responses =
+      <String, Map<String, dynamic>?>{};
+  final List<_PackageRequest> requests = <_PackageRequest>[];
+
+  @override
+  Future<Map<String, dynamic>?> loadJson(
+    String urlOrPath, {
+    String language = 'en',
+  }) async {
+    requests.add(_PackageRequest(urlOrPath, language));
+    final Map<String, dynamic>? response = responses[urlOrPath];
+    return response == null ? null : Map<String, dynamic>.from(response);
+  }
+
+  @override
+  Future<String> resolveUrl(String urlOrPath) async {
+    final Uri uri = Uri.parse(urlOrPath);
+    if (uri.hasScheme) {
+      return urlOrPath;
+    }
+    if (urlOrPath.startsWith('/')) {
+      return 'https://example.test$urlOrPath';
+    }
+    return 'https://example.test/$urlOrPath';
+  }
+}
+
+class _PackageRequest {
+  const _PackageRequest(this.url, this.language);
+
+  final String url;
+  final String language;
+}
+
+class _RecordingAssetPreparer {
+  final List<String> imageUrls = <String>[];
+  final List<String> audioUrls = <String>[];
+
+  Future<void> call({
+    required Iterable<String> imageUrls,
+    required Iterable<String> audioUrls,
+  }) async {
+    this.imageUrls.addAll(imageUrls);
+    this.audioUrls.addAll(audioUrls);
+  }
 }
 
 class _FakeLearningBackend implements EcoUnityLearningBackend {

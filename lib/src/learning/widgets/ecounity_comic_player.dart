@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:ecounity/l10n/app_localizations_extension.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_media_image.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
@@ -122,7 +123,7 @@ class _EcoUnityComicPlayerState extends State<EcoUnityComicPlayer> {
     final EcoUnityComicScene? scene =
         widget.comic.sceneByKey(_sceneKey) ?? widget.comic.startScene;
     if (scene == null) {
-      return const Center(child: Text('No comic scenes available'));
+      return Center(child: Text(context.l10n.comic_no_scenes_available));
     }
 
     final List<EcoUnityComicTimelineEntry> timeline = scene.dialogueTimeline(
@@ -1084,7 +1085,7 @@ class _SceneLoadingOverlay extends StatelessWidget {
                           ),
                           const SizedBox(height: 14),
                           Text(
-                            'Loading scene...',
+                            context.l10n.comic_loading_scene,
                             style: Theme.of(context).textTheme.labelLarge
                                 ?.copyWith(
                                   color: Colors.white,
@@ -1464,7 +1465,7 @@ class _ComicControls extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                 )
               : Text(
-                  'Playing...',
+                  context.l10n.comic_playing,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: EcoUnityColors.textSecondary,
                     fontWeight: FontWeight.w700,
@@ -1501,8 +1502,10 @@ class _ComicControls extends StatelessWidget {
     final bool showPrimaryAction =
         !(isTimelinePlaying && isLastDialogue && scene.decisions.isNotEmpty);
     final String buttonLabel = isLastDialogue
-        ? (scene.decisions.isEmpty ? 'Complete' : 'Continue')
-        : 'Continue';
+        ? (scene.decisions.isEmpty
+              ? context.l10n.comic_complete_action
+              : context.l10n.button_continue)
+        : context.l10n.button_continue;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1566,7 +1569,7 @@ class _ComicControls extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: onCompleted,
               icon: const Icon(Icons.check),
-              label: const Text('Complete'),
+              label: Text(context.l10n.comic_complete_action),
             ),
           ),
         ],
@@ -1590,7 +1593,7 @@ class _ComicControls extends StatelessWidget {
         if (loadingAdditionalScenes) ...<Widget>[
           const SizedBox(height: 2),
           Text(
-            'Loading next scenes...',
+            context.l10n.comic_loading_next_scenes,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: EcoUnityColors.textSecondary,
@@ -1606,7 +1609,11 @@ class _ComicControls extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(scene.title.isNotEmpty ? scene.title : 'Dialogue'),
+          title: Text(
+            scene.title.isNotEmpty
+                ? scene.title
+                : context.l10n.comic_dialogue_title,
+          ),
           content: SizedBox(
             width: math.min(MediaQuery.sizeOf(context).width - 64, 520),
             child: ListView.separated(
@@ -1618,7 +1625,8 @@ class _ComicControls extends StatelessWidget {
               itemBuilder: (BuildContext context, int index) {
                 final EcoUnityComicTimelineEntry entry = timeline[index];
                 final String speaker =
-                    entry.castLayer.character?.name ?? 'Character';
+                    entry.castLayer.character?.name ??
+                    context.l10n.comic_character_fallback;
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -1645,7 +1653,7 @@ class _ComicControls extends StatelessWidget {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
+              child: Text(context.l10n.button_close),
             ),
           ],
         );
@@ -1703,7 +1711,7 @@ class _ComicLoadingControls extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Text(
-          'Loading scene...',
+          context.l10n.comic_loading_scene,
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
             color: EcoUnityColors.textSecondary,
             fontWeight: FontWeight.w700,
@@ -1728,7 +1736,9 @@ class _TimelinePlaybackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton.filledTonal(
-      tooltip: isPlaying ? 'Stop' : 'Play',
+      tooltip: isPlaying
+          ? context.l10n.comic_stop_tooltip
+          : context.l10n.comic_play_tooltip,
       onPressed: enabled ? onPressed : null,
       icon: Icon(isPlaying ? Icons.stop : Icons.play_arrow),
     );
@@ -1747,7 +1757,7 @@ class _DialogueTranscriptButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: 'View dialogue',
+      tooltip: context.l10n.comic_view_dialogue_tooltip,
       onPressed: enabled ? onPressed : null,
       icon: const Icon(Icons.chat_bubble_outline),
     );

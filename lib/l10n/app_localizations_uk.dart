@@ -831,6 +831,36 @@ class AppLocalizationsUk extends AppLocalizations {
   String get play_again => 'Спробувати знову';
 
   @override
+  String get comic_no_scenes_available => 'Немає доступних сцен коміксу';
+
+  @override
+  String get comic_loading_scene => 'Завантаження сцени...';
+
+  @override
+  String get comic_playing => 'Відтворення...';
+
+  @override
+  String get comic_complete_action => 'Завершити';
+
+  @override
+  String get comic_loading_next_scenes => 'Завантаження наступних сцен...';
+
+  @override
+  String get comic_dialogue_title => 'Діалог';
+
+  @override
+  String get comic_character_fallback => 'Персонаж';
+
+  @override
+  String get comic_play_tooltip => 'Відтворити';
+
+  @override
+  String get comic_stop_tooltip => 'Зупинити';
+
+  @override
+  String get comic_view_dialogue_tooltip => 'Переглянути діалог';
+
+  @override
   String get not_enough_images_to_match =>
       'Недостатньо зображень для зіставлення';
 

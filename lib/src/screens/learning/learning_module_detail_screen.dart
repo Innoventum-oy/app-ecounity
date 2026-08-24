@@ -11,6 +11,7 @@ import 'package:ecounity/src/learning/ecounity_learning_text_utils.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_content_review_panel.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_learning_copy.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_media_image.dart';
+import 'package:ecounity/src/providers/ecounity_content_review_provider.dart';
 import 'package:ecounity/src/providers/ecounity_teacher_report_provider.dart';
 import 'package:ecounity/src/providers/teacher_mode_provider.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
@@ -41,6 +42,7 @@ class _EcoUnityLearningModuleDetailScreenState
   Future<EcoUnitySdgModule?>? _future;
   final Set<String> _trackedModuleOpenKeys = <String>{};
   String? _loadedLanguage;
+  String? _requestedReviewQueueKey;
 
   @override
   void didChangeDependencies() {
@@ -54,6 +56,7 @@ class _EcoUnityLearningModuleDetailScreenState
     if (oldWidget.module != widget.module ||
         oldWidget.moduleId != widget.moduleId) {
       _future = _loadModule();
+      _requestedReviewQueueKey = null;
     }
   }
 
@@ -95,6 +98,21 @@ class _EcoUnityLearningModuleDetailScreenState
     final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
       context,
     ).isTeacherMode;
+    final String reviewLanguage =
+        _loadedLanguage ?? Localizations.localeOf(context).languageCode;
+    final core.User user = Provider.of<core.UserProvider>(context).user;
+    final EcoUnityContentReviewProvider reviewProvider =
+        Provider.of<EcoUnityContentReviewProvider>(context);
+    _scheduleReviewQueueLoad(context, module, reviewLanguage, user);
+    final bool showReviewChips = reviewProvider.canReviewFor(user);
+    final bool reviewQueueLoading =
+        showReviewChips &&
+        module.id != null &&
+        reviewProvider.isSdgReviewQueueLoading(
+          moduleId: module.id!,
+          language: reviewLanguage,
+          user: user,
+        );
     final EcoUnityTeacherGroupReport? teacherReport = teacherModeEnabled
         ? Provider.of<EcoUnityTeacherReportProvider>(context).activeReport
         : null;
@@ -115,9 +133,7 @@ class _EcoUnityLearningModuleDetailScreenState
             EcoUnityContentReviewPanel(
               scope: EcoUnityReviewScope.module,
               objectId: module.id!,
-              language:
-                  _loadedLanguage ??
-                  Localizations.localeOf(context).languageCode,
+              language: reviewLanguage,
               fallbackStatus: module.contentStatus,
             ),
           const SizedBox(height: 16),
@@ -127,23 +143,50 @@ class _EcoUnityLearningModuleDetailScreenState
             for (final EcoUnityLearningActivity activity in module.activities)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: _ActivityCard(
-                  activity: activity,
-                  completed:
-                      activity.id != null &&
-                      completedActivityIds.contains(activity.id),
-                  teacherStats: teacherReport?.activityStatsFor(
-                    activityId: activity.id,
-                    slug: activity.slug,
-                  ),
-                  groupSize: teacherReport?.enrolledUsers,
-                  onTap: () {
-                    AppRouter.navigate(
-                      context,
-                      'learningactivity',
-                      widget.navIndex,
-                      replaceRoute: false,
-                      data: activity,
+                child: Builder(
+                  builder: (BuildContext context) {
+                    final EcoUnityContentReviewRecord? reviewRecord =
+                        showReviewChips && activity.id != null
+                        ? reviewProvider.recordFor(
+                            scope: EcoUnityReviewScope.activity,
+                            objectId: activity.id!,
+                            language: reviewLanguage,
+                          )
+                        : null;
+                    final EcoUnityReviewStatus? reviewStatus = showReviewChips
+                        ? reviewRecord?.reviewStatus ??
+                              ecoUnityReviewStatusFromContentStatus(
+                                activity.contentStatus,
+                              )
+                        : null;
+
+                    return _ActivityCard(
+                      activity: activity,
+                      completed:
+                          activity.id != null &&
+                          completedActivityIds.contains(activity.id),
+                      teacherStats: teacherReport?.activityStatsFor(
+                        activityId: activity.id,
+                        slug: activity.slug,
+                      ),
+                      groupSize: teacherReport?.enrolledUsers,
+                      reviewStatus: reviewStatus,
+                      reviewStatusLabel: reviewStatus == null
+                          ? null
+                          : _reviewStatusLabel(reviewStatus, reviewRecord),
+                      reviewLoading:
+                          reviewStatus != null &&
+                          reviewQueueLoading &&
+                          reviewRecord == null,
+                      onTap: () {
+                        AppRouter.navigate(
+                          context,
+                          'learningactivity',
+                          widget.navIndex,
+                          replaceRoute: false,
+                          data: activity,
+                        );
+                      },
                     );
                   },
                 ),
@@ -200,6 +243,39 @@ class _EcoUnityLearningModuleDetailScreenState
       return;
     }
     unawaited(analytics.trackModuleOpened(module, language: language));
+  }
+
+  void _scheduleReviewQueueLoad(
+    BuildContext context,
+    EcoUnitySdgModule module,
+    String language,
+    core.User user,
+  ) {
+    final int? moduleId = module.id;
+    if (moduleId == null || !_hasPotentialReviewUser(user)) {
+      return;
+    }
+
+    final String key = '$moduleId:$language:${user.id}:${user.token}';
+    if (_requestedReviewQueueKey == key) {
+      return;
+    }
+    _requestedReviewQueueKey = key;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final EcoUnityContentReviewProvider reviewProvider =
+          Provider.of<EcoUnityContentReviewProvider>(context, listen: false);
+      unawaited(
+        reviewProvider.loadSdgReviewQueue(
+          user: user,
+          moduleId: moduleId,
+          language: language,
+        ),
+      );
+    });
   }
 }
 
@@ -354,6 +430,9 @@ class _ActivityCard extends StatelessWidget {
     required this.completed,
     required this.teacherStats,
     required this.groupSize,
+    required this.reviewStatus,
+    required this.reviewStatusLabel,
+    required this.reviewLoading,
     required this.onTap,
   });
 
@@ -361,6 +440,9 @@ class _ActivityCard extends StatelessWidget {
   final bool completed;
   final EcoUnityTeacherActivityStats? teacherStats;
   final int? groupSize;
+  final EcoUnityReviewStatus? reviewStatus;
+  final String? reviewStatusLabel;
+  final bool reviewLoading;
   final VoidCallback onTap;
 
   @override
@@ -414,7 +496,7 @@ class _ActivityCard extends StatelessWidget {
             ],
           ],
         ),
-        isThreeLine: teacherStats != null,
+        isThreeLine: teacherStats != null || reviewStatus != null,
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Column(
@@ -425,6 +507,14 @@ class _ActivityCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+              if (reviewStatus != null) ...<Widget>[
+                const SizedBox(height: 8),
+                _ActivityReviewStatusChip(
+                  status: reviewStatus!,
+                  label: reviewStatusLabel ?? _reviewStatusLabel(reviewStatus!),
+                  loading: reviewLoading,
+                ),
+              ],
               if (teacherStats != null) ...<Widget>[
                 const SizedBox(height: 8),
                 _TeacherActivityStats(
@@ -488,6 +578,61 @@ class _TeacherActivityStats extends StatelessWidget {
                   ),
           ),
       ],
+    );
+  }
+}
+
+class _ActivityReviewStatusChip extends StatelessWidget {
+  const _ActivityReviewStatusChip({
+    required this.status,
+    required this.label,
+    required this.loading,
+  });
+
+  final EcoUnityReviewStatus status;
+  final String label;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color = _reviewStatusColor(status);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: color.withValues(alpha: 0.42)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              if (loading) ...<Widget>[
+                SizedBox.square(
+                  dimension: 12,
+                  child: CircularProgressIndicator(
+                    color: color,
+                    strokeWidth: 2,
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ] else ...<Widget>[
+                Icon(_reviewStatusIcon(status), size: 14, color: color),
+                const SizedBox(width: 5),
+              ],
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -565,6 +710,58 @@ IconData _activityIcon(EcoUnityActivityType type) {
   };
 }
 
+IconData _reviewStatusIcon(EcoUnityReviewStatus status) {
+  return switch (status) {
+    EcoUnityReviewStatus.approved => Icons.check_circle_outline_rounded,
+    EcoUnityReviewStatus.published => Icons.verified_rounded,
+    EcoUnityReviewStatus.needsReview => Icons.rate_review_outlined,
+    EcoUnityReviewStatus.needsChanges => Icons.edit_note_rounded,
+    EcoUnityReviewStatus.notReady => Icons.hourglass_empty_rounded,
+    EcoUnityReviewStatus.unknown => Icons.help_outline_rounded,
+  };
+}
+
+Color _reviewStatusColor(EcoUnityReviewStatus status) {
+  return switch (status) {
+    EcoUnityReviewStatus.approved => EcoUnityColors.success,
+    EcoUnityReviewStatus.published => EcoUnityColors.success,
+    EcoUnityReviewStatus.needsReview => EcoUnityColors.warning,
+    EcoUnityReviewStatus.needsChanges => EcoUnityColors.warmOrange,
+    EcoUnityReviewStatus.notReady => EcoUnityColors.textSecondary,
+    EcoUnityReviewStatus.unknown => EcoUnityColors.textSecondary,
+  };
+}
+
+String _reviewStatusLabel([
+  EcoUnityReviewStatus? status,
+  EcoUnityContentReviewRecord? record,
+]) {
+  final String backendLabel = _firstNonEmptyString(<Object?>[
+    record?.rawData['reviewStatusLabel'],
+    record?.rawData['review_status_label'],
+    record?.rawData['status_label'],
+    record?.rawData['statusLabel'],
+  ]);
+  if (backendLabel.isNotEmpty) {
+    return backendLabel;
+  }
+
+  return switch (status ?? EcoUnityReviewStatus.unknown) {
+    EcoUnityReviewStatus.notReady => 'Not ready',
+    EcoUnityReviewStatus.needsReview => 'Needs review',
+    EcoUnityReviewStatus.needsChanges => 'Needs changes',
+    EcoUnityReviewStatus.approved => 'Approved',
+    EcoUnityReviewStatus.published => 'Published',
+    EcoUnityReviewStatus.unknown => 'Unknown',
+  };
+}
+
+bool _hasPotentialReviewUser(core.User user) {
+  return user.id != null &&
+      !user.isGuestUser &&
+      (user.token?.trim().isNotEmpty ?? false);
+}
+
 Set<int> _completedActivityIds(List<EcoUnityProgressEntry> progressEntries) {
   return progressEntries
       .where((EcoUnityProgressEntry entry) {
@@ -612,6 +809,16 @@ String _activityLabel(BuildContext context, EcoUnityLearningActivity activity) {
     if (description.isNotEmpty) description,
   ];
   return parts.join(' · ');
+}
+
+String _firstNonEmptyString(Iterable<Object?> values) {
+  for (final Object? value in values) {
+    final String text = value?.toString().trim() ?? '';
+    if (text.isNotEmpty && text != 'null') {
+      return text;
+    }
+  }
+  return '';
 }
 
 String _percentLabel(double? value) {

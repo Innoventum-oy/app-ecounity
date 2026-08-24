@@ -5,6 +5,7 @@ import 'package:ecounity/src/analytics/ecounity_analytics_service.dart';
 import 'package:ecounity/src/learning/ecounity_comic_speech_audio_controller.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
+import 'package:ecounity/src/learning/widgets/ecounity_activity_hero_image.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_comic_player.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_teacher_objective_card.dart';
 import 'package:ecounity/src/providers/teacher_mode_provider.dart';
@@ -141,19 +142,28 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
         return SizedBox(
           width: double.infinity,
           height: height,
-          child: teacherModeEnabled && activity.learningObjective.isNotEmpty
-              ? Column(
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                      child: EcoUnityTeacherObjectiveCard(
-                        learningObjective: activity.learningObjective,
-                      ),
-                    ),
-                    Expanded(child: player),
-                  ],
-                )
-              : player,
+          child: Column(
+            children: <Widget>[
+              if (activity.heroImage != null) ...<Widget>[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: EcoUnityActivityHeroImage(
+                    activity: activity,
+                    maxHeight: 220,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (teacherModeEnabled && activity.learningObjective.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: EcoUnityTeacherObjectiveCard(
+                    learningObjective: activity.learningObjective,
+                  ),
+                ),
+              Expanded(child: player),
+            ],
+          ),
         );
       },
     );

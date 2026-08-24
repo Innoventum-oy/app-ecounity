@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:ecounity/l10n/app_localizations_extension.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_comic_player.dart';
 import 'package:flutter/material.dart';
@@ -581,6 +582,9 @@ Future<void> _pumpThroughSceneReveal(WidgetTester tester) async {
 
 Widget _comicTestHarness(Widget child) {
   return MaterialApp(
+    locale: const Locale('en'),
+    localizationsDelegates: appLocalizationsDelegates,
+    supportedLocales: const <Locale>[Locale('en')],
     home: MediaQuery(
       data: const MediaQueryData(size: Size(375, 812)),
       child: Scaffold(body: child),

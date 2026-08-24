@@ -89,6 +89,65 @@ class EcoUnityContentReviewRecord {
   }
 }
 
+class EcoUnitySdgReviewQueue {
+  const EcoUnitySdgReviewQueue({
+    required this.moduleId,
+    required this.language,
+    required this.records,
+    required this.rawData,
+  });
+
+  final int moduleId;
+  final String language;
+  final List<EcoUnityContentReviewRecord> records;
+  final Map<String, dynamic> rawData;
+
+  factory EcoUnitySdgReviewQueue.fromApiResponse(
+    Map<String, dynamic> response, {
+    required int moduleId,
+    required String language,
+  }) {
+    final String normalizedLanguage = _normalizeLanguage(
+      _firstNonEmptyString(<Object?>[response['language'], language]),
+    );
+    final List<EcoUnityContentReviewRecord> records =
+        <EcoUnityContentReviewRecord>[];
+    final Set<String> seen = <String>{};
+
+    for (final Map<String, dynamic> item in _reviewQueueItemMaps(response)) {
+      final EcoUnityReviewScope? scope = _reviewScopeFromMap(item);
+      if (scope == null) {
+        continue;
+      }
+      final int? objectId = _reviewObjectIdFromMap(item, scope);
+      if (objectId == null) {
+        continue;
+      }
+
+      final String key = '${scope.wireName}:$objectId:$normalizedLanguage';
+      if (!seen.add(key)) {
+        continue;
+      }
+
+      records.add(
+        EcoUnityContentReviewRecord.fromApiResponse(
+          item,
+          scope: scope,
+          scopeId: objectId,
+          language: normalizedLanguage,
+        ),
+      );
+    }
+
+    return EcoUnitySdgReviewQueue(
+      moduleId: moduleId,
+      language: normalizedLanguage,
+      records: records,
+      rawData: response,
+    );
+  }
+}
+
 abstract class EcoUnityContentReviewTransport {
   Future<Map<String, dynamic>> getJson(
     String path, {
@@ -154,9 +213,7 @@ class EcoUnityHttpContentReviewTransport
     final String token = _reviewToken(user);
     final Map<String, String> headers = <String, String>{
       'Accept': 'application/json',
-      'Api-Key': token,
       'api-key': token,
-      'api_key': token,
       'Authorization': 'Bearer $token',
       'X-Mobile-App': await _mobileAppHeader(),
     };
@@ -241,6 +298,25 @@ class EcoUnityContentReviewService {
       scopeId: objectId,
       language: normalizedLanguage,
       fallbackStatus: fallbackStatus,
+    );
+  }
+
+  Future<EcoUnitySdgReviewQueue> loadSdgReviewQueue({
+    required core.User user,
+    required int moduleId,
+    required String language,
+  }) async {
+    final String normalizedLanguage = _normalizeLanguage(language);
+    final Map<String, dynamic> response = await _transport.getJson(
+      '/api/ecounitylearning/sdg/$moduleId/review/'
+      '${Uri.encodeComponent(normalizedLanguage)}',
+      user: user,
+      language: normalizedLanguage,
+    );
+    return EcoUnitySdgReviewQueue.fromApiResponse(
+      response,
+      moduleId: moduleId,
+      language: normalizedLanguage,
     );
   }
 
@@ -456,6 +532,163 @@ Map<String, dynamic> _reviewPayload(Map<String, dynamic> response) {
     return response;
   }
   return <String, dynamic>{};
+}
+
+Iterable<Map<String, dynamic>> _reviewQueueItemMaps(Object? value) sync* {
+  if (value is Iterable) {
+    for (final Object? item in value) {
+      yield* _reviewQueueItemMaps(item);
+    }
+    return;
+  }
+
+  final Map<String, dynamic>? map = _asMap(value);
+  if (map == null) {
+    return;
+  }
+
+  if (_reviewScopeFromMap(map) != null) {
+    yield map;
+  }
+
+  for (final String key in const <String>[
+    'data',
+    'result',
+    'items',
+    'groups',
+    'children',
+    'records',
+    'markers',
+    'reviewItems',
+    'review_items',
+    'activities',
+    'questions',
+    'notes',
+    'comicScenes',
+    'comic_scenes',
+    'comicDialogues',
+    'comic_dialogues',
+    'comicDecisions',
+    'comic_decisions',
+    'dialogues',
+    'decisions',
+  ]) {
+    if (map.containsKey(key)) {
+      yield* _reviewQueueItemMaps(map[key]);
+    }
+  }
+}
+
+EcoUnityReviewScope? _reviewScopeFromMap(Map<String, dynamic> map) {
+  final String scopeText = _firstNonEmptyString(<Object?>[
+    map['scope_type'],
+    map['scopeType'],
+    map['scope'],
+    map['type'],
+    map['object_type'],
+    map['objectType'],
+    map['_objecttype'],
+    map['objecttype'],
+  ]);
+  if (scopeText.isEmpty) {
+    return null;
+  }
+
+  return _reviewScopeFromWire(scopeText);
+}
+
+EcoUnityReviewScope? _reviewScopeFromWire(Object? value) {
+  final String scope = _canonicalModuleKey(value?.toString() ?? '');
+  return switch (scope) {
+    'module' ||
+    'sdg' ||
+    'sdgmodule' ||
+    'ecounitysdgmodule' ||
+    'ecounitylearningmodule' => EcoUnityReviewScope.module,
+    'activity' ||
+    'learningactivity' ||
+    'ecounitylearningactivity' => EcoUnityReviewScope.activity,
+    'question' ||
+    'quizquestion' ||
+    'ecounityquestion' => EcoUnityReviewScope.question,
+    'note' || 'ecounitynote' => EcoUnityReviewScope.note,
+    'comicscene' ||
+    'scene' ||
+    'ecounitycomicscene' => EcoUnityReviewScope.comicScene,
+    'comicdialogue' ||
+    'dialogue' ||
+    'ecounityscenedialogue' => EcoUnityReviewScope.comicDialogue,
+    'comicdecision' ||
+    'decision' ||
+    'ecounitycomicdecision' => EcoUnityReviewScope.comicDecision,
+    _ => null,
+  };
+}
+
+int? _reviewObjectIdFromMap(
+  Map<String, dynamic> map,
+  EcoUnityReviewScope scope,
+) {
+  final int? direct = _readInt(
+    map['scope_id'] ??
+        map['scopeId'] ??
+        map['object_id'] ??
+        map['objectId'] ??
+        map['content_object_id'] ??
+        map['contentObjectId'],
+  );
+  if (direct != null) {
+    return direct;
+  }
+
+  final int? scopedReference = switch (scope) {
+    EcoUnityReviewScope.module => _objectReferenceId(map['module']),
+    EcoUnityReviewScope.activity => _objectReferenceId(map['activity']),
+    EcoUnityReviewScope.question => _objectReferenceId(map['question']),
+    EcoUnityReviewScope.note => _objectReferenceId(map['note']),
+    EcoUnityReviewScope.comicScene =>
+      _objectReferenceId(map['comic_scene']) ??
+          _objectReferenceId(map['comicScene']) ??
+          _objectReferenceId(map['scene']),
+    EcoUnityReviewScope.comicDialogue =>
+      _objectReferenceId(map['comic_dialogue']) ??
+          _objectReferenceId(map['comicDialogue']) ??
+          _objectReferenceId(map['dialogue']),
+    EcoUnityReviewScope.comicDecision =>
+      _objectReferenceId(map['comic_decision']) ??
+          _objectReferenceId(map['comicDecision']) ??
+          _objectReferenceId(map['decision']),
+  };
+  if (scopedReference != null) {
+    return scopedReference;
+  }
+
+  final int? objectReference =
+      _objectReferenceId(map['object']) ??
+      _objectReferenceId(map['content_object']) ??
+      _objectReferenceId(map['contentObject']);
+  if (objectReference != null) {
+    return objectReference;
+  }
+
+  if (!map.containsKey('localeId') && !map.containsKey('locale_id')) {
+    return _readInt(map['id']);
+  }
+  return null;
+}
+
+int? _objectReferenceId(Object? value) {
+  final Map<String, dynamic>? map = _asMap(value);
+  if (map == null) {
+    return _readInt(value);
+  }
+  return _readInt(
+    map['objectid'] ??
+        map['objectId'] ??
+        map['object_id'] ??
+        map['id'] ??
+        map['value'],
+  );
 }
 
 bool _allowsModify(Object? value, String moduleKey) {

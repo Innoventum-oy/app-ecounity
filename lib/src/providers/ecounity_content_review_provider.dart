@@ -13,9 +13,13 @@ class EcoUnityContentReviewProvider with ChangeNotifier {
       <String, EcoUnityContentReviewRecord>{};
   final Map<String, Future<EcoUnityContentReviewRecord?>> _loadFutures =
       <String, Future<EcoUnityContentReviewRecord?>>{};
+  final Map<String, Future<List<EcoUnityContentReviewRecord>>> _queueFutures =
+      <String, Future<List<EcoUnityContentReviewRecord>>>{};
   final Set<String> _loadingKeys = <String>{};
+  final Set<String> _queueLoadingKeys = <String>{};
   final Set<String> _savingKeys = <String>{};
   final Map<String, String> _errors = <String, String>{};
+  final Map<String, String> _queueErrors = <String, String>{};
 
   String? _permissionUserKey;
   bool? _canReview;
@@ -64,6 +68,22 @@ class EcoUnityContentReviewProvider with ChangeNotifier {
     required String language,
   }) {
     return _errors[_reviewKey(scope, objectId, language)];
+  }
+
+  bool isSdgReviewQueueLoading({
+    required int moduleId,
+    required String language,
+    required core.User user,
+  }) {
+    return _queueLoadingKeys.contains(_queueKey(moduleId, language, user));
+  }
+
+  String? sdgReviewQueueErrorFor({
+    required int moduleId,
+    required String language,
+    required core.User user,
+  }) {
+    return _queueErrors[_queueKey(moduleId, language, user)];
   }
 
   Future<bool> ensureReviewAccess(core.User user) {
@@ -167,6 +187,53 @@ class EcoUnityContentReviewProvider with ChangeNotifier {
     return future;
   }
 
+  Future<List<EcoUnityContentReviewRecord>> loadSdgReviewQueue({
+    required core.User user,
+    required int moduleId,
+    required String language,
+  }) async {
+    final bool canReview = await ensureReviewAccess(user);
+    if (!canReview) {
+      return const <EcoUnityContentReviewRecord>[];
+    }
+
+    final String key = _queueKey(moduleId, language, user);
+    final Future<List<EcoUnityContentReviewRecord>>? current =
+        _queueFutures[key];
+    if (current != null) {
+      return current;
+    }
+
+    _queueLoadingKeys.add(key);
+    _queueErrors.remove(key);
+    notifyListeners();
+
+    late final Future<List<EcoUnityContentReviewRecord>> future;
+    future = () async {
+      try {
+        final EcoUnitySdgReviewQueue queue = await _service.loadSdgReviewQueue(
+          user: user,
+          moduleId: moduleId,
+          language: language,
+        );
+        for (final EcoUnityContentReviewRecord record in queue.records) {
+          _records[_reviewKey(record.scope, record.scopeId, record.language)] =
+              record;
+        }
+        return queue.records;
+      } catch (error) {
+        _queueErrors[key] = error.toString();
+        return const <EcoUnityContentReviewRecord>[];
+      } finally {
+        _queueLoadingKeys.remove(key);
+        _queueFutures.remove(key);
+        notifyListeners();
+      }
+    }();
+    _queueFutures[key] = future;
+    return future;
+  }
+
   Future<EcoUnityContentReviewRecord> updateReview({
     required core.User user,
     required EcoUnityReviewScope scope,
@@ -227,6 +294,10 @@ bool _isLoggedInReviewerCandidate(core.User user) {
 
 String _reviewKey(EcoUnityReviewScope scope, int objectId, String language) {
   return '${scope.wireName}:$objectId:${_normalizeLanguage(language)}';
+}
+
+String _queueKey(int moduleId, String language, core.User user) {
+  return '$moduleId:${_normalizeLanguage(language)}:${_userKey(user)}';
 }
 
 String _userKey(core.User user) {

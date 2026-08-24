@@ -7,10 +7,10 @@ import 'package:ecounity/src/learning/ecounity_content_review_service.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/learning/ecounity_learning_text_utils.dart';
+import 'package:ecounity/src/learning/widgets/ecounity_activity_hero_image.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_content_review_panel.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_learning_copy.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_comic_player.dart';
-import 'package:ecounity/src/learning/widgets/ecounity_media_image.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_teacher_objective_card.dart';
 import 'package:ecounity/src/providers/teacher_mode_provider.dart';
 import 'package:ecounity/src/util/ecounity_design_tokens.dart';
@@ -176,6 +176,16 @@ class _EcoUnityLearningActivityScreenState
     if (activity.comicScenes.isEmpty) {
       return Column(
         children: <Widget>[
+          if (activity.heroImage != null) ...<Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: EcoUnityActivityHeroImage(
+                activity: activity,
+                maxHeight: 220,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           _reviewPanel(activity, language),
           if (teacherModeEnabled && activity.learningObjective.isNotEmpty)
             Padding(
@@ -193,6 +203,16 @@ class _EcoUnityLearningActivityScreenState
 
     return Column(
       children: <Widget>[
+        if (activity.heroImage != null) ...<Widget>[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: EcoUnityActivityHeroImage(
+              activity: activity,
+              maxHeight: 220,
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         _reviewPanel(activity, language),
         if (teacherModeEnabled && activity.learningObjective.isNotEmpty)
           Padding(
@@ -678,7 +698,7 @@ class _ReadableActivityViewState extends State<_ReadableActivityView> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
-        _ActivityHeroImage(activity: widget.activity),
+        EcoUnityActivityHeroImage(activity: widget.activity),
         if (widget.activity.heroImage != null) const SizedBox(height: 16),
         _ActivityIntro(
           activity: widget.activity,
@@ -804,6 +824,8 @@ class _QuizActivityViewState extends State<_QuizActivityView> {
       return ListView(
         padding: const EdgeInsets.all(16),
         children: <Widget>[
+          EcoUnityActivityHeroImage(activity: widget.activity),
+          if (widget.activity.heroImage != null) const SizedBox(height: 16),
           _QuizActivityHeader(
             activity: widget.activity,
             teacherModeEnabled: widget.teacherModeEnabled,
@@ -840,6 +862,8 @@ class _QuizActivityViewState extends State<_QuizActivityView> {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: <Widget>[
+            EcoUnityActivityHeroImage(activity: widget.activity),
+            if (widget.activity.heroImage != null) const SizedBox(height: 16),
             _QuizActivityHeader(
               activity: widget.activity,
               teacherModeEnabled: widget.teacherModeEnabled,
@@ -1405,7 +1429,7 @@ class _ReflectionActivityViewState extends State<_ReflectionActivityView> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
-        _ActivityHeroImage(activity: widget.activity),
+        EcoUnityActivityHeroImage(activity: widget.activity),
         if (widget.activity.heroImage != null) const SizedBox(height: 16),
         _ActivityIntro(
           activity: widget.activity,
@@ -1473,41 +1497,6 @@ class _ReflectionActivityViewState extends State<_ReflectionActivityView> {
         });
       }
     }
-  }
-}
-
-class _ActivityHeroImage extends StatelessWidget {
-  const _ActivityHeroImage({required this.activity});
-
-  final EcoUnityLearningActivity activity;
-
-  @override
-  Widget build(BuildContext context) {
-    final EcoUnityMedia? media = activity.heroImage;
-    if (media == null) {
-      return const SizedBox.shrink();
-    }
-
-    return AspectRatio(
-      aspectRatio: 16 / 9,
-      child: EcoUnityMediaImage(
-        media: media,
-        fit: BoxFit.cover,
-        borderRadius: BorderRadius.circular(8),
-        fallback: DecoratedBox(
-          decoration: const BoxDecoration(
-            color: EcoUnityColors.surfaceContainer,
-          ),
-          child: Center(
-            child: Icon(
-              Icons.image_outlined,
-              color: EcoUnityColors.deepTeal.withValues(alpha: 0.72),
-              size: 36,
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 

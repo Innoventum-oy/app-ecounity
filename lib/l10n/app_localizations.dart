@@ -1474,6 +1474,66 @@ abstract class AppLocalizations {
   /// **'Play again'**
   String get play_again;
 
+  /// No description provided for @comic_no_scenes_available.
+  ///
+  /// In en, this message translates to:
+  /// **'No comic scenes available'**
+  String get comic_no_scenes_available;
+
+  /// No description provided for @comic_loading_scene.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading scene...'**
+  String get comic_loading_scene;
+
+  /// No description provided for @comic_playing.
+  ///
+  /// In en, this message translates to:
+  /// **'Playing...'**
+  String get comic_playing;
+
+  /// No description provided for @comic_complete_action.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get comic_complete_action;
+
+  /// No description provided for @comic_loading_next_scenes.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading next scenes...'**
+  String get comic_loading_next_scenes;
+
+  /// No description provided for @comic_dialogue_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Dialogue'**
+  String get comic_dialogue_title;
+
+  /// No description provided for @comic_character_fallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Character'**
+  String get comic_character_fallback;
+
+  /// No description provided for @comic_play_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get comic_play_tooltip;
+
+  /// No description provided for @comic_stop_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get comic_stop_tooltip;
+
+  /// No description provided for @comic_view_dialogue_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'View dialogue'**
+  String get comic_view_dialogue_tooltip;
+
   /// No description provided for @not_enough_images_to_match.
   ///
   /// In en, this message translates to:
