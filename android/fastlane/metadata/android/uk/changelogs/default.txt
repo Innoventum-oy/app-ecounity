@@ -1,1 +1,1 @@
-Updated EcoUnity with new learning activities, progress tracking, screenshots and release tooling.
+EcoUnity оновлено: додано оновлені навчальні активності, нативні комікси, прогрес, знімки екрана та інструменти випуску.

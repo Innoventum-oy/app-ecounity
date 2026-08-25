@@ -109,12 +109,12 @@ JPEG or 24-bit PNG with no alpha channel. The Play Store app icon is uploaded
 from `en-GB/app_icon.png` and reused for all localized listings unless a locale
 has its own `app_icon.png`; it must be a `512x512` PNG under 1024 KB. English is
 configured as `en-GB`; add translated folders as needed, for example `de-DE`,
-`es-ES`, `fi-FI`, `it-IT`, `pl-PL`, `pt-PT`, `ro-RO`, and `uk`.
+`es-ES`, `fi-FI`, `it-IT`, `pl-PL`, `pt-PT`, `ro`, and `uk`.
 
 By default, the metadata lanes validate/upload all current app languages:
 
 ```sh
-en-GB,de-DE,es-ES,fi-FI,it-IT,pl-PL,pt-PT,ro-RO,uk
+en-GB,de-DE,es-ES,fi-FI,it-IT,pl-PL,pt-PT,ro,uk
 ```
 
 To restrict metadata work to a smaller set, set `PLAY_METADATA_LOCALES` in
@@ -299,7 +299,7 @@ The lanes run the Flutter integration test in screenshot mode for
 - iOS: `ios/fastlane/screenshots/<locale>/`, using App Store locales
   `en-GB,de-DE,es-ES,fi,it,pl,pt-PT,ro,uk`
 - Android: `android/fastlane/metadata/android/<locale>/images/`, using Play
-  Store locales `en-GB,de-DE,es-ES,fi-FI,it-IT,pl-PL,pt-PT,ro-RO,uk` and screenshot
+  Store locales `en-GB,de-DE,es-ES,fi-FI,it-IT,pl-PL,pt-PT,ro,uk` and screenshot
   folders `phoneScreenshots`, `sevenInchScreenshots`, and
   `tenInchScreenshots`
 

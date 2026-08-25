@@ -9,6 +9,7 @@ import 'package:ecounity/src/learning/ecounity_learning_models.dart';
 import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/learning/ecounity_learning_text_utils.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_activity_hero_image.dart';
+import 'package:ecounity/src/learning/widgets/ecounity_comic_activity_cover_sheet.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_content_review_panel.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_learning_copy.dart';
 import 'package:ecounity/src/learning/widgets/ecounity_comic_player.dart';
@@ -18,6 +19,8 @@ import 'package:ecounity/src/util/ecounity_design_tokens.dart';
 import 'package:ecounity/src/widgets/screenscaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+const bool _screenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
 
 class EcoUnityLearningActivityScreen extends StatefulWidget {
   const EcoUnityLearningActivityScreen({
@@ -45,6 +48,7 @@ class _EcoUnityLearningActivityScreenState
   final Set<String> _trackedModuleCompletionKeys = <String>{};
   final Set<String> _shownCompletionDialogKeys = <String>{};
   final Map<String, DateTime> _activityStartedAtByKey = <String, DateTime>{};
+  bool _comicCoverDismissed = false;
 
   @override
   void initState() {
@@ -70,6 +74,7 @@ class _EcoUnityLearningActivityScreenState
     if (oldWidget.activity != widget.activity ||
         oldWidget.activityId != widget.activityId) {
       _latestData = null;
+      _comicCoverDismissed = false;
       _future = _loadActivityData();
     }
   }
@@ -210,59 +215,48 @@ class _EcoUnityLearningActivityScreenState
       );
     }
 
-    return Column(
-      children: <Widget>[
-        if (activity.heroImage != null) ...<Widget>[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: EcoUnityActivityHeroImage(
-              activity: activity,
-              maxHeight: 220,
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
-        _reviewPanel(activity, language),
-        if (teacherModeEnabled && activity.learningObjective.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: EcoUnityTeacherObjectiveCard(
-              learningObjective: activity.learningObjective,
-            ),
-          ),
-        Expanded(
-          child: EcoUnityComicPlayer(
-            comic: EcoUnityComic(
-              activity: activity,
-              scenes: activity.comicScenes,
-              rawData: activity.rawData,
-            ),
-            language: language,
-            loadingAdditionalScenes: loadingAdditionalScenes,
-            onCompleted: () => _markCompleted(
-              activity,
-              language,
-              payload: const <String, dynamic>{'activity_type': 'comic'},
-            ),
-            onSceneViewed: (EcoUnityComicScene scene) {
-              _trackComicSceneViewed(activity, language, scene);
-            },
-            onDecisionSelected:
-                (EcoUnityComicScene scene, EcoUnityComicDecision decision) {
-                  _trackComicDecisionSelected(
-                    activity,
-                    language,
-                    scene,
-                    decision,
-                  );
-                },
-            onPrepareSpeech: _speechAudioController.prepareCues,
-            onSpeechCueChanged: (EcoUnityComicSpeechItem? speech) {
+    if (!_comicCoverDismissed) {
+      return EcoUnityComicActivityCoverSheet(
+        activity: activity,
+        teacherModeEnabled: teacherModeEnabled,
+        loadingAdditionalScenes: loadingAdditionalScenes,
+        reviewPanel: _reviewPanel(activity, language),
+        onStart: () {
+          setState(() {
+            _comicCoverDismissed = true;
+          });
+        },
+      );
+    }
+
+    return EcoUnityComicPlayer(
+      comic: EcoUnityComic(
+        activity: activity,
+        scenes: activity.comicScenes,
+        rawData: activity.rawData,
+      ),
+      language: language,
+      loadingAdditionalScenes: loadingAdditionalScenes,
+      onCompleted: () => _markCompleted(
+        activity,
+        language,
+        payload: const <String, dynamic>{'activity_type': 'comic'},
+      ),
+      onSceneViewed: (EcoUnityComicScene scene) {
+        _trackComicSceneViewed(activity, language, scene);
+      },
+      onDecisionSelected:
+          (EcoUnityComicScene scene, EcoUnityComicDecision decision) {
+            _trackComicDecisionSelected(activity, language, scene, decision);
+          },
+      onPrepareSpeech: _screenshotMode
+          ? null
+          : _speechAudioController.prepareCues,
+      onSpeechCueChanged: _screenshotMode
+          ? null
+          : (EcoUnityComicSpeechItem? speech) {
               unawaited(_speechAudioController.playCue(speech));
             },
-          ),
-        ),
-      ],
     );
   }
 
@@ -753,6 +747,7 @@ class _ReadableActivityViewState extends State<_ReadableActivityView> {
   Widget build(BuildContext context) {
     final bool completed = widget.alreadyCompleted || _completed;
     return ListView(
+      key: ValueKey<String>(_activityLoadedKey(widget.activity.type)),
       padding: const EdgeInsets.all(16),
       children: <Widget>[
         EcoUnityActivityHeroImage(activity: widget.activity),
@@ -882,6 +877,7 @@ class _QuizActivityViewState extends State<_QuizActivityView> {
     final List<EcoUnityQuizQuestion> questions = widget.activity.questions;
     if (questions.isEmpty) {
       return ListView(
+        key: ValueKey<String>(_activityLoadedKey(widget.activity.type)),
         padding: const EdgeInsets.all(16),
         children: <Widget>[
           EcoUnityActivityHeroImage(activity: widget.activity),
@@ -920,6 +916,7 @@ class _QuizActivityViewState extends State<_QuizActivityView> {
             .toDouble();
 
         return ListView(
+          key: ValueKey<String>(_activityLoadedKey(widget.activity.type)),
           padding: const EdgeInsets.all(16),
           children: <Widget>[
             EcoUnityActivityHeroImage(activity: widget.activity),
@@ -1346,6 +1343,7 @@ class _QuizOptionCard extends StatelessWidget {
         : Icons.radio_button_unchecked_rounded;
 
     return Material(
+      key: ValueKey<String>('quiz-option-${option.id}'),
       color: backgroundColor,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
@@ -1487,6 +1485,7 @@ class _ReflectionActivityViewState extends State<_ReflectionActivityView> {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      key: ValueKey<String>(_activityLoadedKey(widget.activity.type)),
       padding: const EdgeInsets.all(16),
       children: <Widget>[
         EcoUnityActivityHeroImage(activity: widget.activity),
@@ -1857,5 +1856,16 @@ String _activityTypeLabel(EcoUnityActivityType type) {
     EcoUnityActivityType.reflection => 'Reflection',
     EcoUnityActivityType.challenge => 'Challenge',
     EcoUnityActivityType.unknown => 'Activity',
+  };
+}
+
+String _activityLoadedKey(EcoUnityActivityType type) {
+  return switch (type) {
+    EcoUnityActivityType.comic => 'screenshot-content-comic-loaded',
+    EcoUnityActivityType.mlr => 'screenshot-content-mlr-loaded',
+    EcoUnityActivityType.quiz => 'screenshot-content-quiz-loaded',
+    EcoUnityActivityType.reflection => 'screenshot-content-reflection-loaded',
+    EcoUnityActivityType.challenge => 'screenshot-content-challenge-loaded',
+    EcoUnityActivityType.unknown => 'screenshot-content-activity-loaded',
   };
 }

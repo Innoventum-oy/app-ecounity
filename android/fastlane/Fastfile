@@ -51,7 +51,7 @@ PLAY_STORE_LOCALES = {
   "it" => "it-IT",
   "pl" => "pl-PL",
   "pt" => "pt-PT",
-  "ro" => "ro-RO",
+  "ro" => "ro",
   "uk" => "uk",
 }.freeze
 

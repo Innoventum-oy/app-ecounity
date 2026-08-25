@@ -2,7 +2,17 @@ import 'dart:io';
 
 import 'package:image/image.dart' as img;
 
-const List<String> defaultLocales = ['en', 'de', 'fi', 'it', 'pl', 'pt', 'uk'];
+const List<String> defaultLocales = [
+  'en',
+  'de',
+  'es',
+  'fi',
+  'it',
+  'pl',
+  'pt',
+  'ro',
+  'uk',
+];
 const List<String> defaultIosTargets = ['iphone_65', 'ipad_13'];
 const List<String> defaultAndroidTargets = ['phone'];
 const int playStoreMaxScreenshotsPerDeviceType = 8;
@@ -15,20 +25,24 @@ const Map<String, List<ScreenshotSize>> appStoreScreenshotSizes = {
 const Map<String, String> appStoreLocales = {
   'en': 'en-GB',
   'de': 'de-DE',
+  'es': 'es-ES',
   'fi': 'fi',
   'it': 'it',
   'pl': 'pl',
   'pt': 'pt-PT',
+  'ro': 'ro',
   'uk': 'uk',
 };
 
 const Map<String, String> playStoreLocales = {
   'en': 'en-GB',
   'de': 'de-DE',
+  'es': 'es-ES',
   'fi': 'fi-FI',
   'it': 'it-IT',
   'pl': 'pl-PL',
   'pt': 'pt-PT',
+  'ro': 'ro',
   'uk': 'uk',
 };
 

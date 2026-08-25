@@ -1,18 +1,19 @@
-EcoUnity is a free sustainability learning app for students, teachers and project participants.
+EcoUnity on maksuton kestävyyden oppimissovellus oppilaille, opettajille ja projektin osallistujille.
 
-The app brings together Sustainable Development Goal learning content, short resources, videos, wiki articles, slides, quizzes, drag-and-drop activities, practical challenges, progress tracking and badges in one mobile experience.
+Sovellus kokoaa kestävän kehityksen tavoitteisiin liittyvät oppimissisällöt, lyhyet materiaalit, natiivit sarjakuvat, visat, pohdintatehtävät, käytännön haasteet, paikallisen edistymisen seurannan ja merkit yhdeksi mobiilikokemukseksi.
 
-Use EcoUnity to:
+EcoUnityn avulla voit:
 
-• Explore SDG-themed learning modules
-• Read and watch short educational resources
-• Complete quizzes, reflections and classroom challenges
-• Track learning progress locally
-• Earn badges as activities are completed
-• Switch between supported project languages
+• tutkia SDG-aiheisia oppimismoduuleja
+• lukea ja katsoa lyhyitä oppimateriaaleja
+• seurata interaktiivisia sarjakuvatarinoita ja tehdä valintoja
+• suorittaa visoja, pohdintoja ja luokkahuonehaasteita
+• seurata edistymistäsi paikallisesti
+• ansaita merkkejä, kun suoritat aktiviteetteja
+• vaihtaa tuettujen projektikielten välillä
 
-EcoUnity is designed for inclusive, classroom-friendly sustainability education and practical action. Content is loaded from the EcoUnity project platform so learning materials can grow without requiring a new app release.
+EcoUnity on suunniteltu inklusiiviseen, luokkahuoneeseen sopivaan kestävyyden oppimiseen ja käytännön toimintaan. Sisältö ladataan EcoUnity-projektialustalta, joten oppimateriaaleja voidaan päivittää ajan myötä ilman uutta sovellusjulkaisua.
 
-EcoUnity is created as part of an Erasmus+ funded project.
+EcoUnity on toteutettu osana Erasmus+-rahoitteista hanketta.
 
-Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Education and Culture Executive Agency (EACEA). Neither the European Union nor EACEA can be held responsible for them.
+Euroopan unionin rahoittama. Esitetyt näkemykset ja mielipiteet ovat kuitenkin vain tekijöiden omia eivätkä välttämättä vastaa Euroopan unionin tai Euroopan koulutuksen ja kulttuurin toimeenpanoviraston (EACEA) näkemyksiä. Euroopan unionia tai EACEAa ei voida pitää niistä vastuussa.

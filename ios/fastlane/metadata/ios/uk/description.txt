@@ -1,18 +1,19 @@
-EcoUnity is a free sustainability learning app for students, teachers and project participants.
+EcoUnity — це безкоштовний застосунок для навчання сталості для учнів, учителів і учасників проєкту.
 
-The app brings together Sustainable Development Goal learning content, short resources, videos, wiki articles, slides, quizzes, drag-and-drop activities, practical challenges, progress tracking and badges in one mobile experience.
+Застосунок поєднує навчальні матеріали про Цілі сталого розвитку (ЦСР), короткі ресурси, нативні комікси, тести, рефлексії, практичні виклики, локальне відстеження прогресу та значки в одному мобільному досвіді.
 
-Use EcoUnity to:
+В EcoUnity можна:
 
-• Explore SDG-themed learning modules
-• Read and watch short educational resources
-• Complete quizzes, reflections and classroom challenges
-• Track learning progress locally
-• Earn badges as activities are completed
-• Switch between supported project languages
+• досліджувати навчальні модулі за темами ЦСР
+• читати й переглядати короткі освітні ресурси
+• проходити інтерактивні комікс-історії та ухвалювати рішення
+• виконувати тести, рефлексії та класні виклики
+• відстежувати прогрес локально
+• отримувати значки після завершення активностей
+• перемикатися між підтримуваними мовами проєкту
 
-EcoUnity is designed for inclusive, classroom-friendly sustainability education and practical action. Content is loaded from the EcoUnity project platform so learning materials can grow without requiring a new app release.
+EcoUnity створено для інклюзивного, зручного для класу навчання сталості та практичних дій. Контент завантажується з платформи проєкту EcoUnity, тому матеріали можна оновлювати з часом без випуску нової версії застосунку.
 
-EcoUnity is created as part of an Erasmus+ funded project.
+EcoUnity створено в межах проєкту, що фінансується програмою Erasmus+.
 
-Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Education and Culture Executive Agency (EACEA). Neither the European Union nor EACEA can be held responsible for them.
+Фінансується Європейським Союзом. Висловлені погляди та думки належать лише авторам і не обов'язково відображають погляди Європейського Союзу або Європейського виконавчого агентства з питань освіти та культури (EACEA). Ні Європейський Союз, ні EACEA не несуть за них відповідальності.

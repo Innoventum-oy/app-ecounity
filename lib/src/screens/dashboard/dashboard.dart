@@ -289,6 +289,7 @@ class _DashboardBody extends StatelessWidget {
         child: RefreshIndicator(
           onRefresh: onRefresh,
           child: ListView(
+            key: const ValueKey<String>('screenshot-dashboard-ready'),
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
             children: <Widget>[

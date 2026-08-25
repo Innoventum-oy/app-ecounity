@@ -1,10 +1,8 @@
 import 'dart:io';
 
-import 'package:core/core.dart' as core;
 import 'package:ecounity/main.dart' as app;
-import 'package:ecounity/src/objects/pathway.dart';
-import 'package:ecounity/src/providers/selected_pathway_notifier.dart';
-import 'package:ecounity/src/screens/challenges/quiz/quiz.dart';
+import 'package:ecounity/src/learning/ecounity_learning_models.dart';
+import 'package:ecounity/src/learning/ecounity_learning_provider.dart';
 import 'package:ecounity/src/util/router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,489 +14,382 @@ const String _locale = String.fromEnvironment(
   defaultValue: 'en',
 );
 
-const List<PathwayType> _contentTypes = [
-  PathwayType.wiki,
-  PathwayType.quiz,
-  PathwayType.dragdrop,
-  PathwayType.video,
-  PathwayType.slides,
-];
-
 void main() {
   final IntegrationTestWidgetsFlutterBinding binding =
       IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('capture store screenshots for $_locale', (tester) async {
+  testWidgets('capture EcoUnity store screenshots for $_locale', (
+    WidgetTester tester,
+  ) async {
     await app.main();
     await _settle(tester);
     await _prepareSurface(binding, tester);
+
+    await _waitFor(
+      tester,
+      find.byKey(const ValueKey<String>('screenshot-welcome-screen')),
+    );
     await _takeScreenshot(binding, '01_welcome');
 
-    await _tapVisible(
+    await _waitFor(
       tester,
-      find.byKey(const ValueKey('screenshot-language-button')),
+      find.byKey(const ValueKey<String>('screenshot-language-options')),
     );
-    await _settle(tester);
-    await _takeScreenshot(binding, '02_languages');
-
-    await _tapVisible(tester, find.byKey(const ValueKey('dialog-ok-button')));
-    await _settle(tester);
+    await _takeScreenshot(binding, '02_language_options');
 
     await _tapVisible(
       tester,
-      find.byKey(const ValueKey('screenshot-continue-button')),
+      find.byKey(const ValueKey<String>('screenshot-continue-button')),
     );
-    await _settle(tester);
-    await _prepareDashboardSuggestionCover(tester);
+    await _waitForLearningModules(tester);
+    await _waitFor(
+      tester,
+      find.byKey(const ValueKey<String>('screenshot-dashboard-ready')),
+      timeout: const Duration(seconds: 90),
+    );
     await _takeScreenshot(binding, '03_dashboard');
 
-    await _captureNavigationScreens(binding, tester);
-    final int nextScreenshotIndex = await _captureContentTypeScreens(
+    final EcoUnitySdgModule module = await _selectScreenshotModule(tester);
+
+    await _navigate(tester, 'learningmodules', navIndex: 1);
+    await _waitFor(
+      tester,
+      find.byKey(const ValueKey<String>('learning-modules-list')),
+    );
+    await _waitForModuleIcons(tester);
+    await _takeScreenshot(binding, '04_sdg_modules');
+
+    await _captureModuleDetail(binding, tester, module);
+
+    await _captureActivity(
       binding,
       tester,
+      module,
+      EcoUnityActivityType.mlr,
+      '06_mlr_activity',
     );
-    await _captureModuleUnitListScreen(binding, tester, nextScreenshotIndex);
+    await _captureActivity(
+      binding,
+      tester,
+      module,
+      EcoUnityActivityType.quiz,
+      '07_quiz_activity',
+    );
+    await _captureActivity(
+      binding,
+      tester,
+      module,
+      EcoUnityActivityType.comic,
+      '08_comic_story',
+    );
+    await _captureChallengeOrReflection(binding, tester, module);
+
+    await _seedProgressForScreenshot(tester, module);
+    await _navigate(tester, 'progress', navIndex: 2);
+    await _waitFor(
+      tester,
+      find.byKey(const ValueKey<String>('screenshot-progress-loaded')),
+      timeout: const Duration(seconds: 90),
+    );
+    await _takeScreenshot(binding, '10_progress');
   });
 }
 
-Future<void> _prepareDashboardSuggestionCover(WidgetTester tester) async {
+Future<void> _captureModuleDetail(
+  IntegrationTestWidgetsFlutterBinding binding,
+  WidgetTester tester,
+  EcoUnitySdgModule module,
+) async {
+  await _navigate(tester, 'learningmodule', navIndex: 1, data: module);
   await _waitFor(
     tester,
-    find.byKey(const ValueKey('screenshot-next-suggestion-card')),
+    find.byKey(const ValueKey<String>('learning-module-detail-list')),
+    timeout: const Duration(seconds: 90),
   );
+  await _takeScreenshot(binding, '05_sdg_detail');
+}
 
-  final List<core.WebPage> candidates = _dashboardSuggestionCandidates(
-    _availablePages(tester),
-  ).where((page) => page.hasThumbnail).toList();
-  if (candidates.isEmpty) {
-    await _waitFor(
-      tester,
-      find.byKey(const ValueKey('screenshot-next-suggestion-cover-loaded')),
-      timeout: const Duration(seconds: 60),
-    );
+Future<void> _captureActivity(
+  IntegrationTestWidgetsFlutterBinding binding,
+  WidgetTester tester,
+  EcoUnitySdgModule module,
+  EcoUnityActivityType type,
+  String screenshotName,
+) async {
+  final EcoUnityLearningActivity? activity = await _loadActivityOfType(
+    tester,
+    module,
+    type,
+  );
+  if (activity == null) {
+    debugPrint('Skipping $screenshotName: no ${type.name} activity found.');
     return;
   }
 
-  final SelectedPathwayNotifier selectedPathwayNotifier =
-      Provider.of<SelectedPathwayNotifier>(_appContext(tester), listen: false);
-  final List<core.WebPage> orderedCandidates = _currentSelectionFirst(
-    candidates,
-    selectedPathwayNotifier.value?.id,
+  await _navigate(tester, 'learningactivity', navIndex: 1, data: activity);
+  if (type == EcoUnityActivityType.comic) {
+    await _waitFor(
+      tester,
+      find.byKey(const ValueKey<String>('screenshot-content-comic-cover')),
+      timeout: const Duration(seconds: 90),
+    );
+    await _tapVisible(
+      tester,
+      find.byKey(const ValueKey<String>('screenshot-comic-cover-start-button')),
+    );
+  }
+  await _waitFor(
+    tester,
+    find.byKey(ValueKey<String>(_activityLoadedKey(type))),
+    timeout: type == EcoUnityActivityType.comic
+        ? const Duration(seconds: 150)
+        : const Duration(seconds: 90),
   );
+  await _prepareActivityScreenshot(tester, type);
+  await _takeScreenshot(binding, screenshotName);
+}
 
-  TestFailure? lastFailure;
-  for (final core.WebPage page in orderedCandidates) {
-    selectedPathwayNotifier.select(page);
-    await _settle(tester);
+Future<void> _captureChallengeOrReflection(
+  IntegrationTestWidgetsFlutterBinding binding,
+  WidgetTester tester,
+  EcoUnitySdgModule module,
+) async {
+  final EcoUnityLearningActivity? challenge = await _loadActivityOfType(
+    tester,
+    module,
+    EcoUnityActivityType.challenge,
+  );
+  if (challenge != null) {
+    await _navigate(tester, 'learningactivity', navIndex: 1, data: challenge);
+    await _waitFor(
+      tester,
+      find.byKey(
+        ValueKey<String>(_activityLoadedKey(EcoUnityActivityType.challenge)),
+      ),
+      timeout: const Duration(seconds: 90),
+    );
+    await _takeScreenshot(binding, '09_challenge_activity');
+    return;
+  }
 
-    try {
-      await _waitFor(
+  final EcoUnityLearningActivity? reflection = await _loadActivityOfType(
+    tester,
+    module,
+    EcoUnityActivityType.reflection,
+  );
+  if (reflection == null) {
+    debugPrint('Skipping challenge/reflection screenshot: no activity found.');
+    return;
+  }
+
+  await _navigate(tester, 'learningactivity', navIndex: 1, data: reflection);
+  await _waitFor(
+    tester,
+    find.byKey(
+      ValueKey<String>(_activityLoadedKey(EcoUnityActivityType.reflection)),
+    ),
+    timeout: const Duration(seconds: 90),
+  );
+  await _takeScreenshot(binding, '09_reflection_activity');
+}
+
+Future<EcoUnitySdgModule> _selectScreenshotModule(WidgetTester tester) async {
+  final EcoUnityLearningProvider provider = _learningProvider(tester);
+  final List<EcoUnitySdgModule> sourceModules = provider.modules
+      .where((EcoUnitySdgModule module) => module.id != null)
+      .toList();
+  if (sourceModules.isEmpty) {
+    throw TestFailure('No EcoUnity SDG modules loaded for $_locale.');
+  }
+
+  EcoUnitySdgModule? bestModule;
+  int bestScore = -1;
+  for (final EcoUnitySdgModule module in sourceModules) {
+    final EcoUnitySdgModule hydrated =
+        await provider.loadModule(module.id!, language: _normalizedLocale) ??
+        module;
+    final int score = _moduleScreenshotScore(hydrated);
+    if (score > bestScore) {
+      bestScore = score;
+      bestModule = hydrated;
+    }
+  }
+
+  if (bestModule == null) {
+    throw TestFailure(
+      'No screenshot-ready EcoUnity module found for $_locale.',
+    );
+  }
+
+  return bestModule;
+}
+
+Future<EcoUnityLearningActivity?> _loadActivityOfType(
+  WidgetTester tester,
+  EcoUnitySdgModule module,
+  EcoUnityActivityType type,
+) async {
+  final EcoUnityLearningActivity? summaryActivity = _activityOfType(
+    module,
+    type,
+  );
+  final int? activityId = summaryActivity?.id;
+  if (activityId == null) {
+    return summaryActivity;
+  }
+
+  return await _learningProvider(
         tester,
-        find.byKey(const ValueKey('screenshot-next-suggestion-cover-loaded')),
-        timeout: const Duration(seconds: 60),
-      );
-      debugPrint('Dashboard screenshot suggestion: ${page.id} ${page.title}');
-      return;
-    } on TestFailure catch (error) {
-      lastFailure = error;
-      debugPrint('Skipping dashboard suggestion ${page.id}: ${error.message}');
+      ).loadActivity(activityId, language: _normalizedLocale) ??
+      summaryActivity;
+}
+
+EcoUnityLearningActivity? _activityOfType(
+  EcoUnitySdgModule module,
+  EcoUnityActivityType type,
+) {
+  for (final EcoUnityLearningActivity activity in module.activities) {
+    if (activity.type == type) {
+      return activity;
     }
   }
-
-  throw TestFailure(
-    'No dashboard suggestion cover image loaded for $_locale. '
-    '${lastFailure?.message ?? ''}',
-  );
+  return null;
 }
 
-Future<void> _captureNavigationScreens(
-  IntegrationTestWidgetsFlutterBinding binding,
-  WidgetTester tester,
-) async {
-  await _navigate(tester, 'modules', navIndex: 1);
-  await _waitFor(tester, find.byKey(const ValueKey('screenshot-modules-list')));
-  await _waitForModuleThumbnails(tester);
-  await _takeScreenshot(binding, '04_modules_list');
-
-  await _navigate(tester, 'resources', navIndex: 2);
-  await _waitFor(
-    tester,
-    find.byKey(const ValueKey('screenshot-resources-list')),
-  );
-  await _takeScreenshot(binding, '05_resources_list');
-}
-
-Future<int> _captureContentTypeScreens(
-  IntegrationTestWidgetsFlutterBinding binding,
-  WidgetTester tester,
-) async {
-  final List<core.WebPage> pages = _availablePages(tester);
-  final core.WebPageList pageList = core.WebPageList(webPages: pages);
-
-  int screenshotIndex = 6;
-  for (final PathwayType type in _contentTypes) {
-    final List<core.WebPage> candidates = _contentCandidates(pages, type);
-    if (candidates.isEmpty) {
-      debugPrint('Skipping ${type.name}: no candidate for $_locale');
-      continue;
-    }
-
-    final String screenshotName =
-        '${screenshotIndex.toString().padLeft(2, '0')}_content_${type.name}';
-    await _captureFirstLoadableContentType(
-      binding,
-      tester,
-      type,
-      candidates,
-      pageList,
-      screenshotName,
-    );
-    screenshotIndex++;
+int _moduleScreenshotScore(EcoUnitySdgModule module) {
+  int score = 0;
+  if (module.coverImage != null) {
+    score += 2;
   }
-  return screenshotIndex;
+  if (module.iconImage != null) {
+    score += 1;
+  }
+  if (_activityOfType(module, EcoUnityActivityType.comic) != null) {
+    score += 5;
+  }
+  if (_activityOfType(module, EcoUnityActivityType.mlr) != null) {
+    score += 4;
+  }
+  if (_activityOfType(module, EcoUnityActivityType.quiz) != null) {
+    score += 4;
+  }
+  if (_activityOfType(module, EcoUnityActivityType.challenge) != null) {
+    score += 3;
+  }
+  if (_activityOfType(module, EcoUnityActivityType.reflection) != null) {
+    score += 2;
+  }
+  if (module.sdgNumber == 5 || module.sdgNumber == 12) {
+    score += 1;
+  }
+  return score;
 }
 
-Future<void> _captureModuleUnitListScreen(
-  IntegrationTestWidgetsFlutterBinding binding,
+Future<void> _seedProgressForScreenshot(
   WidgetTester tester,
-  int screenshotIndex,
+  EcoUnitySdgModule module,
 ) async {
-  await _navigate(tester, 'modules', navIndex: 1);
-  await _waitFor(tester, find.byKey(const ValueKey('screenshot-modules-list')));
-  await _waitForModuleThumbnails(tester);
+  final EcoUnityLearningProvider provider = _learningProvider(tester);
+  final List<EcoUnityLearningActivity> sampleActivities = module.activities
+      .where(
+        (EcoUnityLearningActivity activity) =>
+            activity.moduleId != null &&
+            activity.id != null &&
+            activity.completionRequired,
+      )
+      .take(2)
+      .toList();
 
-  final List<core.WebPage> pages = _availablePages(tester);
-  final core.WebPage? module = _firstModuleWithUnits(pages);
-  if (module == null) {
-    throw TestFailure('No module with MLR unit list found for $_locale.');
+  for (final EcoUnityLearningActivity activity in sampleActivities) {
+    await provider.markActivityCompleted(
+      moduleId: activity.moduleId!,
+      activityId: activity.id!,
+      language: _normalizedLocale,
+      payload: <String, dynamic>{
+        'activity_type': activity.type.name,
+        'source': 'store_screenshot',
+      },
+    );
   }
 
-  await _navigate(tester, 'submodules', navIndex: 1, data: module);
-  await _waitFor(
-    tester,
-    find.byKey(const ValueKey('screenshot-module-units-list')),
-  );
-  await _takeScreenshot(
-    binding,
-    '${screenshotIndex.toString().padLeft(2, '0')}_module_units_list',
-  );
+  await provider.loadProgress(language: _normalizedLocale);
 }
 
-Future<void> _captureFirstLoadableContentType(
-  IntegrationTestWidgetsFlutterBinding binding,
+Future<void> _prepareActivityScreenshot(
   WidgetTester tester,
-  PathwayType type,
-  List<core.WebPage> candidates,
-  core.WebPageList pageList,
-  String screenshotName,
+  EcoUnityActivityType type,
 ) async {
-  TestFailure? lastFailure;
-  for (final core.WebPage page in candidates) {
-    await _navigate(
-      tester,
-      type.name,
-      navIndex: _navigationIndexFor(page, pageList.webPages),
-      data: page,
-      pathways: pageList,
-      skipAutoOpenIntroduction: true,
-    );
-
-    try {
-      await _waitFor(tester, find.byKey(ValueKey(_contentLoadedKey(type))));
-      await _prepareContentScreenshot(tester, type);
-      await _takeScreenshot(binding, screenshotName);
-      return;
-    } on TestFailure catch (error) {
-      lastFailure = error;
-      debugPrint(
-        'Skipping ${type.name} candidate ${page.id}: ${error.message}',
-      );
-    }
-  }
-
-  throw TestFailure(
-    'No ${type.name} candidate loaded for $_locale. '
-    '${lastFailure?.message ?? ''}',
-  );
-}
-
-Future<void> _prepareContentScreenshot(
-  WidgetTester tester,
-  PathwayType type,
-) async {
-  if (type == PathwayType.quiz) {
-    _assertQuizCandidateIsLocalized(tester);
-
-    final Finder nextIcon = find.descendant(
-      of: find.byKey(const ValueKey('screenshot-content-quiz-loaded')),
-      matching: find.byIcon(Icons.arrow_forward),
-    );
-    if (tester.any(nextIcon)) {
-      await tester.tap(nextIcon.first);
+  if (type == EcoUnityActivityType.quiz) {
+    final Finder firstOption = _quizOptionFinder();
+    if (tester.any(firstOption)) {
+      await tester.tap(firstOption.first);
       await _settle(tester);
     }
   }
 
-  if (type == PathwayType.dragdrop) {
-    await tester.pump(const Duration(seconds: 1));
+  if (type == EcoUnityActivityType.comic) {
+    await tester.pump(const Duration(milliseconds: 800));
   }
 }
 
-void _assertQuizCandidateIsLocalized(WidgetTester tester) {
-  if (_normalizeLanguageCode(_locale) == 'en') {
-    return;
-  }
+Finder _quizOptionFinder() {
+  return find.byWidgetPredicate((Widget widget) {
+    final Key? key = widget.key;
+    return key is ValueKey<String> && key.value.startsWith('quiz-option-');
+  });
+}
 
-  final QuizState quizState = tester.state<QuizState>(find.byType(Quiz));
-  final List<String> textValues = _quizTextValues(quizState.form).toList();
-  if (!_containsEnglishFallbackQuizText(textValues)) {
-    return;
-  }
-
-  throw TestFailure(
-    'Quiz candidate loaded English fallback form text for $_locale.',
+Future<void> _waitForLearningModules(WidgetTester tester) async {
+  await _waitForCondition(
+    tester,
+    () {
+      final EcoUnityLearningProvider provider = _learningProvider(tester);
+      return provider.hasCompletedModuleLoad && provider.modules.isNotEmpty;
+    },
+    'EcoUnity learning modules for $_locale',
+    timeout: const Duration(seconds: 120),
   );
 }
 
-Iterable<String> _quizTextValues(core.Form? form) sync* {
-  for (final core.FormElement element in form?.elements ?? []) {
-    yield element.title ?? '';
-    yield element.description ?? '';
-    yield element.htmldescription ?? '';
-    yield element.help ?? '';
-
-    for (final core.FormElementData option in element.elements ?? []) {
-      yield option.value ?? '';
-    }
-  }
-}
-
-bool _containsEnglishFallbackQuizText(List<String> textValues) {
-  final Set<String> normalizedValues = textValues
-      .map((value) => value.trim().toLowerCase())
-      .where((value) => value.isNotEmpty)
-      .toSet();
-  if (normalizedValues.isEmpty) {
-    return false;
-  }
-
-  final String joined = normalizedValues.join(' ');
-  const List<String> fallbackPhrases = [
-    'terms and conditions help define',
-    'social enterprise in poland can remove',
-    'customers, beneficiaries or users',
-    'copying terms and conditions',
-    'true or false - terms and conditions',
-    'true or false – terms and conditions',
-  ];
-
-  if (fallbackPhrases.any(joined.contains)) {
-    return true;
-  }
-
-  return normalizedValues.contains('true') &&
-      normalizedValues.contains('false') &&
-      joined.contains('terms and conditions');
-}
-
-List<core.WebPage> _availablePages(WidgetTester tester) {
-  final core.WebPageProvider provider = Provider.of<core.WebPageProvider>(
-    _appContext(tester),
-    listen: false,
-  );
-  return (provider.list ?? const <core.WebPage>[])
-      .where(_isAvailableInLocale)
-      .toList();
-}
-
-List<core.WebPage> _dashboardSuggestionCandidates(List<core.WebPage> pages) {
-  final List<core.WebPage> subModules = [];
-  final List<core.WebPage> resources = [];
-  final List<core.WebPage> pathwayOptions = [];
-  final List<core.WebPage> sortedPathwayOptions = [];
-
-  for (final core.WebPage page in pages) {
-    if (page.isSubModule) {
-      subModules.add(page);
-    } else if (page.isMainResource) {
-      resources.add(page);
-    } else if (!page.isMainPathway) {
-      pathwayOptions.add(page);
-    }
-  }
-
-  subModules.sort(_compareDashboardModules);
-  for (final core.WebPage module in subModules) {
-    final List<core.WebPage> modulePages =
-        pathwayOptions.where((item) => item.parent == module.id).toList()
-          ..sort(_compareDashboardModules);
-    sortedPathwayOptions.addAll(modulePages);
-  }
-
-  resources.sort(_compareDashboardResources);
-  for (final core.WebPage resourceCategory in resources) {
-    final List<core.WebPage> resourcePages =
-        pathwayOptions
-            .where((item) => item.parent == resourceCategory.id)
-            .toList()
-          ..sort(_compareDashboardResources);
-    sortedPathwayOptions.addAll(resourcePages);
-  }
-
-  return sortedPathwayOptions;
-}
-
-Future<void> _waitForModuleThumbnails(WidgetTester tester) async {
-  final int expectedThumbnailCount = _moduleListPages(
-    _availablePages(tester),
-  ).where((page) => page.hasThumbnail).length;
-
-  if (expectedThumbnailCount == 0) {
+Future<void> _waitForModuleIcons(WidgetTester tester) async {
+  final int expected = _learningProvider(tester).modules
+      .where((EcoUnitySdgModule module) => module.iconImage != null)
+      .length;
+  if (expected == 0) {
     return;
   }
 
   await _waitForCondition(
     tester,
-    () => _loadedModuleThumbnailCount(tester) >= expectedThumbnailCount,
-    '$expectedThumbnailCount module thumbnail frames',
+    () => tester.widgetList(_moduleIconLoadedFinder()).isNotEmpty,
+    'at least one SDG module icon',
     timeout: const Duration(seconds: 60),
   );
 }
 
-int _loadedModuleThumbnailCount(WidgetTester tester) {
-  return tester.widgetList(_moduleThumbnailLoadedFinder()).length;
-}
-
-Finder _moduleThumbnailLoadedFinder() {
+Finder _moduleIconLoadedFinder() {
   return find.byWidgetPredicate((Widget widget) {
     final Key? key = widget.key;
-    return key is ValueKey<String> &&
-        key.value.startsWith('screenshot-module-thumbnail-loaded-');
+    return key is ValueKey<String> && key.value.startsWith('sdg-module-icon-');
   });
 }
 
-core.WebPage? _firstModuleWithUnits(List<core.WebPage> pages) {
-  for (final core.WebPage module in _moduleListPages(pages)) {
-    final bool hasUnits = pages.any((page) => page.parent == module.id);
-    if (hasUnits) {
-      return module;
-    }
-  }
-  return null;
-}
-
-List<core.WebPage> _moduleListPages(List<core.WebPage> pages) {
-  final List<core.WebPage> mainModules =
-      pages.where((page) => page.isMainModule).toList()
-        ..sort(_compareDashboardModules);
-  final List<core.WebPage> moduleList = [];
-
-  for (final core.WebPage mainModule in mainModules) {
-    final List<core.WebPage> subModules =
-        pages.where((page) => page.parent == mainModule.id).toList()
-          ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    moduleList.addAll(subModules);
-  }
-
-  return moduleList;
-}
-
-int _compareDashboardModules(core.WebPage a, core.WebPage b) {
-  if (a.pathwayName == null || b.pathwayName == null) {
-    return 0;
-  }
-  return a.pathwayName!.compareTo(b.pathwayName!);
-}
-
-int _compareDashboardResources(core.WebPage a, core.WebPage b) {
-  return a.sortOrder.compareTo(b.sortOrder);
-}
-
-List<core.WebPage> _currentSelectionFirst(
-  List<core.WebPage> candidates,
-  int? selectedId,
-) {
-  if (selectedId == null) {
-    return candidates;
-  }
-
-  final int index = candidates.indexWhere((page) => page.id == selectedId);
-  if (index <= 0) {
-    return candidates;
-  }
-
-  return <core.WebPage>[
-    candidates[index],
-    ...candidates.take(index),
-    ...candidates.skip(index + 1),
-  ];
-}
-
-List<core.WebPage> _contentCandidates(
-  List<core.WebPage> pages,
-  PathwayType type,
-) {
-  final List<core.WebPage> candidates =
-      pages.where((page) => _isContentCandidate(page, type)).toList()
-        ..sort(_compareContentPages);
-  return candidates;
-}
-
-bool _isContentCandidate(core.WebPage page, PathwayType type) {
-  if (page.type != type ||
-      page.isMainModule ||
-      page.isSubModule ||
-      page.isMainResource ||
-      page.isMainPathway) {
-    return false;
-  }
+String _activityLoadedKey(EcoUnityActivityType type) {
   return switch (type) {
-    PathwayType.quiz => page.getValue('form') != null,
-    PathwayType.dragdrop ||
-    PathwayType.slides => page.getValue('imagefolders') != null,
-    PathwayType.video => (page.videoUrl ?? '').trim().isNotEmpty,
-    PathwayType.wiki => true,
+    EcoUnityActivityType.comic => 'screenshot-content-comic-loaded',
+    EcoUnityActivityType.mlr => 'screenshot-content-mlr-loaded',
+    EcoUnityActivityType.quiz => 'screenshot-content-quiz-loaded',
+    EcoUnityActivityType.reflection => 'screenshot-content-reflection-loaded',
+    EcoUnityActivityType.challenge => 'screenshot-content-challenge-loaded',
+    EcoUnityActivityType.unknown => 'screenshot-content-activity-loaded',
   };
 }
 
-int _compareContentPages(core.WebPage a, core.WebPage b) {
-  final int parentCompare = (a.parent ?? 0).compareTo(b.parent ?? 0);
-  if (parentCompare != 0) {
-    return parentCompare;
-  }
-  final int sortCompare = a.sortOrder.compareTo(b.sortOrder);
-  if (sortCompare != 0) {
-    return sortCompare;
-  }
-  return a.title.compareTo(b.title);
-}
-
-int _navigationIndexFor(core.WebPage page, List<core.WebPage> pages) {
-  final core.WebPage? parent = _pageById(pages, page.parent);
-  if (parent == null) {
-    return 1;
-  }
-  if (parent.isMainResource) {
-    return 2;
-  }
-  final core.WebPage? grandparent = _pageById(pages, parent.parent);
-  return grandparent != null && grandparent.isMainResource ? 2 : 1;
-}
-
-core.WebPage? _pageById(List<core.WebPage> pages, int? id) {
-  if (id == null) {
-    return null;
-  }
-  for (final core.WebPage page in pages) {
-    if (page.id == id) {
-      return page;
-    }
-  }
-  return null;
-}
-
-String _contentLoadedKey(PathwayType type) {
-  return 'screenshot-content-${type.name}-loaded';
+EcoUnityLearningProvider _learningProvider(WidgetTester tester) {
+  return Provider.of<EcoUnityLearningProvider>(
+    _appContext(tester),
+    listen: false,
+  );
 }
 
 Future<void> _navigate(
@@ -506,16 +397,13 @@ Future<void> _navigate(
   String view, {
   required int navIndex,
   dynamic data,
-  core.WebPageList? pathways,
-  bool skipAutoOpenIntroduction = false,
 }) async {
   AppRouter.navigate(
     _appContext(tester),
     view,
     navIndex,
     data: data,
-    pathways: pathways,
-    skipAutoOpenIntroduction: skipAutoOpenIntroduction,
+    replaceRoute: true,
   );
   await tester.pump();
   await _settle(tester);
@@ -526,42 +414,8 @@ BuildContext _appContext(WidgetTester tester) {
       tester.element(find.byType(MaterialApp));
 }
 
-bool _isAvailableInLocale(core.WebPage page) {
-  final String normalizedLocale = _normalizeLanguageCode(_locale);
-  final List<String> contentLanguages = _normalizeLanguageList(
-    page.getValue('contentlanguages'),
-  );
-  if (contentLanguages.isNotEmpty) {
-    return contentLanguages.contains(normalizedLocale);
-  }
-
-  final String legacyLanguage = _normalizeLanguageCode(
-    page.getValue('language')?.toString() ?? '',
-  );
-  return legacyLanguage.isEmpty || legacyLanguage == normalizedLocale;
-}
-
-List<String> _normalizeLanguageList(dynamic rawValue) {
-  if (rawValue is String) {
-    return rawValue
-        .replaceAll(' ', '')
-        .split(',')
-        .map(_normalizeLanguageCode)
-        .where((item) => item.isNotEmpty)
-        .toList();
-  }
-  if (rawValue is List) {
-    return rawValue
-        .map((item) => item.toString())
-        .map(_normalizeLanguageCode)
-        .where((item) => item.isNotEmpty)
-        .toList();
-  }
-  return const <String>[];
-}
-
-String _normalizeLanguageCode(String value) {
-  return value.split('_').first.split('-').first.toLowerCase().trim();
+String get _normalizedLocale {
+  return _locale.split('_').first.split('-').first.toLowerCase().trim();
 }
 
 Future<void> _prepareSurface(
@@ -585,6 +439,7 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   await tester.ensureVisible(finder);
   await _settle(tester);
   await tester.tap(finder);
+  await _settle(tester);
 }
 
 Future<void> _waitFor(

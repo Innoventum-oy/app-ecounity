@@ -1,1 +1,1 @@
-sustainability,SDG,education,climate,students,teachers,quizzes,badges
+сталість,ЦСР,освіта,клімат,учні,тести

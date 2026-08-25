@@ -755,6 +755,7 @@ class LoginState extends State<Login> {
           child: Container(
             constraints: const BoxConstraints(maxWidth: 800),
             child: ListView(
+              key: const ValueKey<String>('screenshot-welcome-screen'),
               padding: const EdgeInsets.fromLTRB(16, 28, 16, 20),
               children: <Widget>[
                 Form(
@@ -1048,6 +1049,7 @@ class _WelcomeLanguageSelector extends StatelessWidget {
         Localizations.localeOf(context);
 
     return Column(
+      key: const ValueKey<String>('screenshot-language-options'),
       children: <Widget>[
         for (final Locale locale in _welcomeLocales)
           Padding(
@@ -1125,7 +1127,7 @@ class _WelcomeLanguageOption extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                selected ? 'Selected' : 'Choose',
+                selected ? context.l10n.selected : context.l10n.select,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: EcoUnityColors.textSecondary,
                   fontWeight: FontWeight.w800,

@@ -102,6 +102,7 @@ class AchievementsViewState extends State<AchievementsView> {
     return RefreshIndicator(
       onRefresh: () => _loadProgressData(reload: true),
       child: ListView(
+        key: const ValueKey<String>('screenshot-progress-loaded'),
         padding: const EdgeInsets.fromLTRB(16, 22, 16, 28),
         children: <Widget>[
           Row(

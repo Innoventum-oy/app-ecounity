@@ -141,7 +141,7 @@ class EcounityState extends State<Ecounity> with WidgetsBindingObserver {
         Provider.of<EcoUnityAnalyticsService>(
           context,
           listen: false,
-        ).startSession(language: Localizations.localeOf(context).languageCode),
+        ).startSession(language: _currentLanguageCode()),
       );
     });
   }
@@ -181,7 +181,7 @@ class EcounityState extends State<Ecounity> with WidgetsBindingObserver {
     }
     final EcoUnityAnalyticsService analytics =
         Provider.of<EcoUnityAnalyticsService>(context, listen: false);
-    final String language = Localizations.localeOf(context).languageCode;
+    final String language = _currentLanguageCode();
     switch (state) {
       case AppLifecycleState.resumed:
         unawaited(analytics.startSession(language: language));
@@ -226,6 +226,15 @@ class EcounityState extends State<Ecounity> with WidgetsBindingObserver {
     }
   }
 
+  String _currentLanguageCode() {
+    final Locale? configuredLocale = Provider.of<LocaleProvider>(
+      context,
+      listen: false,
+    ).locale;
+    return configuredLocale?.languageCode ??
+        WidgetsBinding.instance.platformDispatcher.locale.languageCode;
+  }
+
   @override
   Widget build(BuildContext context) {
     // if settings has language set, get locale based on that
@@ -257,6 +266,9 @@ class _AppLocalizationState extends State<AppLocalizationState>
   bool _openedDataRefreshStarted = false;
 
   Future<core.User> getUserData() async {
+    if (_screenshotMode) {
+      return core.User();
+    }
     return await Provider.of<core.AuthProvider>(context).user;
   }
 

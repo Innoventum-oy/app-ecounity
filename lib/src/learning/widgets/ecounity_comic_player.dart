@@ -701,6 +701,13 @@ class _ComicSceneCanvas extends StatelessWidget {
                   child: LayoutBuilder(
                     builder: (BuildContext context, BoxConstraints constraints) {
                       return Stack(
+                        key: isSceneReady
+                            ? const ValueKey<String>(
+                                'screenshot-content-comic-loaded',
+                              )
+                            : const ValueKey<String>(
+                                'screenshot-content-comic-loading',
+                              ),
                         fit: StackFit.expand,
                         children: <Widget>[
                           _ComicImage(

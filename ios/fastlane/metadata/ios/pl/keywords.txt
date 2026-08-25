@@ -1,1 +1,1 @@
-sustainability,SDG,education,climate,students,teachers,quizzes,badges
+zrównoważony,SDG,edukacja,klimat,uczniowie,nauczyciele,quizy,odznaki

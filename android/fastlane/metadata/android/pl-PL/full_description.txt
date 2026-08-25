@@ -1,18 +1,19 @@
-EcoUnity is a free sustainability learning app for students, teachers and project participants.
+EcoUnity to bezpłatna aplikacja do nauki o zrównoważonym rozwoju dla uczniów, nauczycieli i uczestników projektu.
 
-The app brings together Sustainable Development Goal learning content, short resources, videos, wiki articles, slides, quizzes, drag-and-drop activities, practical challenges, progress tracking and badges in one mobile experience.
+Aplikacja łączy treści edukacyjne dotyczące Celów Zrównoważonego Rozwoju (SDG), krótkie materiały, natywne komiksy, quizy, refleksje, praktyczne wyzwania, lokalne śledzenie postępów i odznaki w jednym doświadczeniu mobilnym.
 
-Use EcoUnity to:
+W EcoUnity możesz:
 
-• Explore SDG-themed learning modules
-• Read and watch short educational resources
-• Complete quizzes, reflections and classroom challenges
-• Track learning progress locally
-• Earn badges as activities are completed
-• Switch between supported project languages
+• odkrywać moduły edukacyjne związane z SDG
+• czytać i oglądać krótkie materiały edukacyjne
+• śledzić interaktywne historie komiksowe i podejmować decyzje
+• rozwiązywać quizy, refleksje i wyzwania klasowe
+• śledzić swoje postępy lokalnie
+• zdobywać odznaki po ukończeniu aktywności
+• przełączać się między obsługiwanymi językami projektu
 
-EcoUnity is designed for inclusive, classroom-friendly sustainability education and practical action. Content is loaded from the EcoUnity project platform so learning materials can grow without requiring a new app release.
+EcoUnity została zaprojektowana z myślą o inkluzyjnej, przyjaznej dla klasy edukacji na rzecz zrównoważonego rozwoju i praktycznego działania. Treści są ładowane z platformy projektu EcoUnity, dzięki czemu materiały można z czasem aktualizować bez konieczności wydawania nowej wersji aplikacji.
 
-EcoUnity is created as part of an Erasmus+ funded project.
+EcoUnity powstała w ramach projektu finansowanego z programu Erasmus+.
 
-Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Education and Culture Executive Agency (EACEA). Neither the European Union nor EACEA can be held responsible for them.
+Sfinansowano ze środków Unii Europejskiej. Wyrażone poglądy i opinie są jednak wyłącznie poglądami autorów i nie muszą odzwierciedlać stanowiska Unii Europejskiej ani Europejskiej Agencji Wykonawczej ds. Edukacji i Kultury (EACEA). Unia Europejska ani EACEA nie ponoszą za nie odpowiedzialności.
