@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:core/core.dart' as core;
+import 'package:ecounity/l10n/app_localizations_extension.dart';
 import 'package:ecounity/src/analytics/ecounity_analytics_service.dart';
 import 'package:ecounity/src/learning/ecounity_comic_speech_audio_controller.dart';
 import 'package:ecounity/src/learning/ecounity_content_review_service.dart';
@@ -111,6 +112,13 @@ class _EcoUnityLearningActivityScreenState
     final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
       context,
     ).isTeacherMode;
+    final bool alreadyCompleted =
+        !teacherModeEnabled &&
+        _isActivityCompleted(
+          context.watch<EcoUnityLearningProvider>().progressEntries,
+          activity,
+          data.language,
+        );
 
     final Widget content = switch (activity.type) {
       EcoUnityActivityType.comic => _buildComic(
@@ -149,6 +157,7 @@ class _EcoUnityLearningActivityScreenState
       ),
       _ => _ReadableActivityView(
         activity: activity,
+        alreadyCompleted: alreadyCompleted,
         teacherModeEnabled: teacherModeEnabled,
         reviewPanel: _reviewPanel(activity, data.language),
         onCompleted: () {
@@ -273,6 +282,10 @@ class _EcoUnityLearningActivityScreenState
   Future<_ActivityScreenData> _loadActivityData() async {
     final EcoUnityLearningProvider provider =
         Provider.of<EcoUnityLearningProvider>(context, listen: false);
+    final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
+      context,
+      listen: false,
+    ).isTeacherMode;
     final String language = await core.Settings().getLanguage() ?? 'en';
     final int? activityId = widget.activityId ?? widget.activity?.id;
 
@@ -281,6 +294,9 @@ class _EcoUnityLearningActivityScreenState
       final EcoUnityLearningActivity? cachedFullActivity = provider
           .cachedActivity(activityId, language: language);
       if (cachedFullActivity != null && cachedFullActivity.isComic) {
+        if (!teacherModeEnabled) {
+          await provider.loadProgress(language: language);
+        }
         return _rememberData(
           _ActivityScreenData(
             activity: cachedFullActivity,
@@ -298,6 +314,9 @@ class _EcoUnityLearningActivityScreenState
           ) ??
           widget.activity;
       if (activity != null && activity.isComic) {
+        if (!teacherModeEnabled) {
+          await provider.loadProgress(language: language);
+        }
         final bool loadingAdditionalScenes = _needsAdditionalComicScenes(
           activity,
         );
@@ -312,6 +331,10 @@ class _EcoUnityLearningActivityScreenState
           ),
         );
       }
+    }
+
+    if (activity != null && !teacherModeEnabled) {
+      await provider.loadProgress(language: language);
     }
 
     return _rememberData(
@@ -453,12 +476,12 @@ class _EcoUnityLearningActivityScreenState
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('Activity completed'),
+          title: Text(context.l10n.pathway_completed),
           content: EcoUnityLearningCopy(text: completionText),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Continue'),
+              child: Text(context.l10n.button_continue),
             ),
           ],
         );
@@ -656,6 +679,28 @@ String _activityAnalyticsKey(
   return '${activity.id ?? activity.slug}:$language';
 }
 
+bool _isActivityCompleted(
+  List<EcoUnityProgressEntry> progressEntries,
+  EcoUnityLearningActivity activity,
+  String language,
+) {
+  final int? activityId = activity.id;
+  if (activityId == null) {
+    return false;
+  }
+  final String normalizedLanguage = _normalizeLanguage(language);
+  return progressEntries.any((EcoUnityProgressEntry entry) {
+    return entry.activityId == activityId &&
+        _normalizeLanguage(entry.language) == normalizedLanguage &&
+        entry.status == EcoUnityProgressStatus.completed;
+  });
+}
+
+String _normalizeLanguage(String language) {
+  final String normalized = language.trim().toLowerCase();
+  return normalized.isEmpty ? 'en' : normalized;
+}
+
 bool _needsAdditionalComicScenes(EcoUnityLearningActivity activity) {
   final EcoUnityComic comic = EcoUnityComic(
     activity: activity,
@@ -675,12 +720,14 @@ bool _needsAdditionalComicScenes(EcoUnityLearningActivity activity) {
 class _ReadableActivityView extends StatefulWidget {
   const _ReadableActivityView({
     required this.activity,
+    required this.alreadyCompleted,
     required this.teacherModeEnabled,
     required this.reviewPanel,
     required this.onCompleted,
   });
 
   final EcoUnityLearningActivity activity;
+  final bool alreadyCompleted;
   final bool teacherModeEnabled;
   final Widget reviewPanel;
   final Future<void> Function() onCompleted;
@@ -694,7 +741,17 @@ class _ReadableActivityViewState extends State<_ReadableActivityView> {
   bool _submitting = false;
 
   @override
+  void didUpdateWidget(covariant _ReadableActivityView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.activity.id != widget.activity.id) {
+      _completed = false;
+      _submitting = false;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final bool completed = widget.alreadyCompleted || _completed;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
@@ -723,16 +780,19 @@ class _ReadableActivityViewState extends State<_ReadableActivityView> {
           _ReflectionPromptPanel(prompt: widget.activity.reflectionPrompt),
         ],
         const SizedBox(height: 20),
-        FilledButton.icon(
-          onPressed: _completed || _submitting ? null : _complete,
-          icon: _submitting
-              ? const SizedBox.square(
-                  dimension: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Icon(_completed ? Icons.check_circle : Icons.check),
-          label: Text(_completed ? 'Completed' : 'Mark complete'),
-        ),
+        if (completed)
+          _ActivityCompletionPanel(activity: widget.activity)
+        else
+          FilledButton.icon(
+            onPressed: _submitting ? null : _complete,
+            icon: _submitting
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check),
+            label: Text(context.l10n.markAsCompleted),
+          ),
       ],
     );
   }
@@ -1547,6 +1607,68 @@ class _InlineActivityMessage extends StatelessWidget {
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivityCompletionPanel extends StatelessWidget {
+  const _ActivityCompletionPanel({required this.activity});
+
+  final EcoUnityLearningActivity activity;
+
+  @override
+  Widget build(BuildContext context) {
+    final String completionText = activity.completionText.trim();
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFE7F8DF),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: EcoUnityColors.success.withValues(alpha: 0.45),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: EcoUnityColors.success,
+                  size: 22,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  context.l10n.completed,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: EcoUnityColors.success,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (completionText.isEmpty)
+              Text(
+                context.l10n.pathway_already_completed,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: EcoUnityColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              )
+            else
+              EcoUnityLearningCopy(
+                text: completionText,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: EcoUnityColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
           ],
         ),
       ),

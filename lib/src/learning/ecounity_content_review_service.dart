@@ -326,6 +326,7 @@ class EcoUnityContentReviewService {
     required int objectId,
     required String language,
     required EcoUnityReviewStatus reviewStatus,
+    String? comment,
   }) async {
     final String normalizedLanguage = _normalizeLanguage(language);
     final String primaryStatus = _reviewStatusToWire(reviewStatus);
@@ -342,6 +343,7 @@ class EcoUnityContentReviewService {
         objectId: objectId,
         language: normalizedLanguage,
         reviewStatus: primaryStatus,
+        comment: comment,
       );
     } on EcoUnityContentReviewException catch (exception) {
       if (retryStatus == null ||
@@ -356,6 +358,7 @@ class EcoUnityContentReviewService {
         objectId: objectId,
         language: normalizedLanguage,
         reviewStatus: retryStatus,
+        comment: comment,
       );
     }
   }
@@ -367,10 +370,16 @@ class EcoUnityContentReviewService {
     required int objectId,
     required String language,
     required String reviewStatus,
+    String? comment,
   }) async {
+    final String trimmedComment = comment?.trim() ?? '';
+    final Map<String, dynamic> payload = <String, dynamic>{
+      'review_status': reviewStatus,
+      if (trimmedComment.isNotEmpty) 'comment': trimmedComment,
+    };
     final Map<String, dynamic> response = await _transport.postJson(
       path,
-      <String, dynamic>{'review_status': reviewStatus},
+      payload,
       user: user,
       language: language,
     );

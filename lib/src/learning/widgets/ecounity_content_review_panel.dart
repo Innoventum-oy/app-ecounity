@@ -137,9 +137,7 @@ class _EcoUnityContentReviewPanelState
                     label: const Text('Mark reviewed'),
                   ),
                   OutlinedButton.icon(
-                    onPressed: saving
-                        ? null
-                        : () => _saveStatus(EcoUnityReviewStatus.needsChanges),
+                    onPressed: saving ? null : () => _saveNeedsChanges(record),
                     icon: _savingStatus == EcoUnityReviewStatus.needsChanges
                         ? const SizedBox(
                             width: 16,
@@ -151,6 +149,10 @@ class _EcoUnityContentReviewPanelState
                   ),
                 ],
               ),
+              if (_reviewComment(record).isNotEmpty) ...<Widget>[
+                const SizedBox(height: 12),
+                _ReviewCommentPanel(comment: _reviewComment(record)),
+              ],
             ],
           ),
         ),
@@ -158,7 +160,25 @@ class _EcoUnityContentReviewPanelState
     );
   }
 
-  Future<void> _saveStatus(EcoUnityReviewStatus status) async {
+  Future<void> _saveNeedsChanges(EcoUnityContentReviewRecord? record) async {
+    final String? comment = await showDialog<String>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return _NeedsChangesCommentDialog(
+          initialComment: _reviewComment(record),
+        );
+      },
+    );
+    if (!mounted || comment == null) {
+      return;
+    }
+    await _saveStatus(EcoUnityReviewStatus.needsChanges, comment: comment);
+  }
+
+  Future<void> _saveStatus(
+    EcoUnityReviewStatus status, {
+    String? comment,
+  }) async {
     final core.User user = Provider.of<core.UserProvider>(
       context,
       listen: false,
@@ -176,6 +196,7 @@ class _EcoUnityContentReviewPanelState
         objectId: widget.objectId,
         language: widget.language,
         reviewStatus: status,
+        comment: comment,
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -283,6 +304,137 @@ class _ReviewStatusChip extends StatelessWidget {
   }
 }
 
+class _NeedsChangesCommentDialog extends StatefulWidget {
+  const _NeedsChangesCommentDialog({required this.initialComment});
+
+  final String initialComment;
+
+  @override
+  State<_NeedsChangesCommentDialog> createState() =>
+      _NeedsChangesCommentDialogState();
+}
+
+class _NeedsChangesCommentDialogState
+    extends State<_NeedsChangesCommentDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialComment);
+    _controller.addListener(_handleCommentChanged);
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_handleCommentChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final String comment = _controller.text.trim();
+    return AlertDialog(
+      title: const Text('What needs to change?'),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              'Add concise editorial feedback for the partner review workflow.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              minLines: 4,
+              maxLines: 7,
+              maxLength: 800,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'Example: Adapt the examples for Spanish classrooms.',
+                labelText: 'Review comment',
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Do not include learner names, contact details, pupil IDs, or other learner personal data.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: EcoUnityColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton.icon(
+          onPressed: comment.isEmpty
+              ? null
+              : () => Navigator.of(context).pop(comment),
+          icon: const Icon(Icons.edit_note),
+          label: const Text('Save feedback'),
+        ),
+      ],
+    );
+  }
+
+  void _handleCommentChanged() {
+    setState(() {});
+  }
+}
+
+class _ReviewCommentPanel extends StatelessWidget {
+  const _ReviewCommentPanel({required this.comment});
+
+  final String comment;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: EcoUnityColors.warmOrange.withValues(alpha: 0.45),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Icon(
+              Icons.notes_rounded,
+              size: 18,
+              color: EcoUnityColors.warmOrange,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                comment,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: EcoUnityColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 String _statusLabel(EcoUnityReviewStatus status) {
   return switch (status) {
     EcoUnityReviewStatus.notReady => 'Not ready',
@@ -292,6 +444,31 @@ String _statusLabel(EcoUnityReviewStatus status) {
     EcoUnityReviewStatus.published => 'Published',
     EcoUnityReviewStatus.unknown => 'Unknown',
   };
+}
+
+String _reviewComment(EcoUnityContentReviewRecord? record) {
+  if (record == null) {
+    return '';
+  }
+  for (final String key in const <String>[
+    'comment',
+    'reviewNotes',
+    'review_notes',
+    'notes',
+    'comments',
+    'review_comment',
+    'reviewComment',
+    'change_comment',
+    'changeComment',
+    'needs_changes_comment',
+    'needsChangesComment',
+  ]) {
+    final String value = record.rawData[key]?.toString().trim() ?? '';
+    if (value.isNotEmpty && value != 'null') {
+      return value;
+    }
+  }
+  return '';
 }
 
 bool _hasPotentialReviewUser(core.User user) {

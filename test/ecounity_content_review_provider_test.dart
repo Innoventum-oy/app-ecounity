@@ -44,10 +44,44 @@ void main() {
       ]),
     );
   });
+
+  test('sends review comment when marking content as needs changes', () async {
+    final _FakeReviewTransport transport = _FakeReviewTransport();
+    final EcoUnityContentReviewProvider provider =
+        EcoUnityContentReviewProvider(
+          service: EcoUnityContentReviewService(transport: transport),
+        );
+    final core.User user = core.User(id: 3, token: 'review-token');
+
+    final EcoUnityContentReviewRecord record = await provider.updateReview(
+      user: user,
+      scope: EcoUnityReviewScope.activity,
+      objectId: 17,
+      language: 'es',
+      reviewStatus: EcoUnityReviewStatus.needsChanges,
+      comment: '  Adapt the examples for Spanish classrooms.  ',
+    );
+
+    expect(record.reviewStatus, EcoUnityReviewStatus.needsChanges);
+    expect(
+      record.rawData['comment'],
+      'Adapt the examples for Spanish classrooms.',
+    );
+    expect(transport.posts, hasLength(1));
+    expect(
+      transport.posts.single.path,
+      '/api/ecounitylearning/review/activity/17/es/update',
+    );
+    expect(transport.posts.single.payload, <String, dynamic>{
+      'review_status': 'needs_changes',
+      'comment': 'Adapt the examples for Spanish classrooms.',
+    });
+  });
 }
 
 class _FakeReviewTransport implements EcoUnityContentReviewTransport {
   final List<String> paths = <String>[];
+  final List<_FakePostRequest> posts = <_FakePostRequest>[];
 
   @override
   Future<Map<String, dynamic>> getJson(
@@ -94,6 +128,27 @@ class _FakeReviewTransport implements EcoUnityContentReviewTransport {
     required core.User user,
     String? language,
   }) async {
+    posts.add(_FakePostRequest(path, Map<String, dynamic>.from(payload)));
+    if (path == '/api/ecounitylearning/review/activity/17/es/update') {
+      return <String, dynamic>{
+        'status': 'success',
+        'marker': <String, dynamic>{
+          'scopeType': 'activity',
+          'scopeId': 17,
+          'language': 'es',
+          'reviewStatus': payload['review_status'],
+          'comment': payload['comment'],
+          'hasComment': payload['comment'] != null,
+        },
+      };
+    }
     fail('Unexpected POST path: $path');
   }
+}
+
+class _FakePostRequest {
+  const _FakePostRequest(this.path, this.payload);
+
+  final String path;
+  final Map<String, dynamic> payload;
 }

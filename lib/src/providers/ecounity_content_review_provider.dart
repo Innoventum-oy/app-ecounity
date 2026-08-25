@@ -240,6 +240,7 @@ class EcoUnityContentReviewProvider with ChangeNotifier {
     required int objectId,
     required String language,
     required EcoUnityReviewStatus reviewStatus,
+    String? comment,
   }) async {
     final bool canReview = await ensureReviewAccess(user);
     if (!canReview) {
@@ -260,6 +261,7 @@ class EcoUnityContentReviewProvider with ChangeNotifier {
         objectId: objectId,
         language: language,
         reviewStatus: reviewStatus,
+        comment: comment,
       );
       _records[key] = record;
       return record;
