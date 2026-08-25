@@ -623,6 +623,168 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
+  String learning_module_difficulty(String level) {
+    String _temp0 = intl.Intl.selectLogic(level, {
+      'beginner': 'Începător',
+      'intermediate': 'Intermediar',
+      'advanced': 'Avansat',
+      'easy': 'Ușor',
+      'medium': 'Mediu',
+      'hard': 'Dificil',
+      'classroom_activity': 'Activitate la clasă',
+      'home_activity': 'Activitate acasă',
+      'group_challenge': 'Provocare de grup',
+      'other': '$level',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String learning_activity_load_error(String error) {
+    return 'Activitatea nu a putut fi încărcată: $error';
+  }
+
+  @override
+  String get learning_activity_not_found => 'Activitatea nu a fost găsită';
+
+  @override
+  String get learning_submit_reflection => 'Trimite reflecția';
+
+  @override
+  String get learning_complete_challenge => 'Finalizează provocarea';
+
+  @override
+  String get learning_write_response_hint => 'Scrie răspunsul tău';
+
+  @override
+  String get learning_reflection_prompt_title => 'Gândește-te la asta';
+
+  @override
+  String get quiz_no_questions_title => 'Nu există întrebări disponibile';
+
+  @override
+  String get quiz_no_questions_message =>
+      'Acest quiz nu include momentan întrebări.';
+
+  @override
+  String quiz_question_progress(int current, int total) {
+    return 'Întrebarea $current din $total';
+  }
+
+  @override
+  String get quiz_no_answer_options_title => 'Nu există opțiuni de răspuns';
+
+  @override
+  String get quiz_no_answer_options_message =>
+      'Această întrebare nu include momentan opțiuni de răspuns.';
+
+  @override
+  String get quiz_submit_answers => 'Trimite răspunsurile';
+
+  @override
+  String quiz_result_passed(int score, int total) {
+    return 'Promovat: $score/$total';
+  }
+
+  @override
+  String quiz_result_try_again(int score, int total) {
+    return 'Încearcă din nou: $score/$total';
+  }
+
+  @override
+  String get progress_load_error_title => 'Progresul nu a putut fi încărcat';
+
+  @override
+  String get progress_empty_message =>
+      'Modulele de învățare vor apărea aici după încărcare.';
+
+  @override
+  String get progress_journey_title => 'Parcursul meu de învățare';
+
+  @override
+  String progress_overall_complete(int percent) {
+    return '$percent% finalizat';
+  }
+
+  @override
+  String progress_summary(
+    int completedModules,
+    int activeChallenges,
+    int earnedBadges,
+  ) {
+    return 'Module finalizate: $completedModules, provocări active: $activeChallenges, insigne câștigate: $earnedBadges';
+  }
+
+  @override
+  String progress_segment(String segment) {
+    String _temp0 = intl.Intl.selectLogic(segment, {
+      'earned': 'Câștigate',
+      'locked': 'Blocate',
+      'modules': 'Progresul modulelor',
+      'other': 'Progres',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get progress_no_badges_earned_title => 'Nu ai câștigat încă insigne';
+
+  @override
+  String get progress_no_badges_earned_message =>
+      'Finalizează activitățile necesare pentru a debloca prima insignă.';
+
+  @override
+  String get progress_all_badges_earned_title =>
+      'Toate insignele au fost câștigate';
+
+  @override
+  String get progress_all_badges_earned_message =>
+      'Ai deblocat toate insignele disponibile.';
+
+  @override
+  String progress_badge_status(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'earned': 'Câștigată',
+      'locked': 'Blocată',
+      'other': 'Insignă',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get progress_no_modules_title => 'Nu există încă module de învățare';
+
+  @override
+  String get progress_no_modules_message =>
+      'Progresul modulelor va apărea aici după încărcarea conținutului.';
+
+  @override
+  String progress_module_activities(int completed, int total) {
+    return '$completed / $total activități';
+  }
+
+  @override
+  String get progress_suggested_module => 'Următorul modul sugerat';
+
+  @override
+  String progress_continue_with(String activityTitle) {
+    return 'Continuă cu $activityTitle';
+  }
+
+  @override
+  String get progress_final_badge_title => 'Final EcoUnity';
+
+  @override
+  String get progress_final_badge_description =>
+      'Finalizează toate modulele de învățare pentru a debloca insigna finală.';
+
+  @override
+  String get learning_module_fallback => 'Modul de învățare';
+
+  @override
+  String get learning_module_badge_fallback => 'Insignă de modul';
+
+  @override
   String get teacher_group_statistics_title => 'Statistici de grup';
 
   @override
@@ -890,7 +1052,7 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
-  String get current_progress => 'Current progress';
+  String get current_progress => 'Progres curent';
 
   @override
   String get next_suggestion => 'Next suggestion';

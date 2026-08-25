@@ -1,10 +1,10 @@
-O EcoUnity é uma aplicação gratuita de aprendizagem sobre sustentabilidade para alunos, professores e participantes do projeto.
+O EcoUnity é uma aplicação gratuita de aprendizagem sobre sustentabilidade para alunos e professores.
 
-A aplicação reúne conteúdos de aprendizagem sobre os Objetivos de Desenvolvimento Sustentável (ODS), recursos breves, banda desenhada nativa, quizzes, reflexões, desafios práticos, acompanhamento local do progresso e emblemas numa experiência móvel.
+A aplicação reúne conteúdos de aprendizagem sobre os Objetivos de Desenvolvimento Sustentável, recursos breves, banda desenhada nativa, quizzes, reflexões, desafios práticos, acompanhamento local do progresso e emblemas numa experiência móvel.
 
 Com o EcoUnity, podes:
 
-• explorar módulos de aprendizagem sobre os ODS
+• explorar módulos de aprendizagem alinhados com os Objetivos de Desenvolvimento Sustentável
 • ler e ver recursos educativos breves
 • acompanhar histórias interativas de banda desenhada e tomar decisões
 • concluir quizzes, reflexões e desafios de sala de aula

@@ -626,6 +626,187 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String learning_module_difficulty(String level) {
+    String _temp0 = intl.Intl.selectLogic(level, {
+      'beginner': 'Principiante',
+      'intermediate': 'Intermédio',
+      'advanced': 'Avançado',
+      'easy': 'Fácil',
+      'medium': 'Médio',
+      'hard': 'Difícil',
+      'classroom_activity': 'Atividade de sala de aula',
+      'home_activity': 'Atividade em casa',
+      'group_challenge': 'Desafio de grupo',
+      'other': '$level',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String learning_activity_load_error(String error) {
+    return 'Não foi possível carregar a atividade: $error';
+  }
+
+  @override
+  String get learning_activity_not_found => 'Atividade não encontrada';
+
+  @override
+  String get learning_submit_reflection => 'Enviar reflexão';
+
+  @override
+  String get learning_complete_challenge => 'Concluir desafio';
+
+  @override
+  String get learning_write_response_hint => 'Escreve a tua resposta';
+
+  @override
+  String get learning_reflection_prompt_title => 'Pensa sobre isto';
+
+  @override
+  String get quiz_no_questions_title => 'Não há perguntas disponíveis';
+
+  @override
+  String get quiz_no_questions_message =>
+      'Este quiz não inclui perguntas neste momento.';
+
+  @override
+  String quiz_question_progress(int current, int total) {
+    return 'Pergunta $current de $total';
+  }
+
+  @override
+  String get quiz_no_answer_options_title => 'Sem opções de resposta';
+
+  @override
+  String get quiz_no_answer_options_message =>
+      'Esta pergunta não inclui opções de resposta neste momento.';
+
+  @override
+  String get quiz_submit_answers => 'Enviar respostas';
+
+  @override
+  String quiz_result_passed(int score, int total) {
+    return 'Aprovado: $score/$total';
+  }
+
+  @override
+  String quiz_result_try_again(int score, int total) {
+    return 'Tenta novamente: $score/$total';
+  }
+
+  @override
+  String get progress_load_error_title =>
+      'Não foi possível carregar o progresso';
+
+  @override
+  String get progress_empty_message =>
+      'Os módulos de aprendizagem aparecerão aqui depois de carregados.';
+
+  @override
+  String get progress_journey_title => 'O meu percurso de aprendizagem';
+
+  @override
+  String progress_overall_complete(int percent) {
+    return '$percent% concluído';
+  }
+
+  @override
+  String progress_summary(
+    int completedModules,
+    int activeChallenges,
+    int earnedBadges,
+  ) {
+    String _temp0 = intl.Intl.pluralLogic(
+      completedModules,
+      locale: localeName,
+      other: 'módulos',
+      one: 'módulo',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      activeChallenges,
+      locale: localeName,
+      other: 'desafios',
+      one: 'desafio',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      earnedBadges,
+      locale: localeName,
+      other: 'emblemas',
+      one: 'emblema',
+    );
+    return '$completedModules $_temp0 concluídos, $activeChallenges $_temp1 ativos, $earnedBadges $_temp2 ganhos';
+  }
+
+  @override
+  String progress_segment(String segment) {
+    String _temp0 = intl.Intl.selectLogic(segment, {
+      'earned': 'Ganhos',
+      'locked': 'Bloqueados',
+      'modules': 'Progresso dos módulos',
+      'other': 'Progresso',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get progress_no_badges_earned_title => 'Ainda não ganhaste emblemas';
+
+  @override
+  String get progress_no_badges_earned_message =>
+      'Conclui as atividades necessárias para desbloquear o teu primeiro emblema.';
+
+  @override
+  String get progress_all_badges_earned_title => 'Todos os emblemas ganhos';
+
+  @override
+  String get progress_all_badges_earned_message =>
+      'Desbloqueaste todos os emblemas disponíveis.';
+
+  @override
+  String progress_badge_status(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'earned': 'Ganho',
+      'locked': 'Bloqueado',
+      'other': 'Emblema',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get progress_no_modules_title =>
+      'Ainda não há módulos de aprendizagem';
+
+  @override
+  String get progress_no_modules_message =>
+      'O progresso dos módulos aparecerá aqui depois de o conteúdo carregar.';
+
+  @override
+  String progress_module_activities(int completed, int total) {
+    return '$completed / $total atividades';
+  }
+
+  @override
+  String get progress_suggested_module => 'Próximo módulo sugerido';
+
+  @override
+  String progress_continue_with(String activityTitle) {
+    return 'Continuar com $activityTitle';
+  }
+
+  @override
+  String get progress_final_badge_title => 'Final EcoUnity';
+
+  @override
+  String get progress_final_badge_description =>
+      'Conclui todos os módulos de aprendizagem para desbloquear o emblema final.';
+
+  @override
+  String get learning_module_fallback => 'Módulo de aprendizagem';
+
+  @override
+  String get learning_module_badge_fallback => 'Emblema do módulo';
+
+  @override
   String get teacher_group_statistics_title => 'Estatísticas do grupo';
 
   @override

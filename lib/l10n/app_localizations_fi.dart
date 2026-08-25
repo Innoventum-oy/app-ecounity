@@ -390,12 +390,12 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String dashboard_continue_sdg(int sdgNumber) {
-    return 'Jatka SDG $sdgNumber';
+    return 'Jatka moduulia $sdgNumber';
   }
 
   @override
   String dashboard_start_sdg(int sdgNumber) {
-    return 'Aloita SDG $sdgNumber';
+    return 'Aloita moduuli $sdgNumber';
   }
 
   @override
@@ -539,7 +539,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String learning_sdg_modules_count(int count) {
-    return 'SDG-oppimoduulit: $count';
+    return 'Kestävän kehityksen tavoitteet: $count';
   }
 
   @override
@@ -620,6 +620,186 @@ class AppLocalizationsFi extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String learning_module_difficulty(String level) {
+    String _temp0 = intl.Intl.selectLogic(level, {
+      'beginner': 'Aloittelija',
+      'intermediate': 'Keskitaso',
+      'advanced': 'Edistynyt',
+      'easy': 'Helppo',
+      'medium': 'Keskitaso',
+      'hard': 'Vaikea',
+      'classroom_activity': 'Luokkahuonetehtävä',
+      'home_activity': 'Kotitehtävä',
+      'group_challenge': 'Ryhmähaaste',
+      'other': '$level',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String learning_activity_load_error(String error) {
+    return 'Aktiviteetin lataaminen epäonnistui: $error';
+  }
+
+  @override
+  String get learning_activity_not_found => 'Aktiviteettia ei löytynyt';
+
+  @override
+  String get learning_submit_reflection => 'Lähetä pohdinta';
+
+  @override
+  String get learning_complete_challenge => 'Suorita haaste';
+
+  @override
+  String get learning_write_response_hint => 'Kirjoita vastauksesi';
+
+  @override
+  String get learning_reflection_prompt_title => 'Pohdi tätä';
+
+  @override
+  String get quiz_no_questions_title => 'Kysymyksiä ei ole saatavilla';
+
+  @override
+  String get quiz_no_questions_message =>
+      'Tässä tietovisassa ei ole tällä hetkellä kysymyksiä.';
+
+  @override
+  String quiz_question_progress(int current, int total) {
+    return 'Kysymys $current/$total';
+  }
+
+  @override
+  String get quiz_no_answer_options_title => 'Vastausvaihtoehtoja ei ole';
+
+  @override
+  String get quiz_no_answer_options_message =>
+      'Tässä kysymyksessä ei ole tällä hetkellä vastausvaihtoehtoja.';
+
+  @override
+  String get quiz_submit_answers => 'Lähetä vastaukset';
+
+  @override
+  String quiz_result_passed(int score, int total) {
+    return 'Läpäisty: $score/$total';
+  }
+
+  @override
+  String quiz_result_try_again(int score, int total) {
+    return 'Yritä uudelleen: $score/$total';
+  }
+
+  @override
+  String get progress_load_error_title => 'Edistymisen lataaminen epäonnistui';
+
+  @override
+  String get progress_empty_message =>
+      'Oppimismoduulit näkyvät täällä, kun ne on ladattu.';
+
+  @override
+  String get progress_journey_title => 'Oma oppimispolkuni';
+
+  @override
+  String progress_overall_complete(int percent) {
+    return '$percent% suoritettu';
+  }
+
+  @override
+  String progress_summary(
+    int completedModules,
+    int activeChallenges,
+    int earnedBadges,
+  ) {
+    String _temp0 = intl.Intl.pluralLogic(
+      completedModules,
+      locale: localeName,
+      other: 'moduulia suoritettu',
+      one: 'moduuli suoritettu',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      activeChallenges,
+      locale: localeName,
+      other: 'aktiivista haastetta',
+      one: 'aktiivinen haaste',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      earnedBadges,
+      locale: localeName,
+      other: 'merkkiä ansaittu',
+      one: 'merkki ansaittu',
+    );
+    return '$completedModules $_temp0, $activeChallenges $_temp1, $earnedBadges $_temp2';
+  }
+
+  @override
+  String progress_segment(String segment) {
+    String _temp0 = intl.Intl.selectLogic(segment, {
+      'earned': 'Ansaitut',
+      'locked': 'Lukitut',
+      'modules': 'Moduulien edistyminen',
+      'other': 'Edistyminen',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get progress_no_badges_earned_title =>
+      'Et ole vielä ansainnut merkkejä';
+
+  @override
+  String get progress_no_badges_earned_message =>
+      'Suorita vaaditut aktiviteetit avataksesi ensimmäisen merkkisi.';
+
+  @override
+  String get progress_all_badges_earned_title => 'Kaikki merkit ansaittu';
+
+  @override
+  String get progress_all_badges_earned_message =>
+      'Olet avannut kaikki saatavilla olevat merkit.';
+
+  @override
+  String progress_badge_status(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'earned': 'Ansaittu',
+      'locked': 'Lukittu',
+      'other': 'Merkki',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get progress_no_modules_title => 'Oppimismoduuleja ei vielä ole';
+
+  @override
+  String get progress_no_modules_message =>
+      'Moduulien edistyminen näkyy täällä, kun sisältö on ladattu.';
+
+  @override
+  String progress_module_activities(int completed, int total) {
+    return '$completed / $total aktiviteettia';
+  }
+
+  @override
+  String get progress_suggested_module => 'Ehdotettu seuraava moduuli';
+
+  @override
+  String progress_continue_with(String activityTitle) {
+    return 'Jatka aktiviteetilla $activityTitle';
+  }
+
+  @override
+  String get progress_final_badge_title => 'EcoUnityn päätösmerkki';
+
+  @override
+  String get progress_final_badge_description =>
+      'Suorita kaikki oppimismoduulit avataksesi päätösmerkin.';
+
+  @override
+  String get learning_module_fallback => 'Oppimismoduuli';
+
+  @override
+  String get learning_module_badge_fallback => 'Moduulimerkki';
 
   @override
   String get teacher_group_statistics_title => 'Ryhmän tilastot';
@@ -764,7 +944,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get login_introduction_text =>
-      'Aloita tutustumalla SDG-oppimismoduuleihin, interaktiivisiin sarjakuviin, tietovisoihin ja luokkahuonehaasteisiin, jotka innostavat ympäristöystävälliseen toimintaan.';
+      'Tutustu kestävän kehityksen tavoitteisiin interaktiivisten sarjakuvien, tietovisojen ja luokkahuonehaasteiden kautta, jotka innostavat ympäristöystävälliseen toimintaan.';
 
   @override
   String get srh_description => 'Käytä näitä kysymyksiä pohdinnan aiheena.';

@@ -1102,6 +1102,220 @@ abstract class AppLocalizations {
   /// **'{type, select, comic{Comic} mlr{Micro-learning} quiz{Quiz} reflection{Reflection} challenge{Challenge} unknown{Activity} other{Activity}}'**
   String learning_activity_type(String type);
 
+  /// Learning module difficulty or learner level label
+  ///
+  /// In en, this message translates to:
+  /// **'{level, select, beginner{Beginner} intermediate{Intermediate} advanced{Advanced} easy{Easy} medium{Medium} hard{Hard} classroom_activity{Classroom activity} home_activity{Home activity} group_challenge{Group challenge} other{{level}}}'**
+  String learning_module_difficulty(String level);
+
+  /// Error shown when a learning activity cannot be loaded
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load activity: {error}'**
+  String learning_activity_load_error(String error);
+
+  /// No description provided for @learning_activity_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity not found'**
+  String get learning_activity_not_found;
+
+  /// No description provided for @learning_submit_reflection.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit reflection'**
+  String get learning_submit_reflection;
+
+  /// No description provided for @learning_complete_challenge.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete challenge'**
+  String get learning_complete_challenge;
+
+  /// No description provided for @learning_write_response_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write your response'**
+  String get learning_write_response_hint;
+
+  /// No description provided for @learning_reflection_prompt_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Think about it'**
+  String get learning_reflection_prompt_title;
+
+  /// No description provided for @quiz_no_questions_title.
+  ///
+  /// In en, this message translates to:
+  /// **'No questions available'**
+  String get quiz_no_questions_title;
+
+  /// No description provided for @quiz_no_questions_message.
+  ///
+  /// In en, this message translates to:
+  /// **'This quiz does not currently include any questions.'**
+  String get quiz_no_questions_message;
+
+  /// Quiz progress label showing current question number
+  ///
+  /// In en, this message translates to:
+  /// **'Question {current} of {total}'**
+  String quiz_question_progress(int current, int total);
+
+  /// No description provided for @quiz_no_answer_options_title.
+  ///
+  /// In en, this message translates to:
+  /// **'No answer options'**
+  String get quiz_no_answer_options_title;
+
+  /// No description provided for @quiz_no_answer_options_message.
+  ///
+  /// In en, this message translates to:
+  /// **'This question does not currently include answer options.'**
+  String get quiz_no_answer_options_message;
+
+  /// No description provided for @quiz_submit_answers.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit answers'**
+  String get quiz_submit_answers;
+
+  /// Quiz result message when the learner passed
+  ///
+  /// In en, this message translates to:
+  /// **'Passed: {score}/{total}'**
+  String quiz_result_passed(int score, int total);
+
+  /// Quiz result message when the learner should try again
+  ///
+  /// In en, this message translates to:
+  /// **'Try again: {score}/{total}'**
+  String quiz_result_try_again(int score, int total);
+
+  /// No description provided for @progress_load_error_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load progress'**
+  String get progress_load_error_title;
+
+  /// No description provided for @progress_empty_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Learning modules will appear here after they are loaded.'**
+  String get progress_empty_message;
+
+  /// No description provided for @progress_journey_title.
+  ///
+  /// In en, this message translates to:
+  /// **'My learning journey'**
+  String get progress_journey_title;
+
+  /// Overall learning progress percentage
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% complete'**
+  String progress_overall_complete(int percent);
+
+  /// Progress summary counts
+  ///
+  /// In en, this message translates to:
+  /// **'{completedModules} {completedModules, plural, one{module} other{modules}} complete, {activeChallenges} {activeChallenges, plural, one{challenge} other{challenges}} active, {earnedBadges} {earnedBadges, plural, one{badge} other{badges}} earned'**
+  String progress_summary(
+    int completedModules,
+    int activeChallenges,
+    int earnedBadges,
+  );
+
+  /// Progress segmented-control label
+  ///
+  /// In en, this message translates to:
+  /// **'{segment, select, earned{Earned} locked{Locked} modules{Module progress} other{Progress}}'**
+  String progress_segment(String segment);
+
+  /// No description provided for @progress_no_badges_earned_title.
+  ///
+  /// In en, this message translates to:
+  /// **'No badges earned yet'**
+  String get progress_no_badges_earned_title;
+
+  /// No description provided for @progress_no_badges_earned_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete required activities to unlock your first badge.'**
+  String get progress_no_badges_earned_message;
+
+  /// No description provided for @progress_all_badges_earned_title.
+  ///
+  /// In en, this message translates to:
+  /// **'All badges earned'**
+  String get progress_all_badges_earned_title;
+
+  /// No description provided for @progress_all_badges_earned_message.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unlocked every available badge.'**
+  String get progress_all_badges_earned_message;
+
+  /// Badge status label in the progress view
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, earned{Earned} locked{Locked} other{Badge}}'**
+  String progress_badge_status(String status);
+
+  /// No description provided for @progress_no_modules_title.
+  ///
+  /// In en, this message translates to:
+  /// **'No learning modules yet'**
+  String get progress_no_modules_title;
+
+  /// No description provided for @progress_no_modules_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Module progress will appear here after content loads.'**
+  String get progress_no_modules_message;
+
+  /// Module progress completed activities count
+  ///
+  /// In en, this message translates to:
+  /// **'{completed} / {total} activities'**
+  String progress_module_activities(int completed, int total);
+
+  /// No description provided for @progress_suggested_module.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested next module'**
+  String get progress_suggested_module;
+
+  /// Suggested activity label
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with {activityTitle}'**
+  String progress_continue_with(String activityTitle);
+
+  /// No description provided for @progress_final_badge_title.
+  ///
+  /// In en, this message translates to:
+  /// **'EcoUnity Final'**
+  String get progress_final_badge_title;
+
+  /// No description provided for @progress_final_badge_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete every learning module to unlock the final badge.'**
+  String get progress_final_badge_description;
+
+  /// No description provided for @learning_module_fallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Learning module'**
+  String get learning_module_fallback;
+
+  /// No description provided for @learning_module_badge_fallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Module badge'**
+  String get learning_module_badge_fallback;
+
   /// No description provided for @teacher_group_statistics_title.
   ///
   /// In en, this message translates to:

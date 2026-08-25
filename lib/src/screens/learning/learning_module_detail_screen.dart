@@ -333,7 +333,11 @@ class _ModuleHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 if (module.difficulty.isNotEmpty)
-                  Chip(label: Text(module.difficulty)),
+                  Chip(
+                    label: Text(
+                      _moduleDifficultyLabel(context, module.difficulty),
+                    ),
+                  ),
               ],
             ),
             if (module.introduction.isNotEmpty) ...<Widget>[
@@ -809,6 +813,44 @@ String _activityLabel(BuildContext context, EcoUnityLearningActivity activity) {
     if (description.isNotEmpty) description,
   ];
   return parts.join(' · ');
+}
+
+String _moduleDifficultyLabel(BuildContext context, String difficulty) {
+  final String raw = difficulty.trim();
+  if (raw.isEmpty) {
+    return raw;
+  }
+  final StringBuffer buffer = StringBuffer();
+  bool previousWasSeparator = false;
+  for (final int codeUnit in raw.toLowerCase().codeUnits) {
+    final bool isAsciiLetter =
+        (codeUnit >= 97 && codeUnit <= 122) ||
+        (codeUnit >= 48 && codeUnit <= 57);
+    if (isAsciiLetter) {
+      buffer.writeCharCode(codeUnit);
+      previousWasSeparator = false;
+    } else if (buffer.isNotEmpty && !previousWasSeparator) {
+      buffer.write('_');
+      previousWasSeparator = true;
+    }
+  }
+  String normalized = buffer.toString();
+  if (normalized.endsWith('_')) {
+    normalized = normalized.substring(0, normalized.length - 1);
+  }
+
+  return switch (normalized) {
+    'beginner' ||
+    'intermediate' ||
+    'advanced' ||
+    'easy' ||
+    'medium' ||
+    'hard' ||
+    'classroom_activity' ||
+    'home_activity' ||
+    'group_challenge' => context.l10n.learning_module_difficulty(normalized),
+    _ => raw,
+  };
 }
 
 String _firstNonEmptyString(Iterable<Object?> values) {

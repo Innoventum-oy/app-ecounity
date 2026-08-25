@@ -89,7 +89,7 @@ class _EcoUnityLearningActivityScreenState
             final _ActivityScreenData? data = snapshot.data ?? _latestData;
             final EcoUnityLearningActivity? activity = data?.activity;
             return ScreenScaffold(
-              title: activity?.title ?? 'Activity',
+              title: activity?.title ?? context.l10n.loading,
               navigationIndex: widget.navIndex,
               fullWidth: activity?.isComic ?? false,
               child: _buildBody(context, snapshot),
@@ -107,12 +107,16 @@ class _EcoUnityLearningActivityScreenState
       return const Center(child: CircularProgressIndicator());
     }
     if (snapshot.hasError && data == null) {
-      return Center(child: Text('Unable to load activity: ${snapshot.error}'));
+      return Center(
+        child: Text(
+          context.l10n.learning_activity_load_error('${snapshot.error}'),
+        ),
+      );
     }
 
     final EcoUnityLearningActivity? activity = data?.activity;
     if (data == null || activity == null) {
-      return const Center(child: Text('Activity not found'));
+      return Center(child: Text(context.l10n.learning_activity_not_found));
     }
     final bool teacherModeEnabled = Provider.of<TeacherModeProvider>(
       context,
@@ -146,7 +150,7 @@ class _EcoUnityLearningActivityScreenState
         activity: activity,
         teacherModeEnabled: teacherModeEnabled,
         reviewPanel: _reviewPanel(activity, data.language),
-        submitLabel: 'Submit reflection',
+        submitLabel: context.l10n.learning_submit_reflection,
         onCompleted: (Map<String, dynamic> payload) {
           return _markCompleted(activity, data.language, payload: payload);
         },
@@ -155,7 +159,7 @@ class _EcoUnityLearningActivityScreenState
         activity: activity,
         teacherModeEnabled: teacherModeEnabled,
         reviewPanel: _reviewPanel(activity, data.language),
-        submitLabel: 'Complete challenge',
+        submitLabel: context.l10n.learning_complete_challenge,
         onCompleted: (Map<String, dynamic> payload) {
           return _markCompleted(activity, data.language, payload: payload);
         },
@@ -208,8 +212,8 @@ class _EcoUnityLearningActivityScreenState
                 learningObjective: activity.learningObjective,
               ),
             ),
-          const Expanded(
-            child: Center(child: Text('No comic scenes available')),
+          Expanded(
+            child: Center(child: Text(context.l10n.comic_no_scenes_available)),
           ),
         ],
       );
@@ -415,7 +419,7 @@ class _EcoUnityLearningActivityScreenState
         activityId: activityId,
         language: language,
         payload: <String, dynamic>{
-          'activity_type': _activityTypeLabel(activity.type).toLowerCase(),
+          'activity_type': _activityTypeAnalyticsValue(activity.type),
           ...payload,
         },
       );
@@ -888,10 +892,10 @@ class _QuizActivityViewState extends State<_QuizActivityView> {
           ),
           widget.reviewPanel,
           const SizedBox(height: 16),
-          const _InlineActivityMessage(
+          _InlineActivityMessage(
             icon: Icons.quiz_outlined,
-            title: 'No questions available',
-            message: 'This quiz does not currently include any questions.',
+            title: context.l10n.quiz_no_questions_title,
+            message: context.l10n.quiz_no_questions_message,
           ),
         ],
       );
@@ -1214,7 +1218,10 @@ class _QuizProgressHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              'Question ${currentIndex + 1} of $questionCount',
+              context.l10n.quiz_question_progress(
+                currentIndex + 1,
+                questionCount,
+              ),
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: EcoUnityColors.deepTeal,
                 fontWeight: FontWeight.w900,
@@ -1274,11 +1281,10 @@ class _QuizQuestionPage extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               if (question.options.isEmpty)
-                const _InlineActivityMessage(
+                _InlineActivityMessage(
                   icon: Icons.rule_outlined,
-                  title: 'No answer options',
-                  message:
-                      'This question does not currently include answer options.',
+                  title: context.l10n.quiz_no_answer_options_title,
+                  message: context.l10n.quiz_no_answer_options_message,
                 )
               else
                 for (final EcoUnityQuizOption option
@@ -1419,7 +1425,7 @@ class _QuizPageControls extends StatelessWidget {
         IconButton.filledTonal(
           onPressed: canGoPrevious ? onPrevious : null,
           icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Previous',
+          tooltip: context.l10n.button_previous,
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -1436,14 +1442,18 @@ class _QuizPageControls extends StatelessWidget {
                               ? Icons.check_circle_rounded
                               : Icons.check_rounded,
                         ),
-                  label: Text(completed ? 'Completed' : 'Submit answers'),
+                  label: Text(
+                    completed
+                        ? context.l10n.completed
+                        : context.l10n.quiz_submit_answers,
+                  ),
                 )
               : FilledButton.icon(
                   onPressed: canGoNext && canLeaveCurrentQuestion
                       ? onNext
                       : null,
                   icon: const Icon(Icons.arrow_forward_rounded),
-                  label: const Text('Next'),
+                  label: Text(context.l10n.button_next),
                 ),
         ),
       ],
@@ -1512,10 +1522,10 @@ class _ReflectionActivityViewState extends State<_ReflectionActivityView> {
               controller: _controller,
               minLines: 3,
               maxLines: 5,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
                 filled: true,
-                hintText: 'Write your response',
+                hintText: context.l10n.learning_write_response_hint,
               ),
             ),
           ),
@@ -1529,7 +1539,7 @@ class _ReflectionActivityViewState extends State<_ReflectionActivityView> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : Icon(_submitted ? Icons.check_circle : Icons.check),
-          label: Text(_submitted ? 'Completed' : widget.submitLabel),
+          label: Text(_submitted ? context.l10n.completed : widget.submitLabel),
         ),
       ],
     );
@@ -1697,7 +1707,7 @@ class _ActivityIntro extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Chip(label: Text(_activityTypeLabel(activity.type))),
+            Chip(label: Text(_activityTypeLabel(context, activity.type))),
             if (activity.shortDescription.isNotEmpty) ...<Widget>[
               const SizedBox(height: 8),
               EcoUnityLearningCopy(
@@ -1747,7 +1757,7 @@ class _ReflectionPromptPanel extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Think about it',
+                  context.l10n.learning_reflection_prompt_title,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: EcoUnityColors.deepTeal,
                     fontWeight: FontWeight.w800,
@@ -1820,8 +1830,14 @@ class _QuizResultPanel extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         child: Text(
           result.passed
-              ? 'Passed: ${result.score}/${result.possibleScore}'
-              : 'Try again: ${result.score}/${result.possibleScore}',
+              ? context.l10n.quiz_result_passed(
+                  result.score,
+                  result.possibleScore,
+                )
+              : context.l10n.quiz_result_try_again(
+                  result.score,
+                  result.possibleScore,
+                ),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: color,
             fontWeight: FontWeight.w700,
@@ -1848,14 +1864,18 @@ int _questionKey(EcoUnityQuizQuestion question) {
   return question.id ?? question.orderNo;
 }
 
-String _activityTypeLabel(EcoUnityActivityType type) {
+String _activityTypeLabel(BuildContext context, EcoUnityActivityType type) {
+  return context.l10n.learning_activity_type(_activityTypeAnalyticsValue(type));
+}
+
+String _activityTypeAnalyticsValue(EcoUnityActivityType type) {
   return switch (type) {
-    EcoUnityActivityType.comic => 'Comic',
-    EcoUnityActivityType.mlr => 'Micro-learning',
-    EcoUnityActivityType.quiz => 'Quiz',
-    EcoUnityActivityType.reflection => 'Reflection',
-    EcoUnityActivityType.challenge => 'Challenge',
-    EcoUnityActivityType.unknown => 'Activity',
+    EcoUnityActivityType.comic => 'comic',
+    EcoUnityActivityType.mlr => 'mlr',
+    EcoUnityActivityType.quiz => 'quiz',
+    EcoUnityActivityType.reflection => 'reflection',
+    EcoUnityActivityType.challenge => 'challenge',
+    EcoUnityActivityType.unknown => 'unknown',
   };
 }
 

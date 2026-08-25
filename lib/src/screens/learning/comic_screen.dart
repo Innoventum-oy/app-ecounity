@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:core/core.dart' as core;
+import 'package:ecounity/l10n/app_localizations_extension.dart';
 import 'package:ecounity/src/analytics/ecounity_analytics_service.dart';
 import 'package:ecounity/src/learning/ecounity_comic_speech_audio_controller.dart';
 import 'package:ecounity/src/learning/ecounity_learning_models.dart';
@@ -77,7 +78,7 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
           (BuildContext context, AsyncSnapshot<_ComicScreenData> snapshot) {
             final _ComicScreenData? data = snapshot.data ?? _latestData;
             final EcoUnityLearningActivity? activity = data?.activity;
-            final String title = activity?.title ?? 'Comic';
+            final String title = activity?.title ?? context.l10n.loading;
 
             return ScreenScaffold(
               title: title,
@@ -98,12 +99,16 @@ class _EcoUnityComicScreenState extends State<EcoUnityComicScreen> {
       return const Center(child: CircularProgressIndicator());
     }
     if (snapshot.hasError && data == null) {
-      return Center(child: Text('Unable to load comic: ${snapshot.error}'));
+      return Center(
+        child: Text(
+          context.l10n.learning_activity_load_error('${snapshot.error}'),
+        ),
+      );
     }
 
     final EcoUnityLearningActivity? activity = data?.activity;
     if (data == null || activity == null || activity.comicScenes.isEmpty) {
-      return const Center(child: Text('No comic scenes available'));
+      return Center(child: Text(context.l10n.comic_no_scenes_available));
     }
 
     final EcoUnityComic comic = EcoUnityComic(

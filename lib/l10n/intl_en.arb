@@ -363,6 +363,147 @@
     }
   },
   "learning_activity_type": "{type, select, comic{Comic} mlr{Micro-learning} quiz{Quiz} reflection{Reflection} challenge{Challenge} unknown{Activity} other{Activity}}",
+  "@learning_module_difficulty": {
+    "description": "Learning module difficulty or learner level label",
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "learning_module_difficulty": "{level, select, beginner{Beginner} intermediate{Intermediate} advanced{Advanced} easy{Easy} medium{Medium} hard{Hard} classroom_activity{Classroom activity} home_activity{Home activity} group_challenge{Group challenge} other{{level}}}",
+  "@learning_activity_load_error": {
+    "description": "Error shown when a learning activity cannot be loaded",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "learning_activity_load_error": "Unable to load activity: {error}",
+  "learning_activity_not_found": "Activity not found",
+  "learning_submit_reflection": "Submit reflection",
+  "learning_complete_challenge": "Complete challenge",
+  "learning_write_response_hint": "Write your response",
+  "learning_reflection_prompt_title": "Think about it",
+  "quiz_no_questions_title": "No questions available",
+  "quiz_no_questions_message": "This quiz does not currently include any questions.",
+  "@quiz_question_progress": {
+    "description": "Quiz progress label showing current question number",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "quiz_question_progress": "Question {current} of {total}",
+  "quiz_no_answer_options_title": "No answer options",
+  "quiz_no_answer_options_message": "This question does not currently include answer options.",
+  "quiz_submit_answers": "Submit answers",
+  "@quiz_result_passed": {
+    "description": "Quiz result message when the learner passed",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "quiz_result_passed": "Passed: {score}/{total}",
+  "@quiz_result_try_again": {
+    "description": "Quiz result message when the learner should try again",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "quiz_result_try_again": "Try again: {score}/{total}",
+  "progress_load_error_title": "Unable to load progress",
+  "progress_empty_message": "Learning modules will appear here after they are loaded.",
+  "progress_journey_title": "My learning journey",
+  "@progress_overall_complete": {
+    "description": "Overall learning progress percentage",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "progress_overall_complete": "{percent}% complete",
+  "@progress_summary": {
+    "description": "Progress summary counts",
+    "placeholders": {
+      "completedModules": {
+        "type": "int"
+      },
+      "activeChallenges": {
+        "type": "int"
+      },
+      "earnedBadges": {
+        "type": "int"
+      }
+    }
+  },
+  "progress_summary": "{completedModules} {completedModules, plural, one{module} other{modules}} complete, {activeChallenges} {activeChallenges, plural, one{challenge} other{challenges}} active, {earnedBadges} {earnedBadges, plural, one{badge} other{badges}} earned",
+  "@progress_segment": {
+    "description": "Progress segmented-control label",
+    "placeholders": {
+      "segment": {
+        "type": "String"
+      }
+    }
+  },
+  "progress_segment": "{segment, select, earned{Earned} locked{Locked} modules{Module progress} other{Progress}}",
+  "progress_no_badges_earned_title": "No badges earned yet",
+  "progress_no_badges_earned_message": "Complete required activities to unlock your first badge.",
+  "progress_all_badges_earned_title": "All badges earned",
+  "progress_all_badges_earned_message": "You have unlocked every available badge.",
+  "@progress_badge_status": {
+    "description": "Badge status label in the progress view",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "progress_badge_status": "{status, select, earned{Earned} locked{Locked} other{Badge}}",
+  "progress_no_modules_title": "No learning modules yet",
+  "progress_no_modules_message": "Module progress will appear here after content loads.",
+  "@progress_module_activities": {
+    "description": "Module progress completed activities count",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "progress_module_activities": "{completed} / {total} activities",
+  "progress_suggested_module": "Suggested next module",
+  "@progress_continue_with": {
+    "description": "Suggested activity label",
+    "placeholders": {
+      "activityTitle": {
+        "type": "String"
+      }
+    }
+  },
+  "progress_continue_with": "Continue with {activityTitle}",
+  "progress_final_badge_title": "EcoUnity Final",
+  "progress_final_badge_description": "Complete every learning module to unlock the final badge.",
+  "learning_module_fallback": "Learning module",
+  "learning_module_badge_fallback": "Module badge",
   "teacher_group_statistics_title": "Group statistics",
   "teacher_refresh_active_group": "Refresh active group",
   "teacher_group_report_description": "Add teacher tokens to view aggregate group-level progress. The app stores only summary reports, not learner identities.",

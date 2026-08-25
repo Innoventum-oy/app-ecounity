@@ -1,10 +1,10 @@
-EcoUnity is a free sustainability learning app for students, teachers and project participants.
+EcoUnity is a free sustainability learning app for students and teachers.
 
 The app brings together Sustainable Development Goal learning content, short resources, native comics, quizzes, reflections, practical challenges, local progress tracking and badges in one mobile experience.
 
 Use EcoUnity to:
 
-• Explore SDG-themed learning modules
+• Explore Sustainable Development Goals-aligned learning modules
 • Read and watch short educational resources
 • Follow interactive comic stories and make decisions
 • Complete quizzes, reflections and classroom challenges

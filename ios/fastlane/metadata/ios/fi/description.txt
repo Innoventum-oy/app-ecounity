@@ -1,16 +1,15 @@
-EcoUnity on maksuton kestävyyden oppimissovellus oppilaille, opettajille ja projektin osallistujille.
+EcoUnity on maksuton kestävän kehityksen oppimissovellus 10-14-vuotiaille sekä opettajille.
 
 Sovellus kokoaa kestävän kehityksen tavoitteisiin liittyvät oppimissisällöt, lyhyet materiaalit, natiivit sarjakuvat, visat, pohdintatehtävät, käytännön haasteet, paikallisen edistymisen seurannan ja merkit yhdeksi mobiilikokemukseksi.
 
 EcoUnityn avulla voit:
 
-• tutkia SDG-aiheisia oppimismoduuleja
+• tutkia kestävän kehityksen tavoitteiden mukaisia oppimismoduuleja
 • lukea ja katsoa lyhyitä oppimateriaaleja
 • seurata interaktiivisia sarjakuvatarinoita ja tehdä valintoja
-• suorittaa visoja, pohdintoja ja luokkahuonehaasteita
-• seurata edistymistäsi paikallisesti
+• suorittaa kyselyjä, pohdintoja ja luokkahuonehaasteita
+• seurata edistymistäsi
 • ansaita merkkejä, kun suoritat aktiviteetteja
-• vaihtaa tuettujen projektikielten välillä
 
 EcoUnity on suunniteltu inklusiiviseen, luokkahuoneeseen sopivaan kestävyyden oppimiseen ja käytännön toimintaan. Sisältö ladataan EcoUnity-projektialustalta, joten oppimateriaaleja voidaan päivittää ajan myötä ilman uutta sovellusjulkaisua.
 

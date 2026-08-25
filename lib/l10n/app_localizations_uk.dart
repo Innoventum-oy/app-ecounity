@@ -623,6 +623,167 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String learning_module_difficulty(String level) {
+    String _temp0 = intl.Intl.selectLogic(level, {
+      'beginner': 'Початковий',
+      'intermediate': 'Середній',
+      'advanced': 'Просунутий',
+      'easy': 'Легкий',
+      'medium': 'Середній',
+      'hard': 'Складний',
+      'classroom_activity': 'Класна активність',
+      'home_activity': 'Домашня активність',
+      'group_challenge': 'Груповий виклик',
+      'other': '$level',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String learning_activity_load_error(String error) {
+    return 'Не вдалося завантажити активність: $error';
+  }
+
+  @override
+  String get learning_activity_not_found => 'Активність не знайдено';
+
+  @override
+  String get learning_submit_reflection => 'Надіслати рефлексію';
+
+  @override
+  String get learning_complete_challenge => 'Завершити виклик';
+
+  @override
+  String get learning_write_response_hint => 'Напиши свою відповідь';
+
+  @override
+  String get learning_reflection_prompt_title => 'Подумай про це';
+
+  @override
+  String get quiz_no_questions_title => 'Немає доступних запитань';
+
+  @override
+  String get quiz_no_questions_message =>
+      'Ця вікторина наразі не містить запитань.';
+
+  @override
+  String quiz_question_progress(int current, int total) {
+    return 'Запитання $current з $total';
+  }
+
+  @override
+  String get quiz_no_answer_options_title => 'Немає варіантів відповіді';
+
+  @override
+  String get quiz_no_answer_options_message =>
+      'Це запитання наразі не містить варіантів відповіді.';
+
+  @override
+  String get quiz_submit_answers => 'Надіслати відповіді';
+
+  @override
+  String quiz_result_passed(int score, int total) {
+    return 'Пройдено: $score/$total';
+  }
+
+  @override
+  String quiz_result_try_again(int score, int total) {
+    return 'Спробуй ще раз: $score/$total';
+  }
+
+  @override
+  String get progress_load_error_title => 'Не вдалося завантажити прогрес';
+
+  @override
+  String get progress_empty_message =>
+      'Навчальні модулі з\'являться тут після завантаження.';
+
+  @override
+  String get progress_journey_title => 'Мій навчальний шлях';
+
+  @override
+  String progress_overall_complete(int percent) {
+    return '$percent% завершено';
+  }
+
+  @override
+  String progress_summary(
+    int completedModules,
+    int activeChallenges,
+    int earnedBadges,
+  ) {
+    return 'Завершено модулів: $completedModules, активних викликів: $activeChallenges, здобутих значків: $earnedBadges';
+  }
+
+  @override
+  String progress_segment(String segment) {
+    String _temp0 = intl.Intl.selectLogic(segment, {
+      'earned': 'Здобуті',
+      'locked': 'Заблоковані',
+      'modules': 'Прогрес модулів',
+      'other': 'Прогрес',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get progress_no_badges_earned_title => 'Значків ще не здобуто';
+
+  @override
+  String get progress_no_badges_earned_message =>
+      'Завершуй потрібні активності, щоб відкрити перший значок.';
+
+  @override
+  String get progress_all_badges_earned_title => 'Усі значки здобуто';
+
+  @override
+  String get progress_all_badges_earned_message =>
+      'Ти відкрив усі доступні значки.';
+
+  @override
+  String progress_badge_status(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'earned': 'Здобуто',
+      'locked': 'Заблоковано',
+      'other': 'Значок',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get progress_no_modules_title => 'Навчальних модулів ще немає';
+
+  @override
+  String get progress_no_modules_message =>
+      'Прогрес модулів з\'явиться тут після завантаження контенту.';
+
+  @override
+  String progress_module_activities(int completed, int total) {
+    return '$completed / $total активностей';
+  }
+
+  @override
+  String get progress_suggested_module => 'Наступний рекомендований модуль';
+
+  @override
+  String progress_continue_with(String activityTitle) {
+    return 'Продовжити: $activityTitle';
+  }
+
+  @override
+  String get progress_final_badge_title => 'Фінал EcoUnity';
+
+  @override
+  String get progress_final_badge_description =>
+      'Заверши всі навчальні модулі, щоб відкрити фінальний значок.';
+
+  @override
+  String get learning_module_fallback => 'Навчальний модуль';
+
+  @override
+  String get learning_module_badge_fallback => 'Значок модуля';
+
+  @override
   String get teacher_group_statistics_title => 'Статистика групи';
 
   @override

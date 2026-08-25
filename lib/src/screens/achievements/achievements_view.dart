@@ -76,12 +76,12 @@ class AchievementsViewState extends State<AchievementsView> {
     if (_error != null && !data.hasLearningData) {
       return _ProgressMessage(
         icon: Icons.cloud_off_outlined,
-        title: 'Unable to load progress',
+        title: context.l10n.progress_load_error_title,
         message: _error!,
         action: FilledButton.icon(
           onPressed: () => _loadProgressData(reload: true),
           icon: const Icon(Icons.refresh),
-          label: const Text('Try again'),
+          label: Text(context.l10n.refresh),
         ),
       );
     }
@@ -90,11 +90,11 @@ class AchievementsViewState extends State<AchievementsView> {
       return _ProgressMessage(
         icon: Icons.school_outlined,
         title: context.l10n.noPathwaysFound,
-        message: 'Learning modules will appear here after they are loaded.',
+        message: context.l10n.progress_empty_message,
         action: FilledButton.icon(
           onPressed: () => _loadProgressData(reload: true),
           icon: const Icon(Icons.refresh),
-          label: const Text('Refresh'),
+          label: Text(context.l10n.refresh),
         ),
       );
     }
@@ -109,7 +109,7 @@ class AchievementsViewState extends State<AchievementsView> {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  'My learning journey',
+                  context.l10n.progress_journey_title,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: EcoUnityColors.deepTeal,
                     fontWeight: FontWeight.w800,
@@ -249,7 +249,7 @@ class _ProgressSummaryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              '$percent% complete',
+              context.l10n.progress_overall_complete(percent),
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
@@ -257,9 +257,11 @@ class _ProgressSummaryCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              '${data.completedModuleCount} ${_plural(data.completedModuleCount, 'module')} complete, '
-              '${data.activeChallengeCount} ${_plural(data.activeChallengeCount, 'challenge')} active, '
-              '${data.earnedBadges.length} ${_plural(data.earnedBadges.length, 'badge')} earned',
+              context.l10n.progress_summary(
+                data.completedModuleCount,
+                data.activeChallengeCount,
+                data.earnedBadges.length,
+              ),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -295,18 +297,18 @@ class _ProgressSegmentSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return SegmentedButton<_ProgressSegment>(
       showSelectedIcon: false,
-      segments: const <ButtonSegment<_ProgressSegment>>[
+      segments: <ButtonSegment<_ProgressSegment>>[
         ButtonSegment<_ProgressSegment>(
           value: _ProgressSegment.earned,
-          label: Text('Earned'),
+          label: Text(context.l10n.progress_segment('earned')),
         ),
         ButtonSegment<_ProgressSegment>(
           value: _ProgressSegment.locked,
-          label: Text('Locked'),
+          label: Text(context.l10n.progress_segment('locked')),
         ),
         ButtonSegment<_ProgressSegment>(
           value: _ProgressSegment.sdgProgress,
-          label: Text('SDG progress'),
+          label: Text(context.l10n.progress_segment('modules')),
         ),
       ],
       selected: <_ProgressSegment>{selectedSegment},
@@ -358,14 +360,13 @@ class _ProgressSegmentBody extends StatelessWidget {
     return switch (segment) {
       _ProgressSegment.earned => _BadgeGrid(
         badges: data.earnedBadges,
-        emptyTitle: 'No badges earned yet',
-        emptyMessage:
-            'Complete required activities to unlock your first badge.',
+        emptyTitle: context.l10n.progress_no_badges_earned_title,
+        emptyMessage: context.l10n.progress_no_badges_earned_message,
       ),
       _ProgressSegment.locked => _BadgeGrid(
         badges: data.lockedBadges,
-        emptyTitle: 'All badges earned',
-        emptyMessage: 'You have unlocked every available badge.',
+        emptyTitle: context.l10n.progress_all_badges_earned_title,
+        emptyMessage: context.l10n.progress_all_badges_earned_message,
       ),
       _ProgressSegment.sdgProgress => _SdgProgressList(
         modules: data.modules,
@@ -431,6 +432,9 @@ class _ProgressBadgeCard extends StatelessWidget {
     final Color statusColor = badge.earned
         ? EcoUnityColors.success
         : EcoUnityColors.textSecondary;
+    final String badgeLabel = badge.id == null
+        ? context.l10n.progress_final_badge_title
+        : badge.label;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -449,7 +453,9 @@ class _ProgressBadgeCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              badge.label,
+              badgeLabel.isEmpty
+                  ? context.l10n.learning_module_badge_fallback
+                  : badgeLabel,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -459,7 +465,9 @@ class _ProgressBadgeCard extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              badge.earned ? 'Earned' : 'Locked',
+              context.l10n.progress_badge_status(
+                badge.earned ? 'earned' : 'locked',
+              ),
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: statusColor,
                 fontWeight: FontWeight.w800,
@@ -554,9 +562,9 @@ class _SdgProgressList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (modules.isEmpty) {
-      return const _InlineEmptyState(
-        title: 'No SDG modules yet',
-        message: 'Module progress will appear here after content loads.',
+      return _InlineEmptyState(
+        title: context.l10n.progress_no_modules_title,
+        message: context.l10n.progress_no_modules_message,
       );
     }
 
@@ -618,7 +626,7 @@ class _SdgProgressTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        _moduleTitle(module),
+                        _moduleTitle(context, module),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -640,7 +648,10 @@ class _SdgProgressTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        '$completedActivities / $requiredActivities activities',
+                        context.l10n.progress_module_activities(
+                          completedActivities,
+                          requiredActivities,
+                        ),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: EcoUnityColors.textSecondary,
                           fontWeight: FontWeight.w600,
@@ -739,7 +750,7 @@ class _SuggestedModuleCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'Suggested next module',
+                  context.l10n.progress_suggested_module,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: EcoUnityColors.turquoise,
                     fontWeight: FontWeight.w900,
@@ -747,7 +758,7 @@ class _SuggestedModuleCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _moduleTitle(module),
+                  _moduleTitle(context, module),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: EcoUnityColors.textPrimary,
                     fontWeight: FontWeight.w900,
@@ -757,7 +768,7 @@ class _SuggestedModuleCard extends StatelessWidget {
                     nextActivity!.title.isNotEmpty) ...<Widget>[
                   const SizedBox(height: 6),
                   Text(
-                    'Continue with ${nextActivity!.title}',
+                    context.l10n.progress_continue_with(nextActivity!.title),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -1184,12 +1195,12 @@ EcoUnityLearningActivity? _suggestedActivity(
   return module.activities.isEmpty ? null : module.activities.first;
 }
 
-String _moduleTitle(EcoUnitySdgModule module) {
+String _moduleTitle(BuildContext context, EcoUnitySdgModule module) {
   final String prefix = module.sdgNumber == null
       ? ''
       : 'SDG ${module.sdgNumber}';
   if (module.title.isEmpty) {
-    return prefix.isEmpty ? 'Learning module' : prefix;
+    return prefix.isEmpty ? context.l10n.learning_module_fallback : prefix;
   }
   return prefix.isEmpty ? module.title : '$prefix - ${module.title}';
 }
@@ -1215,10 +1226,6 @@ String _initials(String value) {
   }
   return '${words.first.characters.first}${words.last.characters.first}'
       .toUpperCase();
-}
-
-String _plural(int count, String singular) {
-  return count == 1 ? singular : '${singular}s';
 }
 
 int _percent(double ratio) {

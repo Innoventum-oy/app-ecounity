@@ -1,10 +1,10 @@
-EcoUnity este o aplicație gratuită de învățare despre sustenabilitate pentru elevi, profesori și participanții la proiect.
+EcoUnity este o aplicație gratuită de învățare despre sustenabilitate pentru elevi și profesori.
 
-Aplicația reunește conținut de învățare despre Obiectivele de Dezvoltare Durabilă (ODD), resurse scurte, benzi desenate native, quizuri, reflecții, provocări practice, urmărirea locală a progresului și insigne într-o experiență mobilă.
+Aplicația reunește conținut de învățare despre Obiectivele de Dezvoltare Durabilă, resurse scurte, benzi desenate native, quizuri, reflecții, provocări practice, urmărirea locală a progresului și insigne într-o experiență mobilă.
 
 Cu EcoUnity poți:
 
-• explora module de învățare tematice ODD
+• explora module de învățare aliniate cu Obiectivele de Dezvoltare Durabilă
 • citi și viziona resurse educaționale scurte
 • urmări povești interactive de bandă desenată și lua decizii
 • finaliza quizuri, reflecții și provocări de clasă

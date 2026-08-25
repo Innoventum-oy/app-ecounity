@@ -623,6 +623,185 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String learning_module_difficulty(String level) {
+    String _temp0 = intl.Intl.selectLogic(level, {
+      'beginner': 'Beginner',
+      'intermediate': 'Intermediate',
+      'advanced': 'Advanced',
+      'easy': 'Easy',
+      'medium': 'Medium',
+      'hard': 'Hard',
+      'classroom_activity': 'Classroom activity',
+      'home_activity': 'Home activity',
+      'group_challenge': 'Group challenge',
+      'other': '$level',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String learning_activity_load_error(String error) {
+    return 'Unable to load activity: $error';
+  }
+
+  @override
+  String get learning_activity_not_found => 'Activity not found';
+
+  @override
+  String get learning_submit_reflection => 'Submit reflection';
+
+  @override
+  String get learning_complete_challenge => 'Complete challenge';
+
+  @override
+  String get learning_write_response_hint => 'Write your response';
+
+  @override
+  String get learning_reflection_prompt_title => 'Think about it';
+
+  @override
+  String get quiz_no_questions_title => 'No questions available';
+
+  @override
+  String get quiz_no_questions_message =>
+      'This quiz does not currently include any questions.';
+
+  @override
+  String quiz_question_progress(int current, int total) {
+    return 'Question $current of $total';
+  }
+
+  @override
+  String get quiz_no_answer_options_title => 'No answer options';
+
+  @override
+  String get quiz_no_answer_options_message =>
+      'This question does not currently include answer options.';
+
+  @override
+  String get quiz_submit_answers => 'Submit answers';
+
+  @override
+  String quiz_result_passed(int score, int total) {
+    return 'Passed: $score/$total';
+  }
+
+  @override
+  String quiz_result_try_again(int score, int total) {
+    return 'Try again: $score/$total';
+  }
+
+  @override
+  String get progress_load_error_title => 'Unable to load progress';
+
+  @override
+  String get progress_empty_message =>
+      'Learning modules will appear here after they are loaded.';
+
+  @override
+  String get progress_journey_title => 'My learning journey';
+
+  @override
+  String progress_overall_complete(int percent) {
+    return '$percent% complete';
+  }
+
+  @override
+  String progress_summary(
+    int completedModules,
+    int activeChallenges,
+    int earnedBadges,
+  ) {
+    String _temp0 = intl.Intl.pluralLogic(
+      completedModules,
+      locale: localeName,
+      other: 'modules',
+      one: 'module',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      activeChallenges,
+      locale: localeName,
+      other: 'challenges',
+      one: 'challenge',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      earnedBadges,
+      locale: localeName,
+      other: 'badges',
+      one: 'badge',
+    );
+    return '$completedModules $_temp0 complete, $activeChallenges $_temp1 active, $earnedBadges $_temp2 earned';
+  }
+
+  @override
+  String progress_segment(String segment) {
+    String _temp0 = intl.Intl.selectLogic(segment, {
+      'earned': 'Earned',
+      'locked': 'Locked',
+      'modules': 'Module progress',
+      'other': 'Progress',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get progress_no_badges_earned_title => 'No badges earned yet';
+
+  @override
+  String get progress_no_badges_earned_message =>
+      'Complete required activities to unlock your first badge.';
+
+  @override
+  String get progress_all_badges_earned_title => 'All badges earned';
+
+  @override
+  String get progress_all_badges_earned_message =>
+      'You have unlocked every available badge.';
+
+  @override
+  String progress_badge_status(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'earned': 'Earned',
+      'locked': 'Locked',
+      'other': 'Badge',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get progress_no_modules_title => 'No learning modules yet';
+
+  @override
+  String get progress_no_modules_message =>
+      'Module progress will appear here after content loads.';
+
+  @override
+  String progress_module_activities(int completed, int total) {
+    return '$completed / $total activities';
+  }
+
+  @override
+  String get progress_suggested_module => 'Suggested next module';
+
+  @override
+  String progress_continue_with(String activityTitle) {
+    return 'Continue with $activityTitle';
+  }
+
+  @override
+  String get progress_final_badge_title => 'EcoUnity Final';
+
+  @override
+  String get progress_final_badge_description =>
+      'Complete every learning module to unlock the final badge.';
+
+  @override
+  String get learning_module_fallback => 'Learning module';
+
+  @override
+  String get learning_module_badge_fallback => 'Module badge';
+
+  @override
   String get teacher_group_statistics_title => 'Group statistics';
 
   @override

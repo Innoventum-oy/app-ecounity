@@ -1,10 +1,10 @@
-EcoUnity to bezpłatna aplikacja do nauki o zrównoważonym rozwoju dla uczniów, nauczycieli i uczestników projektu.
+EcoUnity to bezpłatna aplikacja do nauki o zrównoważonym rozwoju dla uczniów i nauczycieli.
 
-Aplikacja łączy treści edukacyjne dotyczące Celów Zrównoważonego Rozwoju (SDG), krótkie materiały, natywne komiksy, quizy, refleksje, praktyczne wyzwania, lokalne śledzenie postępów i odznaki w jednym doświadczeniu mobilnym.
+Aplikacja łączy treści edukacyjne dotyczące Celów Zrównoważonego Rozwoju, krótkie materiały, natywne komiksy, quizy, refleksje, praktyczne wyzwania, lokalne śledzenie postępów i odznaki w jednym doświadczeniu mobilnym.
 
 W EcoUnity możesz:
 
-• odkrywać moduły edukacyjne związane z SDG
+• odkrywać moduły edukacyjne zgodne z Celami Zrównoważonego Rozwoju
 • czytać i oglądać krótkie materiały edukacyjne
 • śledzić interaktywne historie komiksowe i podejmować decyzje
 • rozwiązywać quizy, refleksje i wyzwania klasowe
